@@ -7,6 +7,8 @@ Created on Sun Apr  4 21:41:21 2021
 author: William Du
 
 Python Version 3.8.8
+
+HARK version 11.0
 """
 
 
@@ -35,7 +37,7 @@ from HARK.utilities import plot_funcs_der, plot_funcs
 
 
 
-#######################################
+##############################################################################
 
 
 
@@ -48,6 +50,7 @@ class FBSNKagent(IndShockConsumerType):
                                                    "L",
                                                    "SSPmu",
                                                    "wage",
+                                                   "B"
                                                    
                                                   ]
  
@@ -55,11 +58,9 @@ class FBSNKagent(IndShockConsumerType):
     def __init__(self, cycles= 0, **kwds):
         
         IndShockConsumerType.__init__(self, cycles= 0, **kwds)
-        #self.wage = 1/(self.SSPmu)
         
         #Steady State values for Wage , Labor and tax rate
-        self.Rfree = 1.0035
-        #N = self.IncUnemp*self.UnempPrb / self.wage*self.tax_rate
+        self.Rfree = 1.02
         #MVMU = wage*(1-self.tax_rate)/(self.SSWmu)
         
     
@@ -67,12 +68,11 @@ class FBSNKagent(IndShockConsumerType):
     def  update_income_process(self):
         
         self.wage = 1/(self.SSPmu)
-        self.N = self.mu_u*(self.IncUnemp*self.UnempPrb )/ (self.wage*self.tax_rate)
+        self.N = (self.mu_u*(self.IncUnemp*self.UnempPrb ))/ (self.wage*self.tax_rate) + self.B*(self.Rfree -1)
         
         
-        PermShkDstn_U = Lognormal(np.log(self.mu_u) - (self.L*(self.PermShkStd[0])**2)/2 , self.L*self.PermShkStd[0] , 123).approx(self.PermShkCount,3) #Permanent Shock Distribution faced when unemployed
-        PermShkDstn_E = MeanOneLogNormal( self.PermShkStd[0] , 123).approx(self.PermShkCount,3) #Permanent Shock Distribution faced when employed
-        
+        PermShkDstn_U = Lognormal(np.log(self.mu_u) - (self.L*(self.PermShkStd[0])**2)/2 , self.L*self.PermShkStd[0] , 123).approx(self.PermShkCount) #Permanent Shock Distribution faced when unemployed
+        PermShkDstn_E = MeanOneLogNormal( self.PermShkStd[0] , 123).approx(self.PermShkCount) #Permanent Shock Distribution faced when employed
         
         
         pmf_P = np.concatenate(((1-self.UnempPrb)*PermShkDstn_E.pmf ,self.UnempPrb*PermShkDstn_U.pmf))
@@ -80,8 +80,8 @@ class FBSNKagent(IndShockConsumerType):
         PermShkDstn = [DiscreteDistribution(pmf_P, X_P)]
         self.PermShkDstn = PermShkDstn 
         
-        TranShkDstn_E = MeanOneLogNormal( self.TranShkStd[0],123).approx(self.TranShkCount,3)#Transitory Shock Distribution faced when employed
-        TranShkDstn_E.X = (TranShkDstn_E.X *(1-self.tax_rate)*self.wage*self.N)/(1-self.UnempPrb)  #add wage, tax rate and labor supply
+        TranShkDstn_E = MeanOneLogNormal( self.TranShkStd[0],123).approx(self.TranShkCount)#Transitory Shock Distribution faced when employed
+        TranShkDstn_E.X = (TranShkDstn_E.X *(1-self.tax_rate)*self.wage*self.N)/(1-self.UnempPrb)**2 #add wage, tax rate and labor supply
         
         lng = len(TranShkDstn_E.X )
         TranShkDstn_U = DiscreteDistribution(np.ones(lng)/lng, self.IncUnemp*np.ones(lng)) #Transitory Shock Distribution faced when unemployed
@@ -108,8 +108,8 @@ IdiosyncDict={
     # Parameters shared with the perfect foresight model
     "CRRA":2.0,                           # Coefficient of relative risk aversion
     #"Rfree": 1.03,                         # Interest factor on assets
-    "DiscFac": 0.96,                       # Intertemporal discount factor
-    "LivPrb" : [.98],                     # Survival probability
+    "DiscFac": 0.978,                       # Intertemporal discount factor
+    "LivPrb" : [.9745],                     # Survival probability
     "PermGroFac" :[1.00],                  # Permanent income growth factor
 
     # Parameters that specify the income distribution over the lifecycle
@@ -140,7 +140,7 @@ IdiosyncDict={
 
     # Parameters only used in simulation
     "AgentCount" : 10000,                  # Number of agents of this type
-    "T_sim" : 100,                         # Number of periods to simulate
+    "T_sim" : 350,                         # Number of periods to simulate
     "aNrmInitMean" : -6.0,                 # Mean of log initial assets
     "aNrmInitStd"  : 1.0,                  # Standard deviation of log initial assets
     "pLvlInitMean" : 0.0,                  # Mean of log initial permanent income
@@ -156,78 +156,48 @@ IdiosyncDict={
      "SSWmu " : 1.1 ,                      # sequence space jacobian appendix
      "SSPmu" :  1.2,                        # sequence space jacobian appendix
      "calvo price stickiness":  .926,      # Auclert et al 2020
-     "calvo wage stickiness": .899,        #Auclert et al 2020
+     "calvo wage stickiness": .899,        # Auclert et al 2020
+     "B" : 0                               # Net Bond Supply
     
 }
 
 
     
 ###############################################################################
-
 '''
 
-example = FBSNKagent(**IdiosyncDict)
-example.solve()
+example0 = FBSNKagent(**IdiosyncDict)
+example0.cycles=0
+example0.solve()
 
-plot_funcs(example.solution[0].cFunc,example.solution[0].mNrmMin,1)
+
+example1 = FBSNKagent(**IdiosyncDict)
+example1.solve()
+
+print(example1.solution[0].cFunc.functions[0].y_list -example0.solution[0].cFunc.functions[0].y_list)
 
 '''
-
 ##############################################################################
-
-
-'''
-char_view_consumers = [] 
-
-# now create types with different disc factors
-example = FBSNKagent(**IdiosyncDict)
-
-for i in range(num_consumer_types):
-    example.DiscFac    = DiscFac_list[i]
-    example.AgentCount = int(10000*DiscFac_dist.pmf[i])
-    #example.T_sim      = 100
-    #newConsumer.update_income_process()
-    example.solve()
-    char_view_consumers.append(example)
-    print('try')
-
-lita=[]
-litc=[]
-# simulate and keep track mNrm and MPCnow
-for i in range(num_consumer_types):
-    char_view_consumers[i].track_vars = ['aNrm','mNrm','cNrm','pLvl', 'MPCnow']
-    char_view_consumers[i].initialize_sim()
-    char_view_consumers[i].simulate()
-    
-    litc.append((char_view_consumers[i].state_now['mNrm']-char_view_consumers[i].state_now['aNrm'])*char_view_consumers[i].state_now['pLvl'])
-    lita.append(char_view_consumers[i].state_now['aLvl'])
-    print('k')
-
-c=a= np.concatenate(litc)
-a= np.concatenate(lita)
-AggA = np.mean(np.array(a))
-AggC = np.mean(np.array(c))
-
-'''
 ########################################################################################
 
 
 
 
-num_consumer_types = 5     # num of types 
+num_consumer_types = 7     # num of types 
 
 
-discFacDispersion = 0.0067
-bottomDiscFac     = 0.9867 - discFacDispersion
-topDiscFac        = 0.9867 + discFacDispersion
+discFacDispersion = 0.0069
+bottomDiscFac     = 0.9787 - discFacDispersion
+topDiscFac        = 0.9787 + discFacDispersion
 
-# draw discFac from uniform distribution with U(0.9941 - \Delta, 0.9941 + \Delta)
 DiscFac_dist  = Uniform(bot=bottomDiscFac,top=topDiscFac,seed=606).approx(N=num_consumer_types)
 DiscFac_list  = DiscFac_dist.X
 
 
 
-tolerance = .01
+target = .75
+
+tolerance = .001
 
 completed_loops=0
 
@@ -237,13 +207,10 @@ example = FBSNKagent(**IdiosyncDict)
 
 char_view_consumers = [] 
     
-    # now create types with different disc factors
+# now create types with different disc factors
 for i in range(num_consumer_types):
     example.DiscFac    = DiscFac_list[i]
     example.AgentCount = int(10000*DiscFac_dist.pmf[i])
-        #example.T_sim      = 100
-        #newConsumer.update_income_process()
-        #example.solve()
     char_view_consumers.append(example)
    
 
@@ -255,11 +222,10 @@ while go:
     for i in range(num_consumer_types):
         char_view_consumers[i].Rfree = example.Rfree 
         char_view_consumers[i].solve()
-        #char_view_consumers[i].track_vars = ['aNrm','mNrm','cNrm','pLvl', 'MPCnow']
         char_view_consumers[i].initialize_sim()
         char_view_consumers[i].simulate()
         
-        litc.append((char_view_consumers[i].state_now['mNrm']-char_view_consumers[i].state_now['aNrm'])*char_view_consumers[i].state_now['pLvl'])
+        litc.append((char_view_consumers[i].state_now['mNrm'] - char_view_consumers[i].state_now['aNrm'])*char_view_consumers[i].state_now['pLvl'])
         lita.append(char_view_consumers[i].state_now['aLvl'])
         print('k')
     
@@ -270,19 +236,24 @@ while go:
 
     
     
-    if AggA - .75 > 0 :
+    if AggA - target > 0 :
         
-       example.Rfree = example.Rfree - .0001
+       example.Rfree = example.Rfree - .001
         
-    elif AggA-.75 < 0: 
-        example.Rfree = example.Rfree + .0001
+    elif AggA - target < 0: 
+        example.Rfree = example.Rfree + .001
         
     else:
         break
     
+    print('Assets')
+    print(AggA)
+    print('consumption')
+    print(AggC)
+    print('interest rate')
     print(example.Rfree)
     
-    distance = abs(AggA - .75) 
+    distance = abs(AggA - target) 
     
     completed_loops += 1
     go = distance >= tolerance and completed_loops < 100
@@ -291,30 +262,12 @@ while go:
 print(AggA)
 print(AggC)
 
-    
+  
 
 
-##################################################################
+##########################################################################
+##########################################################################
 '''
-
-example = FBSNKagent(**IdiosyncDict)
-example.solve()
-example.track_vars = ['aNrm','mNrm','cNrm','pLvl']
-example.initialize_sim()
-example.simulate()
-
-a= example.state_now['aLvl']
-c = (example.state_now['mNrm'] - example.state_now['aNrm'] )*example.state_now['pLvl']
-
-AggA = np.mean(np.array(a))
-AggC = np.mean(np.array(c))
-print(AggA)
-print(AggC)
-
-#A = .09*(1-(1/1.2))/.02
-#newR = .09*(1-(1/1.2))/AggA
-
-
 
 tolerance = .001
 
@@ -365,16 +318,64 @@ AggC = np.mean(np.array(c))
 print(AggA)
 print(AggC)
 
+'''
+###############################################################################################
+
+'''
+
+CRRA = 2.0
+DiscFac = 0.96
+
+# Parameters for a Cobb-Douglas economy
+PermGroFacAgg = 1.00  # Aggregate permanent income growth factor
+PermShkAggCount = (
+    3  # Number of points in discrete approximation to aggregate permanent shock dist
+)
+TranShkAggCount = (
+    3  # Number of points in discrete approximation to aggregate transitory shock dist
+)
+PermShkAggStd = 0.0063  # Standard deviation of log aggregate permanent shocks
+TranShkAggStd = 0.0031  # Standard deviation of log aggregate transitory shocks
+DeprFac = 0.025  # Capital depreciation rate
+CapShare = 0.36  # Capital's share of income
+DiscFacPF = DiscFac  # Discount factor of perfect foresight calibration
+CRRAPF = CRRA  # Coefficient of relative risk aversion of perfect foresight calibration
+intercept_prev = 0.0  # Intercept of aggregate savings function
+slope_prev = 1.0  # Slope of aggregate savings function
+verbose_cobb_douglas = (
+    True  # Whether to print solution progress to screen while solving
+)
+T_discard = 200  # Number of simulated "burn in" periods to discard when updating AFunc
+DampingFac = 0.5  # Damping factor when updating AFunc; puts DampingFac weight on old params, rest on new
+max_loops = 20  # Maximum number of AFunc updating loops to allow
 
 
 
-EconomyDict={  
-    "SSWmu " : 1.1 , # sequence space jacobian appendix
-                   "SSPmu":  1.2, # sequence space jacobian appendix
-                   " calvo price stickiness":  .926, # Auclert et al 2020
-                   "calvo wage stickiness": .899, #Auclert et al 2020
-                  
-    }
+EconomyDict = {
+    "PermShkAggCount": PermShkAggCount,
+    "TranShkAggCount": TranShkAggCount,
+    "PermShkAggStd": PermShkAggStd,
+    "TranShkAggStd": TranShkAggStd,
+    "DeprFac": DeprFac,
+    "SSWmu ": 1.1,
+    "DiscFac": DiscFacPF,
+    "CRRA": CRRAPF,
+    "PermGroFacAgg": PermGroFacAgg,
+    "AggregateL": 1.0,
+    "intercept_prev": intercept_prev,
+    "slope_prev": slope_prev,
+    "verbose": verbose_cobb_douglas,
+    "T_discard": T_discard,
+    "DampingFac": DampingFac,
+    "max_loops": max_loops,
+    
+    "SSWmu ": 1.1,
+    "SSPmu":  1.2, # sequence space jacobian appendix
+    " calvo price stickiness":  .926, # Auclert et al 2020
+    "calvo wage stickiness": .899, #Auclert et al 2020
+}
+
+
 
 
 
@@ -404,31 +405,28 @@ class Economy(Market):
     def update(self):
         
         
+    def solve(self):
+        self.solveAgents()
+        
+        
         
     def mill_rule(self, aLvl):
         
-        AggA = np.mean(np.array(aLvl))
         
-        return (AggA)
+        return self.Calc_endo
         
         
     def calc_dynamics(self,AggA):
         
-        if AggA > A :
-            Rfree - .001
-            
-        else:
-            Rfree + .001
+ 
             
         
-        return AggDynRule(Rfree)
+        return Calc_Rules
     
 class AggDynRule(MetricObject):
     
     def __init__(self,Rfree):
         self.Rfree = Rfree
         self.distance_criteria = ["AFunc"]
-
-
 
 '''
