@@ -36,7 +36,7 @@ from HARK.utilities import plot_funcs_der, plot_funcs
 
 
 
-
+##############################################################################
 ##############################################################################
 
 
@@ -67,15 +67,15 @@ class FBSNKagent(IndShockConsumerType):
 
     def  update_income_process(self):
         
-        self.wage = 1/(self.SSPmu)
-        self.N = (self.mu_u*(self.IncUnemp*self.UnempPrb ))/ (self.wage*self.tax_rate) + self.B*(self.Rfree -1)
+        self.wage = 1/(self.SSPmu) #calculate SS wage
+        self.N = (self.mu_u*(self.IncUnemp*self.UnempPrb ))/ (self.wage*self.tax_rate) + self.B*(self.Rfree -1) #calculate SS labor supply from Budget Constraint
         
         
         PermShkDstn_U = Lognormal(np.log(self.mu_u) - (self.L*(self.PermShkStd[0])**2)/2 , self.L*self.PermShkStd[0] , 123).approx(self.PermShkCount) #Permanent Shock Distribution faced when unemployed
         PermShkDstn_E = MeanOneLogNormal( self.PermShkStd[0] , 123).approx(self.PermShkCount) #Permanent Shock Distribution faced when employed
         
         
-        pmf_P = np.concatenate(((1-self.UnempPrb)*PermShkDstn_E.pmf ,self.UnempPrb*PermShkDstn_U.pmf))
+        pmf_P = np.concatenate(((1-self.UnempPrb)*PermShkDstn_E.pmf ,self.UnempPrb*PermShkDstn_U.pmf)) 
         X_P = np.concatenate((PermShkDstn_E.X, PermShkDstn_U.X))
         PermShkDstn = [DiscreteDistribution(pmf_P, X_P)]
         self.PermShkDstn = PermShkDstn 
@@ -153,8 +153,8 @@ IdiosyncDict={
      "L"          : 1.3, 
      
     #New Economy Parameters
-     "SSWmu " : 1.1 ,                      # sequence space jacobian appendix
-     "SSPmu" :  1.2,                        # sequence space jacobian appendix
+     "SSWmu " : 1.1 ,                      # Wage Markup from sequence space jacobian appendix
+     "SSPmu" :  1.2,                        # Price Markup from sequence space jacobian appendix
      "calvo price stickiness":  .926,      # Auclert et al 2020
      "calvo wage stickiness": .899,        # Auclert et al 2020
      "B" : 0                               # Net Bond Supply
@@ -177,18 +177,105 @@ example1.solve()
 print(example1.solution[0].cFunc.functions[0].y_list -example0.solution[0].cFunc.functions[0].y_list)
 
 '''
+###############################################################################
+###############################################################################
+
+target = .75
+
+tolerance = .001
+
+completed_loops=0
+
+go = True
+
+example = FBSNKagent(**IdiosyncDict)
+
+num_consumer_types = 7     # num of types 
+
+center = 0.9787
+    
+
+while go:
+    
+    discFacDispersion = 0.0069
+    bottomDiscFac     = center - discFacDispersion
+    topDiscFac        = center + discFacDispersion
+    
+    DiscFac_dist  = Uniform(bot=bottomDiscFac,top=topDiscFac,seed=606).approx(N=num_consumer_types)
+    DiscFac_list  = DiscFac_dist.X
+    
+    char_view_consumers = [] 
+    
+    # now create types with different disc factors
+    for i in range(num_consumer_types):
+        example.DiscFac    = DiscFac_list[i]
+        example.AgentCount = int(10000*DiscFac_dist.pmf[i])
+        char_view_consumers.append(example)
+       
+
+    lita=[]
+    litc=[]
+    # simulate and keep track mNrm and MPCnow
+    for i in range(num_consumer_types):
+        char_view_consumers[i].Rfree = example.Rfree 
+        char_view_consumers[i].solve()
+        char_view_consumers[i].initialize_sim()
+        char_view_consumers[i].simulate()
+        
+        litc.append((char_view_consumers[i].state_now['mNrm'] - char_view_consumers[i].state_now['aNrm'])*char_view_consumers[i].state_now['pLvl'])
+        lita.append(char_view_consumers[i].state_now['aLvl'])
+        print('k')
+    
+    c = np.concatenate(litc)
+    a = np.concatenate(lita)
+    AggA = np.mean(np.array(a))
+    AggC = np.mean(np.array(c))
+
+    
+    
+    if AggA - target > 0 :
+        
+       center = center - .0001
+        
+    elif AggA - target < 0: 
+        center = center + .0001
+        
+    else:
+        break
+    
+    print('Assets')
+    print(AggA)
+    print('consumption')
+    print(AggC)
+    print('center')
+    print(center)
+    
+    distance = abs(AggA - target) 
+    
+    completed_loops += 1
+    go = distance >= tolerance and completed_loops < 100
+        
+
+print(AggA)
+print(AggC)
+
+  
+
+
+
+
 ##############################################################################
 ########################################################################################
 
-
+'''
 
 
 num_consumer_types = 7     # num of types 
 
-
+center = 0.9787
 discFacDispersion = 0.0069
-bottomDiscFac     = 0.9787 - discFacDispersion
-topDiscFac        = 0.9787 + discFacDispersion
+bottomDiscFac     = center - discFacDispersion
+topDiscFac        = center + discFacDispersion
 
 DiscFac_dist  = Uniform(bot=bottomDiscFac,top=topDiscFac,seed=606).approx(N=num_consumer_types)
 DiscFac_list  = DiscFac_dist.X
@@ -263,7 +350,7 @@ print(AggA)
 print(AggC)
 
   
-
+'''
 
 ##########################################################################
 ##########################################################################
