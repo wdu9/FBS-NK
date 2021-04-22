@@ -35,10 +35,6 @@ from HARK.utilities import plot_funcs_der, plot_funcs
 ##############################################################################
 ##############################################################################
 
-dx = .001 #Deviation from steady state
-
-E = np.identity(300)
-
 
 
 
@@ -48,7 +44,6 @@ class FBSNK_solver(ConsIndShockSolver):
     
    
     def __init__(self, 
-                cList,
                 solution_next,
                 IncShkDstn,
                 LivPrb,
@@ -60,29 +55,38 @@ class FBSNK_solver(ConsIndShockSolver):
                 aXtraGrid,
                 vFuncBool,
                 CubicBool,
+                
+                cList,
                 s,
+                dx,
                 ):
                  
         self.s = s 
+        self.dx=dx
+        self.cList = cList #need to change this to time state variable somehow
         
-        self.cList = cList
         self.solution_next = solution_next
         self.IncShkDstn = IncShkDstn
         self.LivPrb = LivPrb
         self.DiscFac = DiscFac
         self.CRRA = CRRA
-        
         self.PermGroFac = PermGroFac
         self.BoroCnstArt = BoroCnstArt
         self.aXtraGrid = aXtraGrid
         self.vFuncBool = vFuncBool
         self.CubicBool = CubicBool
         self.def_utility_funcs()
+        self.Rfree=Rfree
         
-        if len(example.cList) == 300 - 1  - self.s  :
-            self.Rfree = Rfree + dx
+        
+       
+        
+        if len(self.cList) == 300 - 1  - self.s  :
+            self.Rfree = Rfree + self.dx
         else:
             self.Rfree = Rfree
+            
+        
         
     
     def solve(self):
@@ -151,10 +155,14 @@ class FBSNKagent(IndShockConsumerType):
                                                    "wage",
                                                    "B",
                                                    "cList",
-                                                   "s"
+                                                   "s",
+                                                   "dx",
                                                    
+                    
                                                   ]
- 
+    
+    
+
     
     def __init__(self, cycles= 300, **kwds):
         
@@ -164,6 +172,7 @@ class FBSNKagent(IndShockConsumerType):
         self.Rfree = 1.02
         self.cList = []
         self.s = self.s 
+        self.dx=self.dx
         
         
         solver = FBSNK_solver
@@ -205,17 +214,69 @@ class FBSNKagent(IndShockConsumerType):
         IncShkDstn = [DiscreteDistribution(pmf_I, X_I)]
         self.IncShkDstn = IncShkDstn
         self.add_to_time_vary('IncShkDstn')
+        
+        
+    def get_Rfree(self):
+        """
+        Returns an array of size self.AgentCount with self.Rfree in every entry.
+        Parameters
+        ----------
+        None
+        Returns
+        -------
+        RfreeNow : np.array
+             Array of size self.AgentCount with risk free interest rate for each agent.
+        """
     
+        
+        if self.t_sim == self.s:
+            RfreeNow = (self.Rfree + self.dx)* np.ones(self.AgentCount)
+        else:
+            RfreeNow = self.Rfree * np.ones(self.AgentCount)
+            
+        return RfreeNow
+        
+        
+        
+    def get_controls(self):
+        """
+        Calculates consumption for each consumer of this type using the consumption functions.
+        Parameters
+        ----------
+        None
+        Returns
+        -------
+        None
+        """   
+        
+            
+    
+        
+        cNrmNow = np.zeros(self.AgentCount) + np.nan
+        MPCnow = np.zeros(self.AgentCount) + np.nan
+        
+        
+        for t in range(self.T_cycle):
+            these = t == self.t_cycle
+            cNrmNow[these], MPCnow[these] = self.solution[t].cFunc.eval_with_derivative(
+                self.state_now['mNrm'][these]
+            )
+        self.controls['cNrm'] = cNrmNow
+
+        # MPCnow is not really a control
+        self.MPCnow = MPCnow
+        return None
+
     
     
     
 IdiosyncDict={
     # Parameters shared with the perfect foresight model
     "CRRA":2.0,                           # Coefficient of relative risk aversion
-    #"Rfree": 1.03,                         # Interest factor on assets
-    "DiscFac": 0.978,                       # Intertemporal discount factor
-    "LivPrb" : [.9745],                     # Survival probability
-    "PermGroFac" :[1.00],                  # Permanent income growth factor
+    #"Rfree": 1.03,                       # Interest factor on assets
+    "DiscFac": 0.978,                     # Intertemporal discount factor
+    "LivPrb" : [.9745],                   # Survival probability
+    "PermGroFac" :[1.00],                 # Permanent income growth factor
 
     # Parameters that specify the income distribution over the lifecycle
    
@@ -245,7 +306,7 @@ IdiosyncDict={
 
     # Parameters only used in simulation
     "AgentCount" : 10000,                  # Number of agents of this type
-    "T_sim" : 350,                         # Number of periods to simulate
+    "T_sim" : 300,                         # Number of periods to simulate
     "aNrmInitMean" : -6.0,                 # Mean of log initial assets
     "aNrmInitStd"  : 1.0,                  # Standard deviation of log initial assets
     "pLvlInitMean" : 0.0,                  # Mean of log initial permanent income
@@ -256,7 +317,8 @@ IdiosyncDict={
     # new parameters
      "mu_u"       : .8 ,
      "L"          : 1.3, 
-     "s"          : 1,
+     "s"          : 50,
+     "dx"         : .0001,                   #Deviation from steady state
      
     #New Economy Parameters
      "SSWmu " : 1.1 ,                      # Wage Markup from sequence space jacobian appendix
@@ -271,24 +333,37 @@ IdiosyncDict={
     
 ###############################################################################
 
-example = FBSNKagent(**IdiosyncDict)
-example.solve()
+
+example2 = FBSNKagent(**IdiosyncDict)
+example2.solve()
+example2.initialize_sim()
+example2.simulate()
+
+
+
 
 
 ###############################################################################
 
+'''
 
 Cpols = [] # A list where each element is a list of consumption policies across 300 periods. 
             #The index of each element/list in Cpols indicates the period in which the interest has deviated from its steady state level.
 
-
+list_c = []
+list_p = []
 for i in range(300):
     
-    
-    example.s = i 
-    example.solve()
-    Cpols.append(example.cList)
+    example2.s = i 
+    example2.solve()
     print(i)
+    example2.initialize_sim()
+    example2.simulate()
+    for j in range(example2.T_sim):
+        list_c.append(example2.history['cNrm'][j,:]*example2.history['pLvl'][j,:])
+    
+    
+'''
     
 
 
