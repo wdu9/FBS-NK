@@ -12,7 +12,7 @@ HARK version 11.0
 
 import numpy as np
 from copy import copy, deepcopy
-from time import time
+from timeit import timeit
 from HARK.distribution import DiscreteDistribution,combine_indep_dstns, Lognormal, MeanOneLogNormal, Uniform
 from HARK.utilities import get_percentiles, get_lorenz_shares, calc_subpop_avg
 from HARK import Market, make_one_period_oo_solver
@@ -59,6 +59,7 @@ class FBSNK_solver(ConsIndShockSolver):
                 cList,
                 s,
                 dx,
+                T_sim,
                 ):
                  
         self.s = s 
@@ -77,16 +78,16 @@ class FBSNK_solver(ConsIndShockSolver):
         self.CubicBool = CubicBool
         self.def_utility_funcs()
         self.Rfree=Rfree
-        
+        self.T_sim = T_sim
         
        
         
-        if len(self.cList) == 300 - 1  - self.s  :
+        if len(self.cList) == self.T_sim - 1  - self.s  :
             self.Rfree = Rfree + self.dx
         else:
             self.Rfree = Rfree
             
-        
+
         
     
     def solve(self):
@@ -157,6 +158,7 @@ class FBSNKagent(IndShockConsumerType):
                                                    "cList",
                                                    "s",
                                                    "dx",
+                                                   "T_sim"
                                                    
                     
                                                   ]
@@ -164,9 +166,9 @@ class FBSNKagent(IndShockConsumerType):
     
 
     
-    def __init__(self, cycles= 300, **kwds):
+    def __init__(self, cycles= 200, **kwds):
         
-        IndShockConsumerType.__init__(self, cycles = 300, **kwds)
+        IndShockConsumerType.__init__(self, cycles = 200, **kwds)
         
         #Steady State values for Wage , Labor and tax rate
         self.Rfree = 1.02
@@ -251,7 +253,6 @@ class FBSNKagent(IndShockConsumerType):
         
             
     
-        
         cNrmNow = np.zeros(self.AgentCount) + np.nan
         MPCnow = np.zeros(self.AgentCount) + np.nan
         
@@ -306,7 +307,7 @@ IdiosyncDict={
 
     # Parameters only used in simulation
     "AgentCount" : 10000,                  # Number of agents of this type
-    "T_sim" : 300,                         # Number of periods to simulate
+    "T_sim" : 200,                         # Number of periods to simulate
     "aNrmInitMean" : -6.0,                 # Mean of log initial assets
     "aNrmInitStd"  : 1.0,                  # Standard deviation of log initial assets
     "pLvlInitMean" : 0.0,                  # Mean of log initial permanent income
@@ -317,7 +318,7 @@ IdiosyncDict={
     # new parameters
      "mu_u"       : .8 ,
      "L"          : 1.3, 
-     "s"          : 50,
+     "s"          : 1,
      "dx"         : .0001,                   #Deviation from steady state
      
     #New Economy Parameters
@@ -332,39 +333,164 @@ IdiosyncDict={
 
     
 ###############################################################################
+###############################################################################
 
 
-example2 = FBSNKagent(**IdiosyncDict)
-example2.solve()
-example2.initialize_sim()
-example2.simulate()
 
 
+example1 = FBSNKagent(**IdiosyncDict)
+example1.track_vars = ['aNrm','mNrm','cNrm','pLvl']
+example1.dx = 0
+#example.solution_terminal = 
+
+
+num_consumer_types = 7     # num of types 
+
+center = 0.978818264
+
+    
+discFacDispersion = 0.0069
+bottomDiscFac     = center - discFacDispersion
+topDiscFac        = center + discFacDispersion
+
+DiscFac_dist  = Uniform(bot=bottomDiscFac,top=topDiscFac,seed=606).approx(N=num_consumer_types)
+DiscFac_list  = DiscFac_dist.X
+
+
+consumers = [] 
+
+# now create types with different disc factors
+for i in range(num_consumer_types):
+        example1.DiscFac    = DiscFac_list[i]
+        example1.AgentCount = int(100000*DiscFac_dist.pmf[i])
+        consumers.append(example1)
+        
+'''
+#lita=[]
+litc=[]
+# simulate and keep track mNrm and MPCnow
+for i in range(num_consumer_types):
+    #consumers[i].Rfree = ss_agent.Rfree 
+    consumers[i].solve()
+    consumers[i].initialize_sim()
+    consumers[i].simulate()
+    
+    
+    for j in range(num_consumer_types)
+
+    litc.append(consumers[i].history['cNrm'][,:]*consumers[i].history['pLvl'][199,:])
+    #lita.append(consumers[i].state_now['aLvl'])
+    
+    print('one consumer solved and simulated')
+    
+    c = np.concatenate(litc)
+    #a = np.concatenate(lita)
+    #A_ss = np.mean(np.array(a))
+    C_ss = np.mean(np.array(c))
+'''
+
+listC = []
+listH = []
+for k in range(num_consumer_types):
+    consumers[k].s=i
+    consumers[k].solve()
+    consumers[k].initialize_sim()
+    consumers[k].simulate()
+
+    listH.append([consumers[k].history['cNrm'],consumers[k].history['pLvl']])
+
+    for j in range(example1.T_sim):
+
+        litc=[]
+        for n in range(num_consumer_types):
+            litc.append(listH[n][0][j,:]*listH[n][1][j,:])
+    
+        c = np.concatenate(litc)
+        c = np.mean(np.array(c))
+
+        listC.append(c)
+        
+    C_dx0 = np.array(listC)
+        
+        
 
 
 
 ###############################################################################
 
-'''
 
-Cpols = [] # A list where each element is a list of consumption policies across 300 periods. 
-            #The index of each element/list in Cpols indicates the period in which the interest has deviated from its steady state level.
+example2 = FBSNKagent(**IdiosyncDict)
+example2.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 
-list_c = []
-list_p = []
-for i in range(300):
+
+######################################################################################
+num_consumer_types = 7     # num of types 
+
+center = 0.978818264
+
+discFacDispersion = 0.0069
+bottomDiscFac     = center - discFacDispersion
+topDiscFac        = center + discFacDispersion
+
+DiscFac_dist  = Uniform(bot=bottomDiscFac,top=topDiscFac,seed=606).approx(N=num_consumer_types)
+DiscFac_list  = DiscFac_dist.X
+
+
+consumers = [] 
+
+# now create types with different disc factors
+for i in range(num_consumer_types):
+        
+        example2.DiscFac    = DiscFac_list[i]
+        example2.AgentCount = int(10000*DiscFac_dist.pmf[i])
+        consumers.append(example2)
+
+##############################################################################
+
+Mega_list =[]
+
+for i in range(example2.T_sim):
     
-    example2.s = i 
-    example2.solve()
-    print(i)
-    example2.initialize_sim()
-    example2.simulate()
+        listC = []
+        listH = []
+        for k in range(num_consumer_types):
+            consumers[k].s=i
+            consumers[k].solve()
+            consumers[k].initialize_sim()
+            consumers[k].simulate()
+            
+            listH.append([consumers[k].history['cNrm'],consumers[k].history['pLvl']])
+            
+        for j in range(example2.T_sim):
+            
+            litc=[]
+            for n in range(num_consumer_types):
+                litc.append(listH[n][0][j,:]*listH[n][1][j,:])
+            
+            c = np.concatenate(litc)
+            c = np.mean(np.array(c))
+        
+            listC.append(c)
+        
+        Mega_list.append(np.array(listC) - C_dx0) # Elements of this list are arrays. The index of the element +1 represents the 
+                                                  # Derivative with respect to a shock to the interest rate in period s.
+                                                  # The ith element of the arrays in this list is the time t deviation in consumption to a shock in the interest rate in period s
+        
+        print(i)
+    
+    
+''' 
+    list_c = []
     for j in range(example2.T_sim):
-        list_c.append(example2.history['cNrm'][j,:]*example2.history['pLvl'][j,:])
+        c = np.array((example2.history['cNrm'][j,:]*example2.history['pLvl'][j,:]))
+        c = np.mean(c)
+        list_c.append(c- 0.06467790625604977 - 0.06465157617443441)
     
+    Mega_list.append(np.array(list_c))
     
+
 '''
-    
+
 
 
 
