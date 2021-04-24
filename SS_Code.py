@@ -43,7 +43,7 @@ from HARK.utilities import plot_funcs_der, plot_funcs
 
 
 
-class FBSNKagent(IndShockConsumerType):
+class FBSNK_ss_agent(IndShockConsumerType):
     
    
     time_inv_ = IndShockConsumerType.time_inv_  + ["mu_u",
@@ -139,7 +139,7 @@ IdiosyncDict={
     "T_cycle" : 1,                         # Number of periods in the cycle for this agent type
 
     # Parameters only used in simulation
-    "AgentCount" : 10000,                  # Number of agents of this type
+    "AgentCount" : 100000,                  # Number of agents of this type
     "T_sim" : 300,                         # Number of periods to simulate
     "aNrmInitMean" : -6.0,                 # Mean of log initial assets
     "aNrmInitStd"  : 1.0,                  # Standard deviation of log initial assets
@@ -188,13 +188,13 @@ completed_loops=0
 
 go = True
 
-example = FBSNKagent(**IdiosyncDict)
-example.track_vars = ['aNrm','mNrm','cNrm','pLvl']
+ss_agent = FBSNK_ss_agent(**IdiosyncDict)
+ss_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 
 
 num_consumer_types = 7     # num of types 
 
-center = 0.979
+center = 0.988818264
     
 
 while go:
@@ -206,31 +206,39 @@ while go:
     DiscFac_dist  = Uniform(bot=bottomDiscFac,top=topDiscFac,seed=606).approx(N=num_consumer_types)
     DiscFac_list  = DiscFac_dist.X
     
-    consumers = [] 
+    consumers_ss = [] 
     
     # now create types with different disc factors
     for i in range(num_consumer_types):
-        example.DiscFac    = DiscFac_list[i]
-        example.AgentCount = int(100000*DiscFac_dist.pmf[i])
-        consumers.append(example)
-       
+        consumers_ss.append(deepcopy(ss_agent))
+        
+    for i in range(num_consumer_types):
+        consumers_ss[i].DiscFac    = DiscFac_list[i]
+        consumers_ss[i].AgentCount = int(100000*DiscFac_dist.pmf[i])
+    
+    
 
-    lita=[]
+    list_pLvl=[]
+    list_aNrm =[]
+    list_aLvl=[]
     litc=[]
     # simulate and keep track mNrm and MPCnow
     for i in range(num_consumer_types):
-        consumers[i].Rfree = example.Rfree 
-        consumers[i].solve()
-        consumers[i].initialize_sim()
-        consumers[i].simulate()
+        consumers_ss[i].solve()
+        consumers_ss[i].initialize_sim()
+        consumers_ss[i].simulate()
         
-        litc.append((consumers[i].state_now['mNrm'] - consumers[i].state_now['aNrm'])*consumers[i].state_now['pLvl'])
-        lita.append(consumers[i].state_now['aLvl'])
+        list_pLvl.append(consumers_ss[i].state_now['pLvl'])
+        list_aNrm.append(consumers_ss[i].state_now['aNrm'])
+        litc.append((consumers_ss[i].state_now['mNrm'] - consumers_ss[i].state_now['aNrm'])*consumers_ss[i].state_now['pLvl'])
+        list_aLvl.append(consumers_ss[i].state_now['aLvl'])
         
         print('one consumer solved and simulated')
     
+    pLvl = np.concatenate(list_pLvl)
+    aNrm = np.concatenate(list_aLvl)
     c = np.concatenate(litc)
-    a = np.concatenate(lita)
+    a = np.concatenate(list_aLvl)
     AggA = np.mean(np.array(a))
     AggC = np.mean(np.array(c))
 
@@ -267,41 +275,13 @@ print(AggA)
 print(AggC)
 
 
-plot_funcs(consumers[1].solution[0].cFunc, 0, .4)
-plot_funcs(consumers[2].solution[0].cFunc, 0, .4)
-
 
 
 ##############################################################################
-########################################################################################
+################################################################################
+################################################################################
 
 '''
-
-##Code below is to compute aggregate consumption at different periods. First computation is at period 1117 of the simulation 
-and the second period is at period 1000 of the simulation
-
-litC1=[]
-for i in range(num_consumer_types):
-    
-    litC1.append(char_view_consumers[i].history['cNrm'][1117,:]*char_view_consumers[i].history['pLvl'][1117,:])
-    
-AggC1 = np.concatenate(litC1)
-
-AggC1 = np.mean(np.array(AggC1))
-                                    
-
-litC2=[]
-for i in range(num_consumer_types):
-    
-    litC2.append(char_view_consumers[i].history['cNrm'][1000,:]*char_view_consumers[i].history['pLvl'][1000,:])
-    
-AggC2 = np.concatenate(litC2)
-
-AggC2 = np.mean(np.array(AggC2))
-                                       
-
-################################################################################
-################################################################################
 
 num_consumer_types = 7     # num of types 
 
@@ -323,7 +303,7 @@ completed_loops=0
 
 go = True
 
-example = FBSNKagent(**IdiosyncDict)
+example = FBSNK_ss_agent(**IdiosyncDict)
 
 char_view_consumers = [] 
     
@@ -387,166 +367,10 @@ print(AggC)
 
 ##########################################################################
 ##########################################################################
-'''
 
-tolerance = .001
-
-completed_loops=0
-
-go = True
-
-example = FBSNKagent(**IdiosyncDict)
-
-while go:
-    
-    example.solve()
-
-#plot_funcs(example.solution[0].cFunc,example.solution[0].mNrmMin,5)
-    example.track_vars = ['aNrm','mNrm','cNrm','pLvl']
-    example.initialize_sim()
-    example.simulate()
-
-    a = example.state_now['aLvl']
-    AggA = np.mean(np.array(a))
-    
-   
-    
-    
-    if AggA - .75 > 0 :
-        
-       example.Rfree = example.Rfree - .0001
-        
-    elif AggA-.75 < 0: 
-        example.Rfree = example.Rfree + .0001
-        
-    else:
-        break
-    
-    print(example.Rfree)
-    
-    distance = abs(AggA - .75) 
-    
-    completed_loops += 1
-    go = distance >= tolerance and completed_loops < 100
-        
-    
-a= example.state_now['aLvl']
-c = (example.state_now['mNrm'] - example.state_now['aNrm'] )*example.state_now['pLvl']
-
-AggA = np.mean(np.array(a))
-AggC = np.mean(np.array(c))
-print(AggA)
-print(AggC)
-
-'''
 ###############################################################################################
 
-'''
-
-CRRA = 2.0
-DiscFac = 0.96
-
-# Parameters for a Cobb-Douglas economy
-PermGroFacAgg = 1.00  # Aggregate permanent income growth factor
-PermShkAggCount = (
-    3  # Number of points in discrete approximation to aggregate permanent shock dist
-)
-TranShkAggCount = (
-    3  # Number of points in discrete approximation to aggregate transitory shock dist
-)
-PermShkAggStd = 0.0063  # Standard deviation of log aggregate permanent shocks
-TranShkAggStd = 0.0031  # Standard deviation of log aggregate transitory shocks
-DeprFac = 0.025  # Capital depreciation rate
-CapShare = 0.36  # Capital's share of income
-DiscFacPF = DiscFac  # Discount factor of perfect foresight calibration
-CRRAPF = CRRA  # Coefficient of relative risk aversion of perfect foresight calibration
-intercept_prev = 0.0  # Intercept of aggregate savings function
-slope_prev = 1.0  # Slope of aggregate savings function
-verbose_cobb_douglas = (
-    True  # Whether to print solution progress to screen while solving
-)
-T_discard = 200  # Number of simulated "burn in" periods to discard when updating AFunc
-DampingFac = 0.5  # Damping factor when updating AFunc; puts DampingFac weight on old params, rest on new
-max_loops = 20  # Maximum number of AFunc updating loops to allow
-
-
-
-EconomyDict = {
-    "PermShkAggCount": PermShkAggCount,
-    "TranShkAggCount": TranShkAggCount,
-    "PermShkAggStd": PermShkAggStd,
-    "TranShkAggStd": TranShkAggStd,
-    "DeprFac": DeprFac,
-    "SSWmu ": 1.1,
-    "DiscFac": DiscFacPF,
-    "CRRA": CRRAPF,
-    "PermGroFacAgg": PermGroFacAgg,
-    "AggregateL": 1.0,
-    "intercept_prev": intercept_prev,
-    "slope_prev": slope_prev,
-    "verbose": verbose_cobb_douglas,
-    "T_discard": T_discard,
-    "DampingFac": DampingFac,
-    "max_loops": max_loops,
-    
-    "SSWmu ": 1.1,
-    "SSPmu":  1.2, # sequence space jacobian appendix
-    " calvo price stickiness":  .926, # Auclert et al 2020
-    "calvo wage stickiness": .899, #Auclert et al 2020
-}
 
 
 
 
-
-class Economy(Market):
-    
-    def __init__(self, agents=None, tolerance=0.0001, act_T=12, **kwds):
-        agents = agents if agents is not None else list()
-        params = EconomyDict.copy() # this is to add eocnomy dictionary
-        
-        params["sow_vars"] = [
-            "Rfree",
-        ]
-        params.update(kwds)
-
-        Market.__init__(
-            self,
-            agents=agents,
-            reap_vars=['aLvl', 'pLvl'],
-            track_vars=[],
-            dyn_vars=["Rfree"],
-            tolerance=tolerance,
-            act_T=act_T,
-            **params
-        )
-        self.update()
-
-    def update(self):
-        
-        
-    def solve(self):
-        self.solveAgents()
-        
-        
-        
-    def mill_rule(self, aLvl):
-        
-        
-        return self.Calc_endo
-        
-        
-    def calc_dynamics(self,AggA):
-        
- 
-            
-        
-        return Calc_Rules
-    
-class AggDynRule(MetricObject):
-    
-    def __init__(self,Rfree):
-        self.Rfree = Rfree
-        self.distance_criteria = ["AFunc"]
-
-'''
