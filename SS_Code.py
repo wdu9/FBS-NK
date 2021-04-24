@@ -164,25 +164,13 @@ IdiosyncDict={
 
     
 ###############################################################################
-'''
 
-example0 = FBSNKagent(**IdiosyncDict)
-example0.cycles=0
-example0.solve()
-
-
-example1 = FBSNKagent(**IdiosyncDict)
-example1.solve()
-
-print(example1.solution[0].cFunc.functions[0].y_list -example0.solution[0].cFunc.functions[0].y_list)
-
-'''
 ###############################################################################
 ###############################################################################
 
 target = .6
 
-tolerance = .0001
+tolerance = .01
 
 completed_loops=0
 
@@ -194,7 +182,7 @@ ss_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 
 num_consumer_types = 7     # num of types 
 
-center = 0.97975
+center = 0.97974
     
 
 while go:
@@ -246,10 +234,10 @@ while go:
     
     if AggA - target > 0 :
         
-       center = center - .00001
+       center = center - .0001
         
     elif AggA - target < 0: 
-        center = center + .00001
+        center = center + .0001
         
     else:
         break
@@ -281,92 +269,13 @@ print(AggC)
 ################################################################################
 ################################################################################
 
-'''
 
-num_consumer_types = 7     # num of types 
-
-center = 0.9787
-discFacDispersion = 0.0069
-bottomDiscFac     = center - discFacDispersion
-topDiscFac        = center + discFacDispersion
-
-DiscFac_dist  = Uniform(bot=bottomDiscFac,top=topDiscFac,seed=606).approx(N=num_consumer_types)
-DiscFac_list  = DiscFac_dist.X
-
-
-
-target = .75
-
-tolerance = .001
-
-completed_loops=0
-
-go = True
-
-example = FBSNK_ss_agent(**IdiosyncDict)
-
-char_view_consumers = [] 
-    
-# now create types with different disc factors
-for i in range(num_consumer_types):
-    example.DiscFac    = DiscFac_list[i]
-    example.AgentCount = int(10000*DiscFac_dist.pmf[i])
-    char_view_consumers.append(example)
-   
-
-while go:
-
-    lita=[]
-    litc=[]
-    # simulate and keep track mNrm and MPCnow
-    for i in range(num_consumer_types):
-        char_view_consumers[i].Rfree = example.Rfree 
-        char_view_consumers[i].solve()
-        char_view_consumers[i].initialize_sim()
-        char_view_consumers[i].simulate()
-        
-        litc.append((char_view_consumers[i].state_now['mNrm'] - char_view_consumers[i].state_now['aNrm'])*char_view_consumers[i].state_now['pLvl'])
-        lita.append(char_view_consumers[i].state_now['aLvl'])
-        print('k')
-    
-    c = np.concatenate(litc)
-    a = np.concatenate(lita)
-    AggA = np.mean(np.array(a))
-    AggC = np.mean(np.array(c))
-
-    
-    
-    if AggA - target > 0 :
-        
-       example.Rfree = example.Rfree - .001
-        
-    elif AggA - target < 0: 
-        example.Rfree = example.Rfree + .001
-        
-    else:
-        break
-    
-    print('Assets')
-    print(AggA)
-    print('consumption')
-    print(AggC)
-    print('interest rate')
-    print(example.Rfree)
-    
-    distance = abs(AggA - target) 
-    
-    completed_loops += 1
-    go = distance >= tolerance and completed_loops < 100
-        
-
-print(AggA)
-print(AggC)
-
-  
-'''
 
 ##########################################################################
 ##########################################################################
+
+
+
 
 ###############################################################################################
 
