@@ -60,7 +60,7 @@ class FBSNK_ss_agent(IndShockConsumerType):
         IndShockConsumerType.__init__(self, cycles= 0, **kwds)
         
         #Steady State values for Wage , Labor and tax rate
-        self.Rfree = 1.02
+        self.Rfree = 1.03
         #MVMU = wage*(1-self.tax_rate)/(self.SSWmu)
         
     
@@ -109,7 +109,7 @@ IdiosyncDict={
     "CRRA":2.0,                           # Coefficient of relative risk aversion
     #"Rfree": 1.03,                         # Interest factor on assets
     "DiscFac": 0.978,                       # Intertemporal discount factor
-    "LivPrb" : [.9745],                     # Survival probability
+    "LivPrb" : [.97],                     # Survival probability
     "PermGroFac" :[1.00],                  # Permanent income growth factor
 
     # Parameters that specify the income distribution over the lifecycle
@@ -123,7 +123,7 @@ IdiosyncDict={
     "UnempPrbRet" : 0.0005,                # Probability of "unemployment" while retired
     "IncUnempRet" : 0.0,                   # "Unemployment" benefits when retired
     "T_retire" : 0,                        # Period of retirement (0 --> no retirement)
-    "tax_rate" : 0.2,                      # Flat income tax rate (legacy parameter, will be removed in future)
+    "tax_rate" : 0.15,                      # Flat income tax rate (legacy parameter, will be removed in future)
 
     # Parameters for constructing the "assets above minimum" grid
     "aXtraMin" : 0.001,                    # Minimum end-of-period "assets above minimum" value
@@ -149,7 +149,7 @@ IdiosyncDict={
     "T_age" : None,                        # Age after which simulated agents are automatically killed
     
     # new parameters
-     "mu_u"       : .8 ,
+     "mu_u"       : .9 ,
      "L"          : 1.3, 
      
     #New Economy Parameters
@@ -180,9 +180,9 @@ print(example1.solution[0].cFunc.functions[0].y_list -example0.solution[0].cFunc
 ###############################################################################
 ###############################################################################
 
-target = .75
+target = .6
 
-tolerance = .001
+tolerance = .0001
 
 completed_loops=0
 
@@ -194,7 +194,7 @@ ss_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 
 num_consumer_types = 7     # num of types 
 
-center = 0.988818264
+center = 0.979
     
 
 while go:
@@ -246,10 +246,10 @@ while go:
     
     if AggA - target > 0 :
         
-       center = center - .0001
+       center = center - .00001
         
     elif AggA - target < 0: 
-        center = center + .0001
+        center = center + .00001
         
     else:
         break
