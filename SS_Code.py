@@ -194,7 +194,7 @@ ss_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 
 num_consumer_types = 7     # num of types 
 
-center = 0.979
+center = 0.97975
     
 
 while go:
