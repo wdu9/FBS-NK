@@ -5,6 +5,7 @@ Created on Sat Apr 24 00:51:38 2021
 @author: wdu
 """
 import numpy as np
+import matplotlib.pyplot as plt
 from copy import copy, deepcopy
 from timeit import timeit
 from HARK.distribution import DiscreteDistribution,combine_indep_dstns, Lognormal, MeanOneLogNormal, Uniform
@@ -73,7 +74,7 @@ class FBSNK_solver(ConsIndShockSolver):
         
        
         
-        if len(self.cList) == self.T_sim - 1  - self.s  :
+        if len(self.cList) == self.T_sim - self.s  :
             self.Rfree = Rfree + self.dx
         else:
             self.Rfree = Rfree
@@ -162,7 +163,7 @@ class FBSNK_agent(IndShockConsumerType):
         IndShockConsumerType.__init__(self, cycles = 200, **kwds)
         
         #Steady State values for Wage , Labor and tax rate
-        self.Rfree = 1.03
+        self.Rfree = 1.05**.25
         self.cList = []
         self.s = self.s 
         self.dx=self.dx
@@ -244,39 +245,94 @@ class FBSNK_agent(IndShockConsumerType):
         None
         """
         
-        if self.jac == False:
+        #if self.jac == False:
             
-            # Get and store states for newly born agents
-            N = np.sum(which_agents)  # Number of new consumers to make
-            self.state_now['aNrm'][which_agents] = Lognormal(
-                mu=self.aNrmInitMean,
-                sigma=self.aNrmInitStd,
-                seed=self.RNG.randint(0, 2 ** 31 - 1),
-            ).draw(N)
-            # why is a now variable set here? Because it's an aggregate.
-            pLvlInitMeanNow = self.pLvlInitMean + np.log(
-                self.state_now['PlvlAgg']
-            )  # Account for newer cohorts having higher permanent income
-            self.state_now['pLvl'][which_agents] = Lognormal(
-                pLvlInitMeanNow,
-                self.pLvlInitStd,
-                seed=self.RNG.randint(0, 2 ** 31 - 1)
-            ).draw(N)
+        # Get and store states for newly born agents
+        N = np.sum(which_agents)  # Number of new consumers to make
+        self.state_now['aNrm'][which_agents] = Lognormal(
+            mu=self.aNrmInitMean,
+            sigma=self.aNrmInitStd,
+            seed=self.RNG.randint(0, 2 ** 31 - 1),
+        ).draw(N)
+        # why is a now variable set here? Because it's an aggregate.
+        pLvlInitMeanNow = self.pLvlInitMean + np.log(
+            self.state_now['PlvlAgg']
+        )  # Account for newer cohorts having higher permanent income
+        self.state_now['pLvl'][which_agents] = Lognormal(
+            pLvlInitMeanNow,
+            self.pLvlInitStd,
+            seed=self.RNG.randint(0, 2 ** 31 - 1)
+        ).draw(N)
         
+        
+        '''
         else: 
+            
+        
+            
+            if self.t_sim ==0:
+                
                 for i in range(num_consumer_types):
                     
                     if self.DiscFac == consumers_ss[i].DiscFac:
                         
                         self.state_now['aNrm'] = list_aNrm[i]
                         self.state_now['pLvl'] = list_pLvl[i]
+            else:
+                # Get and store states for newly born agents
+                N = np.sum(which_agents)  # Number of new consumers to make
+                self.state_now['aNrm'][which_agents] = Lognormal(
+                    mu=self.aNrmInitMean,
+                    sigma=self.aNrmInitStd,
+                    seed=self.RNG.randint(0, 2 ** 31 - 1),
+                ).draw(N)
+                # why is a now variable set here? Because it's an aggregate.
+                pLvlInitMeanNow = self.pLvlInitMean + np.log(
+                    self.state_now['PlvlAgg']
+                )  # Account for newer cohorts having higher permanent income
+                self.state_now['pLvl'][which_agents] = Lognormal(
+                    pLvlInitMeanNow,
+                    self.pLvlInitStd,
+                    seed=self.RNG.randint(0, 2 ** 31 - 1)
+                ).draw(N)
+            
+            '''            
                         
             
+ 
         self.t_age[which_agents] = 0  # How many periods since each agent was born
         self.t_cycle[
             which_agents
         ] = 0  # Which period of the cycle each agent is currently in
         return None
+    
+    def transition(self):
+        
+        
+        pLvlPrev = self.state_prev['pLvl']
+        aNrmPrev = self.state_prev['aNrm']
+        RfreeNow = self.get_Rfree()
+
+        # Calculate new states: normalized market resources and permanent income level
+        pLvlNow = pLvlPrev*self.shocks['PermShk']  # Updated permanent income level
+        # Updated aggregate permanent productivity level
+        PlvlAggNow = self.state_prev['PlvlAgg']*self.PermShkAggNow
+        # "Effective" interest factor on normalized assets
+        ReffNow = RfreeNow/self.shocks['PermShk']
+        bNrmNow = ReffNow*aNrmPrev         # Bank balances before labor income
+        mNrmNow = bNrmNow + self.shocks['TranShk']  # Market resources after income
+        
+        
+        if self.jac == True:
+            if self.t_sim == 0:
+                for i in range(num_consumer_types):
+                    if  self.DiscFac == consumers_ss[i].DiscFac:
+                        mNrmNow = consumers_ss[i].state_now['mNrm']
+                        pLvlNow = list_pLvl[i]
+                        print('occurred')
+                        
+
+        return pLvlNow, PlvlAggNow, bNrmNow, mNrmNow, None
     
     
     
@@ -286,21 +342,21 @@ IdiosyncDict={
     "CRRA":2.0,                           # Coefficient of relative risk aversion
     #"Rfree": 1.03,                       # Interest factor on assets
     "DiscFac": 0.978,                     # Intertemporal discount factor
-    "LivPrb" : [.97],                   # Survival probability
+    "LivPrb" : [.985],                   # Survival probability
     "PermGroFac" :[1.00],                 # Permanent income growth factor
 
     # Parameters that specify the income distribution over the lifecycle
    
     "PermShkStd" :  [(0.01*4/11)**0.5],    # Standard deviation of log permanent shocks to income
     "PermShkCount" : 5,                    # Number of points in discrete approximation to permanent income shocks
-    "TranShkStd" : [(0.01*4)**0.5],        # Standard deviation of log transitory shocks to income
+    "TranShkStd" : [.3],        # Standard deviation of log transitory shocks to income
     "TranShkCount" : 5,                    # Number of points in discrete approximation to transitory income shocks
     "UnempPrb" : 0.05,                     # Probability of unemployment while working
-    "IncUnemp" : 0.3,                      # Unemployment benefits replacement rate
+    "IncUnemp" : 0.2,                      # Unemployment benefits replacement rate
     "UnempPrbRet" : 0.0005,                # Probability of "unemployment" while retired
     "IncUnempRet" : 0.0,                   # "Unemployment" benefits when retired
     "T_retire" : 0,                        # Period of retirement (0 --> no retirement)
-    "tax_rate" : 0.15,                      # Flat income tax rate (legacy parameter, will be removed in future)
+    "tax_rate" : 0.3,                      # Flat income tax rate (legacy parameter, will be removed in future)
 
     # Parameters for constructing the "assets above minimum" grid
     "aXtraMin" : 0.001,                    # Minimum end-of-period "assets above minimum" value
@@ -317,7 +373,7 @@ IdiosyncDict={
 
     # Parameters only used in simulation
     "AgentCount" : 100000,                  # Number of agents of this type
-    "T_sim" : 200,                         # Number of periods to simulate
+    "T_sim" : 30,                         # Number of periods to simulate
     "aNrmInitMean" : -6.0,                 # Mean of log initial assets
     "aNrmInitStd"  : 1.0,                  # Standard deviation of log initial assets
     "pLvlInitMean" : 0.0,                  # Mean of log initial permanent income
@@ -329,7 +385,7 @@ IdiosyncDict={
      "mu_u"       : .9 ,
      "L"          : 1.3, 
      "s"          : 1,
-     "dx"         : .0001,                  #Deviation from steady state
+     "dx"         : .1,                  #Deviation from steady state
      "jac"        : True,
      
     #New Economy Parameters
@@ -344,11 +400,9 @@ IdiosyncDict={
 
     
 ###############################################################################
-
-###############################################################################
 ###############################################################################
 
-target = .6
+target =  0.488908522298304
 
 tolerance = .01
 
@@ -366,12 +420,12 @@ ss_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 
 num_consumer_types = 7     # num of types 
 
-center = 0.97974
+center = 0.98051
     
 
 while go:
     
-    discFacDispersion = 0.0069
+    discFacDispersion = 0.0059
     bottomDiscFac     = center - discFacDispersion
     topDiscFac        = center + discFacDispersion
     
@@ -450,22 +504,11 @@ print(AggC)
 ################################################################################
 
 ghost_agent = FBSNK_agent(**IdiosyncDict)
+ghost_agent.cycles = ghost_agent.T_sim
 ghost_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 ghost_agent.dx = 0
 ghost_agent.jac = True
 
-
-num_consumer_types = 7     # num of types 
-
-center = 0.97974
-
-    
-discFacDispersion = 0.0069
-bottomDiscFac     = center - discFacDispersion
-topDiscFac        = center + discFacDispersion
-
-DiscFac_dist  = Uniform(bot=bottomDiscFac,top=topDiscFac,seed=606).approx(N=num_consumer_types)
-DiscFac_list  = DiscFac_dist.X
 
 
 ghosts= [] 
@@ -504,24 +547,22 @@ for j in range(ghost_agent.T_sim):
 C_dx0 = np.array(listC_g)
     
     
+    
+    
+############################################################################### 
+
+    
+            
+    
+    
 ###############################################################################
 ###############################################################################
 
 
 jac_agent = FBSNK_agent(**IdiosyncDict)
 jac_agent.jac = True
+jac_agent.cycles = jac_agent.T_sim
 jac_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
-
-num_consumer_types = 7     # num of types 
-
-center = 0.97974
-
-discFacDispersion = 0.0069
-bottomDiscFac     = center - discFacDispersion
-topDiscFac        = center + discFacDispersion
-
-DiscFac_dist  = Uniform(bot=bottomDiscFac,top=topDiscFac,seed=606).approx(N=num_consumer_types)
-DiscFac_list  = DiscFac_dist.X
 
 
 consumers = [] 
@@ -541,7 +582,7 @@ for i in range(num_consumer_types):
 ##############################################################################
 
 Mega_list =[]
-
+CHist = []
 for i in range(jac_agent.T_sim):
     
         listC = []
@@ -564,8 +605,9 @@ for i in range(jac_agent.T_sim):
             c = np.mean(np.array(c))
         
             listC.append(c)
-        
-        Mega_list.append(np.array(listC)- C_dx0) # Elements of this list are arrays. The index of the element +1 represents the 
+            
+        CHist.append(np.array(listC))
+        Mega_list.append(np.array(listC)- C_dx0)  # Elements of this list are arrays. The index of the element +1 represents the 
                                                   # Derivative with respect to a shock to the interest rate in period s.
                                                   # The ith element of the arrays in this list is the time t deviation in consumption to a shock in the interest rate in period s
         
@@ -573,6 +615,16 @@ for i in range(jac_agent.T_sim):
 
 
 
+plt.plot(C_dx0 , label = 'Steady State')
+plt.plot(CHist[18], label = '18')
+plt.plot(CHist[25], label = '25')
+plt.plot(CHist[9], label = '9')
+plt.plot(CHist[1], label = '17')
+plt.plot(CHist[2], label = '7')
+plt.plot(CHist[0], label = '5')
+plt.ylim([.036,.08])
+plt.legend()
+plt.show()
 
 
 
@@ -586,8 +638,4 @@ for i in range(jac_agent.T_sim):
 
 
 
-
-    
-    
-        
         
