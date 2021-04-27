@@ -20,6 +20,7 @@ from HARK.ConsumptionSaving.ConsIndShockModel import (
 )
 
 from HARK import Market, make_one_period_oo_solver
+from HARK.distribution import DiscreteDistribution,combine_indep_dstns, Lognormal, MeanOneLogNormal, Uniform
 
 
 
@@ -151,6 +152,10 @@ class Test_agent(IndShockConsumerType):
                                                    "dx",
                                                    "T_sim",
                                                    "jac",
+                                                   #"wage",
+                                                   #"N",
+                                                  
+                                                   
                                                    
                     
                                                   ]
@@ -169,9 +174,49 @@ class Test_agent(IndShockConsumerType):
         
         solver = FBSNK_solver
         self.solve_one_period = make_one_period_oo_solver(solver)
-    
-    
+        
         '''
+        
+    def  update_income_process(self):
+        
+        self.wage = 1/(self.SSPmu) #calculate SS wage
+        self.N = (self.mu_u*(self.IncUnemp*self.UnempPrb ))/ (self.wage*self.tax_rate) + self.B*(self.Rfree - 1) #calculate SS labor supply from Budget Constraint
+        
+        
+        PermShkDstn_U = Lognormal(np.log(self.mu_u) - (self.L*(self.PermShkStd[0])**2)/2 , self.L*self.PermShkStd[0] , 123).approx(self.PermShkCount) #Permanent Shock Distribution faced when unemployed
+        PermShkDstn_E = MeanOneLogNormal( self.PermShkStd[0] , 123).approx(self.PermShkCount) #Permanent Shock Distribution faced when employed
+        
+        
+        pmf_P = np.concatenate(((1-self.UnempPrb)*PermShkDstn_E.pmf ,self.UnempPrb*PermShkDstn_U.pmf)) 
+        X_P = np.concatenate((PermShkDstn_E.X, PermShkDstn_U.X))
+        PermShkDstn = [DiscreteDistribution(pmf_P, X_P)]
+        self.PermShkDstn = PermShkDstn 
+        
+        TranShkDstn_E = MeanOneLogNormal( self.TranShkStd[0],123).approx(self.TranShkCount)#Transitory Shock Distribution faced when employed
+        TranShkDstn_E.X = (TranShkDstn_E.X *(1-self.tax_rate)*self.wage*self.N)/(1-self.UnempPrb)**2 #add wage, tax rate and labor supply
+        
+        lng = len(TranShkDstn_E.X )
+        TranShkDstn_U = DiscreteDistribution(np.ones(lng)/lng, self.IncUnemp*np.ones(lng)) #Transitory Shock Distribution faced when unemployed
+        
+        IncShkDstn_E = combine_indep_dstns(PermShkDstn_E, TranShkDstn_E) # Income Distribution faced when Employed
+        IncShkDstn_U = combine_indep_dstns(PermShkDstn_U,TranShkDstn_U) # Income Distribution faced when Unemployed
+        
+        #Combine Outcomes of both distributions
+        X_0 = np.concatenate((IncShkDstn_E.X[0],IncShkDstn_U.X[0]))
+        X_1=np.concatenate((IncShkDstn_E.X[1],IncShkDstn_U.X[1]))
+        X_I = [X_0,X_1] #discrete distribution takes in a list of arrays
+        
+        #Combine pmf Arrays
+        pmf_I = np.concatenate(((1-self.UnempPrb)*IncShkDstn_E.pmf, self.UnempPrb*IncShkDstn_U.pmf))
+        
+        IncShkDstn = [DiscreteDistribution(pmf_I, X_I)]
+        self.IncShkDstn = IncShkDstn
+        self.add_to_time_vary('IncShkDstn')
+        
+        '''
+    
+    
+        
     def get_Rfree(self):
         """
         Returns an array of size self.AgentCount with self.Rfree in every entry.
@@ -185,14 +230,14 @@ class Test_agent(IndShockConsumerType):
         """
     
         
-        if self.t_sim == self.s :
+        if self.t_sim == self.s  :
             RfreeNow = (self.Rfree + self.dx)* np.ones(self.AgentCount)
         else:
             RfreeNow = self.Rfree * np.ones(self.AgentCount)
             
         return RfreeNow
         
-    '''
+    
    
     
     
@@ -240,7 +285,7 @@ IdiosyncDict={
    
     "PermShkStd" :  [(0.01*4/11)**0.5],    # Standard deviation of log permanent shocks to income
     "PermShkCount" : 5,                    # Number of points in discrete approximation to permanent income shocks
-    "TranShkStd" : [.3],        # Standard deviation of log transitory shocks to income
+    "TranShkStd" : [.2],        # Standard deviation of log transitory shocks to income
     "TranShkCount" : 5,                    # Number of points in discrete approximation to transitory income shocks
     "UnempPrb" : 0.05,                     # Probability of unemployment while working
     "IncUnemp" : 0.2,                      # Unemployment benefits replacement rate
@@ -387,7 +432,7 @@ for i in Test_set:
                                                   # The ith element of the arrays in this list is the time t deviation in consumption to a shock in the interest rate in period s
         
         print(i)
-
+'''
 plt.plot(C_dx0 , label = 'Steady State')
 
 plt.plot(CHist[1], label = '1')
@@ -396,13 +441,65 @@ plt.plot(CHist[3], label = '20')
 plt.plot(CHist[2], label = '5')
 plt.plot(CHist[0], label = '0')
 
-plt.ylim([.9,1.2])
+plt.ylim([.9,1.1])
 plt.legend()
 plt.show()
 
 
+plt.plot(CHist[1]-C_dx0, label = '1')
+plt.plot(CHist[3]-C_dx0, label = '20')
+plt.plot(CHist[2]-C_dx0, label = '5')
+plt.plot(CHist[0]-C_dx0, label = '0')
+plt.ylim([-.01,.01])
+plt.legend()
+plt.show()
+
+'''
 
 
+'''
+With new income process
+
+plt.plot(C_dx0 , label = 'Steady State')
+
+plt.plot(CHist[1], label = '1')
+plt.plot(CHist[3], label = '20')
+plt.plot(CHist[0], label = '0')
+
+plt.ylim([.035,.038])
+plt.legend()
+plt.show()
+
+
+plt.plot((CHist[1]-C_dx0)/(.1), label = '1')
+plt.plot((CHist[3]-C_dx0)/(.1), label = '20')
+plt.plot((CHist[2]-C_dx0)/(.1), label = '5')
+plt.plot((CHist[0]-C_dx0)/(.1), label = '0')
+plt.ylim([-.006,.003])
+plt.legend()
+plt.show()
+
+'''
+
+
+plt.plot(C_dx0 , label = 'Steady State')
+
+plt.plot(CHist[1], label = '1')
+plt.plot(CHist[3], label = '20')
+plt.plot(CHist[0], label = '0')
+
+plt.ylim([0.94,1.05])
+plt.legend()
+plt.show()
+
+
+plt.plot((CHist[1]-C_dx0)/(.1), label = '1')
+plt.plot((CHist[3]-C_dx0)/(.1), label = '20')
+plt.plot((CHist[2]-C_dx0)/(.1), label = '5')
+plt.plot((CHist[0]-C_dx0)/(.1), label = '0')
+plt.ylim([-.16,.01])
+plt.legend()
+plt.show()
 
 
 
