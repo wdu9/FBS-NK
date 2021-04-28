@@ -175,7 +175,7 @@ class Test_agent(IndShockConsumerType):
         solver = FBSNK_solver
         self.solve_one_period = make_one_period_oo_solver(solver)
         
-        '''
+        
         
     def  update_income_process(self):
         
@@ -213,9 +213,9 @@ class Test_agent(IndShockConsumerType):
         self.IncShkDstn = IncShkDstn
         self.add_to_time_vary('IncShkDstn')
         
-        '''
+        
     
-    
+    '''
         
     def get_Rfree(self):
         """
@@ -238,7 +238,7 @@ class Test_agent(IndShockConsumerType):
         return RfreeNow
         
     
-   
+   '''
     
     
     def transition(self):
@@ -309,7 +309,7 @@ IdiosyncDict={
 
     # Parameters only used in simulation
     "AgentCount" : 100000,                  # Number of agents of this type
-    "T_sim" : 100,                         # Number of periods to simulate
+    "T_sim" : 500,                         # Number of periods to simulate
     "aNrmInitMean" : -6.0,                 # Mean of log initial assets
     "aNrmInitStd"  : 1.0,                  # Standard deviation of log initial assets
     "pLvlInitMean" : 0.0,                  # Mean of log initial permanent income
@@ -341,6 +341,7 @@ ss.jac= False
 ss.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 ss.cycles=0
 ss.dx=0
+ss.T_sim= 1000
 ss.solve()
 ss.initialize_sim()
 ss.simulate()
@@ -388,7 +389,7 @@ C_dx0 = np.array(listC_g)
 
 example = Test_agent(**IdiosyncDict )
 example.terminal_solution = ss.solution[0]
-example.T_sim = 100
+example.T_sim = 500
 example.cycles=example.T_sim
 example.jac = True
 example.dx= 0.1
@@ -488,7 +489,7 @@ plt.plot(CHist[1], label = '1')
 plt.plot(CHist[3], label = '20')
 plt.plot(CHist[0], label = '0')
 
-plt.ylim([0.94,1.05])
+plt.ylim([0.03,0.035])
 plt.legend()
 plt.show()
 
