@@ -182,6 +182,9 @@ class Test_agent(IndShockConsumerType):
         self.wage = 1/(self.SSPmu) #calculate SS wage
         self.N = (self.mu_u*(self.IncUnemp*self.UnempPrb ))/ (self.wage*self.tax_rate) + self.B*(self.Rfree - 1) #calculate SS labor supply from Budget Constraint
         
+        self.wage=.833333
+        self.N=1
+        
         
         PermShkDstn_U = Lognormal(np.log(self.mu_u) - (self.L*(self.PermShkStd[0])**2)/2 , self.L*self.PermShkStd[0] , 123).approx(self.PermShkCount) #Permanent Shock Distribution faced when unemployed
         PermShkDstn_E = MeanOneLogNormal( self.PermShkStd[0] , 123).approx(self.PermShkCount) #Permanent Shock Distribution faced when employed
@@ -489,7 +492,7 @@ plt.plot(CHist[1], label = '1')
 plt.plot(CHist[3], label = '20')
 plt.plot(CHist[0], label = '0')
 
-plt.ylim([0.03,0.035])
+plt.ylim([0.425,0.475])
 plt.legend()
 plt.show()
 
@@ -498,7 +501,7 @@ plt.plot((CHist[1]-C_dx0)/(.1), label = '1')
 plt.plot((CHist[3]-C_dx0)/(.1), label = '20')
 plt.plot((CHist[2]-C_dx0)/(.1), label = '5')
 plt.plot((CHist[0]-C_dx0)/(.1), label = '0')
-plt.ylim([-.16,.01])
+plt.ylim([-.3,.01])
 plt.legend()
 plt.show()
 
