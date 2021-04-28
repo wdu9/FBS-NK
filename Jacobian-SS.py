@@ -151,7 +151,7 @@ class FBSNK_agent(IndShockConsumerType):
     time_inv_ = IndShockConsumerType.time_inv_  + ["mu_u",
                                                    "L",
                                                    "SSPmu",
-                                                   "wage",
+                                                   #"wage",
                                                    "B",
                                                    "cList",
                                                    "s",
@@ -187,7 +187,7 @@ class FBSNK_agent(IndShockConsumerType):
         #self.N = (self.mu_u*(self.IncUnemp*self.UnempPrb ))/ (self.wage*self.tax_rate) + self.B*(self.Rfree - 1) #calculate SS labor supply from Budget Constraint
         
         self.wage = .833333
-        self.N =3
+        self.N = .5
         
         
         PermShkDstn_U = Lognormal(np.log(self.mu_u) - (self.L*(self.PermShkStd[0])**2)/2 , self.L*self.PermShkStd[0] , 123).approx(self.PermShkCount) #Permanent Shock Distribution faced when unemployed
@@ -220,9 +220,10 @@ class FBSNK_agent(IndShockConsumerType):
         self.IncShkDstn = IncShkDstn
         self.add_to_time_vary('IncShkDstn')
         
+      
         
-        
-    '''
+    ''' 
+    
     def get_Rfree(self):
         """
         Returns an array of size self.AgentCount with self.Rfree in every entry.
@@ -236,7 +237,7 @@ class FBSNK_agent(IndShockConsumerType):
         """
     
         
-        if self.t_sim == self.s +  1:
+        if self.t_sim == self.s  :
             RfreeNow = (self.Rfree + self.dx)* np.ones(self.AgentCount)
         else:
             RfreeNow = self.Rfree * np.ones(self.AgentCount)
@@ -267,8 +268,10 @@ class FBSNK_agent(IndShockConsumerType):
             if self.t_sim == 0:
                 for i in range(num_consumer_types):
                     if  self.DiscFac == consumers_ss[i].DiscFac:
-                        mNrmNow = consumers_ss[i].state_now['mNrm']
-                        pLvlNow = list_pLvl[i]
+                        #mNrmNow = consumers_ss[i].state_now['mNrm']
+                        #pLvlNow = list_pLvl[i]
+                        mNrmNow = consumers_ss[i].history['mNrm'][self.T_sim-1,:]
+                        pLvlNow = consumers_ss[i].history['pLvl'][self.T_sim-1,:]
                         print(self.DiscFac)
                        
 
@@ -289,7 +292,7 @@ IdiosyncDict={
    
     "PermShkStd" :  [(0.01*4/11)**0.5],    # Standard deviation of log permanent shocks to income
     "PermShkCount" : 5,                    # Number of points in discrete approximation to permanent income shocks
-    "TranShkStd" : [.3],        # Standard deviation of log transitory shocks to income
+    "TranShkStd" : [.2],        # Standard deviation of log transitory shocks to income
     "TranShkCount" : 5,                    # Number of points in discrete approximation to transitory income shocks
     "UnempPrb" : 0.05,                     # Probability of unemployment while working
     "IncUnemp" : 0.2,                      # Unemployment benefits replacement rate
@@ -313,7 +316,7 @@ IdiosyncDict={
 
     # Parameters only used in simulation
     "AgentCount" : 100000,                  # Number of agents of this type
-    "T_sim" : 100,                         # Number of periods to simulate
+    "T_sim" : 500,                         # Number of periods to simulate
     "aNrmInitMean" : -6.0,                 # Mean of log initial assets
     "aNrmInitStd"  : 1.0,                  # Standard deviation of log initial assets
     "pLvlInitMean" : 0.0,                  # Mean of log initial permanent income
@@ -323,7 +326,7 @@ IdiosyncDict={
     
     # new parameters
      "mu_u"       : .9 ,
-     "L"          : 1.3, 
+     "L"          : 1.1, 
      "s"          : 1,
      "dx"         : .01,                  #Deviation from steady state
      "jac"        : True,
@@ -339,6 +342,10 @@ IdiosyncDict={
 
 
     
+
+
+NumAgents = 200000
+
 ###############################################################################
 ###############################################################################
 
@@ -354,7 +361,7 @@ ss_agent = FBSNK_agent(**IdiosyncDict)
 ss_agent.cycles= 0
 ss_agent.jac = False
 ss_agent.dx = 0
-ss_agent.T_sim = 100
+ss_agent.T_sim = 1000
 ss_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 
 
@@ -381,7 +388,7 @@ while go:
         
     for i in range(num_consumer_types):
         consumers_ss[i].DiscFac    = DiscFac_list[i]
-        consumers_ss[i].AgentCount = int(100000*DiscFac_dist.pmf[i])
+        consumers_ss[i].AgentCount = int(NumAgents*DiscFac_dist.pmf[i])
     
     
 
@@ -445,6 +452,7 @@ print(AggC)
 ################################################################################
 
 ghost_agent = FBSNK_agent(**IdiosyncDict)
+ghost_agent.T_sim = 500
 ghost_agent.cycles = ghost_agent.T_sim
 ghost_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 ghost_agent.dx = 0
@@ -460,8 +468,8 @@ for i in range(num_consumer_types):
 # now create types with different disc factors
 for i in range(num_consumer_types):
         ghosts[i].DiscFac   = DiscFac_list[i]
-        ghosts[i].AgentCount = int(100000*DiscFac_dist.pmf[i])
-        ghosts[i].solution_terminal = consumers_ss[i].solution[0]
+        ghosts[i].AgentCount = int(NumAgents*DiscFac_dist.pmf[i])
+        ghosts[i].solution_terminal = deepcopy(consumers_ss[i].solution[0]) ### Should it have a Deepcopy?
         
 #############################################################################      
      
@@ -490,9 +498,10 @@ for j in range(ghost_agent.T_sim):
         
 C_dx0 = np.array(listC_g)
          
-#plt.plot(C_dx0, label = 'steady state')
-#plt.legend()
-#plt.show()
+plt.plot(C_dx0, label = 'steady state')
+plt.legend()
+plt.show()
+
 
 ###############################################################################
 ###############################################################################
@@ -501,6 +510,7 @@ C_dx0 = np.array(listC_g)
 jac_agent = FBSNK_agent(**IdiosyncDict)
 jac_agent.dx = 0.2
 jac_agent.jac = True
+jac_agent.T_sim = 500
 jac_agent.cycles = jac_agent.T_sim
 jac_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 
@@ -515,8 +525,8 @@ for i in range(num_consumer_types):
 
 for i in range(num_consumer_types):
         consumers[i].DiscFac    = DiscFac_list[i]
-        consumers[i].AgentCount = int(100000*DiscFac_dist.pmf[i])
-        consumers[i].solution_terminal = consumers_ss[i].solution[0]
+        consumers[i].AgentCount = int(NumAgents*DiscFac_dist.pmf[i])
+        consumers[i].solution_terminal = deepcopy(consumers_ss[i].solution[0]) ### Should it have a Deepcopy?
 
         
 ##############################################################################
@@ -567,7 +577,6 @@ for i in testSet:
         Mega_list.append(np.array(listC)- C_dx0)  # Elements of this list are arrays. The index of the element +1 represents the 
                                                   # Derivative with respect to a shock to the interest rate in period s.
                                                   # The ith element of the arrays in this list is the time t deviation in consumption to a shock in the interest rate in period s
-        
         print(i)
 
 
@@ -576,10 +585,11 @@ plt.plot(C_dx0 , label = 'Steady State')
 plt.plot(CHist[1], label = '5')
 plt.plot(CHist[3], label = '40')
 plt.plot(CHist[2], label = '15')
+plt.ylim([.2,.28])
 plt.legend()
 plt.show()
 
-'''
+
 
 plt.plot((CHist[3]- C_dx0)/(.01), label = '40')
 plt.plot((CHist[1]- C_dx0)/(.01), label = '5')
@@ -587,6 +597,7 @@ plt.plot((CHist[2] - C_dx0)/(.01), label = '15')
 plt.legend()
 plt.show()
 
+'''
 
 plt.plot(AHist[3], label = '40')
 plt.plot(AHist[1], label = '3')
@@ -613,9 +624,9 @@ plt.ylim([0.035,.045])
 plt.legend()
 plt.show()
 
+
+
 '''
-
-
 
 
 
