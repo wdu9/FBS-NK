@@ -2,7 +2,11 @@
 """
 Created on Sat Apr 24 00:51:38 2021
 
-@author: wdu
+@author: William Du
+
+python 3.8.8
+
+
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -49,16 +53,45 @@ class FBSNK_solver(ConsIndShockSolver):
                 CubicBool,
                 
                 jac,
+                jacW,
                 cList,
                 s,
                 dx,
                 T_sim,
+                mu_u,
+                L,
+                PermShkStd,
+                PermShkCount,
+                TranShkCount,
+                TranShkStd,
+                tax_rate,
+                UnempPrb,
+                IncUnemp,
+                wage,
+                N,
+                
+                
                 ):
                  
         self.s = s 
         self.dx=dx
         self.cList = cList #need to change this to time state variable somehow
         self.jac = jac
+        self.jacW = jacW
+        self.mu_u = mu_u
+        self.L = L
+        self.PermShkStd = PermShkStd
+        self.PermShkCount = PermShkCount
+        self.TranShkCount = TranShkCount
+        self.TranShkStd = TranShkStd
+        self.tax_rate = tax_rate
+        self.UnempPrb = UnempPrb
+        self.IncUnemp = IncUnemp
+        self.wage=wage
+        self.N=N
+                
+        
+        
         self.solution_next = solution_next
         self.IncShkDstn = IncShkDstn
         self.LivPrb = LivPrb
@@ -73,11 +106,52 @@ class FBSNK_solver(ConsIndShockSolver):
         self.Rfree=Rfree
         self.T_sim = T_sim
         
-       
+        
     
-                
-            
+        
+       
+        if self.jacW == True:
+          
+          if len(self.cList) == self.T_sim - self.s  :
+             
+            self.wage = .833333 + self.dx
+        
 
+        else:
+            
+              self.wage = .833333
+        
+              
+        PermShkDstn_U = Lognormal(np.log(self.mu_u) - (self.L*(self.PermShkStd[0])**2)/2 , self.L*self.PermShkStd[0] , 123).approx(self.PermShkCount) #Permanent Shock Distribution faced when unemployed
+        PermShkDstn_E = MeanOneLogNormal( self.PermShkStd[0] , 123).approx(self.PermShkCount) #Permanent Shock Distribution faced when employed
+        
+        TranShkDstn_E = MeanOneLogNormal( self.TranShkStd[0],123).approx(self.TranShkCount)#Transitory Shock Distribution faced when employed
+        TranShkDstn_E.X = (TranShkDstn_E.X *(1-self.tax_rate)*self.wage*self.N)/(1-self.UnempPrb)**2 #add wage, tax rate and labor supply
+        
+        lng = len(TranShkDstn_E.X )
+        TranShkDstn_U = DiscreteDistribution(np.ones(lng)/lng, self.IncUnemp*np.ones(lng)) #Transitory Shock Distribution faced when unemployed
+        
+        IncShkDstn_E = combine_indep_dstns(PermShkDstn_E, TranShkDstn_E) # Income Distribution faced when Employed
+        IncShkDstn_U = combine_indep_dstns(PermShkDstn_U,TranShkDstn_U) # Income Distribution faced when Unemployed
+        
+        #Combine Outcomes of both distributions
+        X_0 = np.concatenate((IncShkDstn_E.X[0],IncShkDstn_U.X[0]))
+        X_1=np.concatenate((IncShkDstn_E.X[1],IncShkDstn_U.X[1]))
+        X_I = [X_0,X_1] #discrete distribution takes in a list of arrays
+        
+        #Combine pmf Arrays
+        pmf_I = np.concatenate(((1-self.UnempPrb)*IncShkDstn_E.pmf, self.UnempPrb*IncShkDstn_U.pmf))
+        
+        IncShkDstn = DiscreteDistribution(pmf_I, X_I)
+        
+        
+        self.IncShkDstn = IncShkDstn
+ 
+    
+ 
+    
+              
+  
         
     
     def solve(self):
@@ -135,9 +209,6 @@ class FBSNK_solver(ConsIndShockSolver):
     
 
 
-
-
-
 ##############################################################################
 ##############################################################################
 
@@ -151,13 +222,24 @@ class FBSNK_agent(IndShockConsumerType):
     time_inv_ = IndShockConsumerType.time_inv_  + ["mu_u",
                                                    "L",
                                                    "SSPmu",
-                                                   #"wage",
+                                                   "wage",
+                                                   "N",
                                                    "B",
                                                    "cList",
                                                    "s",
                                                    "dx",
                                                    "T_sim",
                                                    "jac",
+                                                   "jacW",
+                                                   "PermShkStd",
+                                                   
+                                                    "PermShkCount",
+                                                    "TranShkCount",
+                                                    "TranShkStd",
+                                                    "tax_rate",
+                                                    "UnempPrb",
+                                                    "IncUnemp",
+                                                 
                                                    
                     
                                                   ]
@@ -220,7 +302,104 @@ class FBSNK_agent(IndShockConsumerType):
         self.IncShkDstn = IncShkDstn
         self.add_to_time_vary('IncShkDstn')
         
-      
+       
+        '''
+    def get_shocks(self):
+        """
+        Gets permanent and transitory income shocks for this period.  Samples from IncShkDstn for
+        each period in the cycle.
+        Parameters
+        ----------
+        None
+        Returns
+        -------
+        None
+        """
+        
+        
+        
+        
+        if self.jacW == True:
+        
+            if self.t_sim == self.s:
+           
+                self.wage = .833333 + self.dx
+                
+                print("made it here")
+            else:
+            
+              self.wage = .833333
+        
+              
+        PermShkDstn_U = Lognormal(np.log(self.mu_u) - (self.L*(self.PermShkStd[0])**2)/2 , self.L*self.PermShkStd[0] , 123).approx(self.PermShkCount) #Permanent Shock Distribution faced when unemployed
+        PermShkDstn_E = MeanOneLogNormal( self.PermShkStd[0] , 123).approx(self.PermShkCount) #Permanent Shock Distribution faced when employed
+        
+        TranShkDstn_E = MeanOneLogNormal( self.TranShkStd[0],123).approx(self.TranShkCount)#Transitory Shock Distribution faced when employed
+        TranShkDstn_E.X = (TranShkDstn_E.X *(1-self.tax_rate)*self.wage*self.N)/(1-self.UnempPrb)**2 #add wage, tax rate and labor supply
+        
+        lng = len(TranShkDstn_E.X )
+        TranShkDstn_U = DiscreteDistribution(np.ones(lng)/lng, self.IncUnemp*np.ones(lng)) #Transitory Shock Distribution faced when unemployed
+        
+        IncShkDstn_E = combine_indep_dstns(PermShkDstn_E, TranShkDstn_E) # Income Distribution faced when Employed
+        IncShkDstn_U = combine_indep_dstns(PermShkDstn_U,TranShkDstn_U) # Income Distribution faced when Unemployed
+        
+        #Combine Outcomes of both distributions
+        X_0 = np.concatenate((IncShkDstn_E.X[0],IncShkDstn_U.X[0]))
+        X_1=np.concatenate((IncShkDstn_E.X[1],IncShkDstn_U.X[1]))
+        X_I = [X_0,X_1] #discrete distribution takes in a list of arrays
+        
+        #Combine pmf Arrays
+        pmf_I = np.concatenate(((1-self.UnempPrb)*IncShkDstn_E.pmf, self.UnempPrb*IncShkDstn_U.pmf))
+        
+        IncShkDstn = [DiscreteDistribution(pmf_I, X_I)]
+        
+        self.IncShkDstn = IncShkDstn
+        
+    
+        
+        PermShkNow = np.zeros(self.AgentCount)  # Initialize shock arrays
+        TranShkNow = np.zeros(self.AgentCount)
+        newborn = self.t_age == 0
+        for t in range(self.T_cycle):
+            these = t == self.t_cycle
+            N = np.sum(these)
+            if N > 0:
+                IncShkDstnNow = self.IncShkDstn[
+                    t - 1
+                ]  # set current income distribution
+                PermGroFacNow = self.PermGroFac[t - 1]  # and permanent growth factor
+                # Get random draws of income shocks from the discrete distribution
+                IncShks = IncShkDstnNow.draw(N)
+
+                PermShkNow[these] = (
+                    IncShks[0, :] * PermGroFacNow
+                )  # permanent "shock" includes expected growth
+                TranShkNow[these] = IncShks[1, :]
+
+        # That procedure used the *last* period in the sequence for newborns, but that's not right
+        # Redraw shocks for newborns, using the *first* period in the sequence.  Approximation.
+        N = np.sum(newborn)
+        if N > 0:
+            these = newborn
+            IncShkDstnNow = self.IncShkDstn[0]  # set current income distribution
+            PermGroFacNow = self.PermGroFac[0]  # and permanent growth factor
+
+            # Get random draws of income shocks from the discrete distribution
+            EventDraws = IncShkDstnNow.draw_events(N)
+            PermShkNow[these] = (
+                IncShkDstnNow.X[0][EventDraws] * PermGroFacNow
+            )  # permanent "shock" includes expected growth
+            TranShkNow[these] = IncShkDstnNow.X[1][EventDraws]
+        #        PermShkNow[newborn] = 1.0
+        TranShkNow[newborn] = 1.0
+
+        # Store the shocks in self
+        self.EmpNow = np.ones(self.AgentCount, dtype=bool)
+        self.EmpNow[TranShkNow == self.IncUnemp] = False
+        self.shocks['PermShk'] = PermShkNow
+        self.shocks['TranShk'] = TranShkNow
+      '''
+        
         
     ''' 
     
@@ -264,8 +443,10 @@ class FBSNK_agent(IndShockConsumerType):
         mNrmNow = bNrmNow + self.shocks['TranShk']  # Market resources after income
         
         
-        if self.jac == True:
+        if self.jac == True or self.jacW ==True :
+        
             if self.t_sim == 0:
+                
                 for i in range(num_consumer_types):
                     if  self.DiscFac == consumers_ss[i].DiscFac:
                         #mNrmNow = consumers_ss[i].state_now['mNrm']
@@ -273,7 +454,7 @@ class FBSNK_agent(IndShockConsumerType):
                         mNrmNow = consumers_ss[i].history['mNrm'][self.T_sim-1,:]
                         pLvlNow = consumers_ss[i].history['pLvl'][self.T_sim-1,:]
                         print(self.DiscFac)
-                       
+    
 
         return pLvlNow, PlvlAggNow, bNrmNow, mNrmNow, None
     
@@ -328,8 +509,9 @@ IdiosyncDict={
      "mu_u"       : .9 ,
      "L"          : 1.1, 
      "s"          : 1,
-     "dx"         : .01,                  #Deviation from steady state
+     "dx"         : .1,                  #Deviation from steady state
      "jac"        : True,
+     "jacW"       : True, 
      
     #New Economy Parameters
      "SSWmu " : 1.1 ,                      # Wage Markup from sequence space jacobian appendix
@@ -344,7 +526,7 @@ IdiosyncDict={
     
 
 
-NumAgents = 200000
+NumAgents = 150000
 
 ###############################################################################
 ###############################################################################
@@ -360,8 +542,9 @@ go = True
 ss_agent = FBSNK_agent(**IdiosyncDict)
 ss_agent.cycles= 0
 ss_agent.jac = False
+ss_agent.jacW = False
 ss_agent.dx = 0
-ss_agent.T_sim = 1000
+ss_agent.T_sim = 1500
 ss_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 
 
@@ -452,11 +635,13 @@ print(AggC)
 ################################################################################
 
 ghost_agent = FBSNK_agent(**IdiosyncDict)
-ghost_agent.T_sim = 500
+ghost_agent.T_sim = 200
 ghost_agent.cycles = ghost_agent.T_sim
 ghost_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 ghost_agent.dx = 0
 ghost_agent.jac = True
+ghost_agent.jacW = False
+
 
 
 
@@ -510,7 +695,9 @@ plt.show()
 jac_agent = FBSNK_agent(**IdiosyncDict)
 jac_agent.dx = 0.2
 jac_agent.jac = True
-jac_agent.T_sim = 500
+jac_agent.jacW = False
+
+jac_agent.T_sim = 200
 jac_agent.cycles = jac_agent.T_sim
 jac_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 
@@ -566,9 +753,7 @@ for i in testSet:
             c = np.mean(np.array(c))
             listC.append(c)
             
-           # a = np.concatenate(lita_jac)
-           # a = np.mean(np.array(a))
-           #listA.append(a)
+
         
             
         
@@ -585,7 +770,7 @@ plt.plot(C_dx0 , label = 'Steady State')
 plt.plot(CHist[1], label = '5')
 plt.plot(CHist[3], label = '40')
 plt.plot(CHist[2], label = '15')
-plt.ylim([.2,.28])
+plt.ylim([.2,.26])
 plt.legend()
 plt.show()
 
