@@ -252,7 +252,7 @@ class FBSNK_agent(IndShockConsumerType):
         IndShockConsumerType.__init__(self, cycles = 200, **kwds)
         
         #Steady State values for Wage , Labor and tax rate
-        self.Rfree = 1.05**.25
+        self.Rfree = 1.04**.25
         self.cList = []
         self.s = self.s 
         self.dx=self.dx
@@ -265,11 +265,13 @@ class FBSNK_agent(IndShockConsumerType):
 
     def  update_income_process(self):
         
-        #self.wage = 1/(self.SSPmu) #calculate SS wage
-        #self.N = (self.mu_u*(self.IncUnemp*self.UnempPrb ))/ (self.wage*self.tax_rate) + self.B*(self.Rfree - 1) #calculate SS labor supply from Budget Constraint
+        self.wage = 1/(self.SSPmu) #calculate SS wage
+        self.N = (self.mu_u*(self.IncUnemp*self.UnempPrb ))/ (self.wage*self.tax_rate) + self.B*(self.Rfree - 1) #calculate SS labor supply from Budget Constraint
         
-        self.wage = .833333
-        self.N = .5
+        
+        
+        #self.wage = .833333
+        #self.N = .5
         
         
         PermShkDstn_U = Lognormal(np.log(self.mu_u) - (self.L*(self.PermShkStd[0])**2)/2 , self.L*self.PermShkStd[0] , 123).approx(self.PermShkCount) #Permanent Shock Distribution faced when unemployed
@@ -282,7 +284,7 @@ class FBSNK_agent(IndShockConsumerType):
         self.PermShkDstn = PermShkDstn 
         
         TranShkDstn_E = MeanOneLogNormal( self.TranShkStd[0],123).approx(self.TranShkCount)#Transitory Shock Distribution faced when employed
-        TranShkDstn_E.X = (TranShkDstn_E.X *(1-self.tax_rate)*self.wage*self.N)/(1-self.UnempPrb)**2 #add wage, tax rate and labor supply
+        TranShkDstn_E.X = (TranShkDstn_E.X *(1-self.tax_rate)*self.wage*self.N)/(1-self.UnempPrb)**2 #NEED TO FIX THIS SQUARE TERM #add wage, tax rate and labor supply
         
         lng = len(TranShkDstn_E.X )
         TranShkDstn_U = DiscreteDistribution(np.ones(lng)/lng, self.IncUnemp*np.ones(lng)) #Transitory Shock Distribution faced when unemployed
@@ -303,7 +305,7 @@ class FBSNK_agent(IndShockConsumerType):
         self.add_to_time_vary('IncShkDstn')
         
        
-        '''
+        
     def get_shocks(self):
         """
         Gets permanent and transitory income shocks for this period.  Samples from IncShkDstn for
@@ -317,7 +319,7 @@ class FBSNK_agent(IndShockConsumerType):
         """
         
         
-        
+        '''
         
         if self.jacW == True:
         
@@ -326,6 +328,7 @@ class FBSNK_agent(IndShockConsumerType):
                 self.wage = .833333 + self.dx
                 
                 print("made it here")
+                
             else:
             
               self.wage = .833333
@@ -356,7 +359,8 @@ class FBSNK_agent(IndShockConsumerType):
         self.IncShkDstn = IncShkDstn
         
     
-        
+        '''
+    
         PermShkNow = np.zeros(self.AgentCount)  # Initialize shock arrays
         TranShkNow = np.zeros(self.AgentCount)
         newborn = self.t_age == 0
@@ -375,7 +379,7 @@ class FBSNK_agent(IndShockConsumerType):
                     IncShks[0, :] * PermGroFacNow
                 )  # permanent "shock" includes expected growth
                 TranShkNow[these] = IncShks[1, :]
-
+                
         # That procedure used the *last* period in the sequence for newborns, but that's not right
         # Redraw shocks for newborns, using the *first* period in the sequence.  Approximation.
         N = np.sum(newborn)
@@ -398,10 +402,11 @@ class FBSNK_agent(IndShockConsumerType):
         self.EmpNow[TranShkNow == self.IncUnemp] = False
         self.shocks['PermShk'] = PermShkNow
         self.shocks['TranShk'] = TranShkNow
-      '''
+      
         
+      
         
-    ''' 
+    '''
     
     def get_Rfree(self):
         """
@@ -422,8 +427,8 @@ class FBSNK_agent(IndShockConsumerType):
             RfreeNow = self.Rfree * np.ones(self.AgentCount)
             
         return RfreeNow
-    
-     '''
+    '''
+     
     
     
     def transition(self):
@@ -466,7 +471,7 @@ IdiosyncDict={
     "CRRA":2,                           # Coefficient of relative risk aversion
     #"Rfree": 1.03,                       # Interest factor on assets
     "DiscFac": 0.978,                     # Intertemporal discount factor
-    "LivPrb" : [.985],                   # Survival probability
+    "LivPrb" : [.9725],                   # Survival probability
     "PermGroFac" :[1.00],                 # Permanent income growth factor
 
     # Parameters that specify the income distribution over the lifecycle
@@ -475,12 +480,12 @@ IdiosyncDict={
     "PermShkCount" : 5,                    # Number of points in discrete approximation to permanent income shocks
     "TranShkStd" : [.2],        # Standard deviation of log transitory shocks to income
     "TranShkCount" : 5,                    # Number of points in discrete approximation to transitory income shocks
-    "UnempPrb" : 0.05,                     # Probability of unemployment while working
+    "UnempPrb" : 0.075,                     # Probability of unemployment while working
     "IncUnemp" : 0.2,                      # Unemployment benefits replacement rate
     "UnempPrbRet" : 0.0005,                # Probability of "unemployment" while retired
     "IncUnempRet" : 0.0,                   # "Unemployment" benefits when retired
     "T_retire" : 0,                        # Period of retirement (0 --> no retirement)
-    "tax_rate" : 0.3,                      # Flat income tax rate (legacy parameter, will be removed in future)
+    "tax_rate" : 0.1,                      # Flat income tax rate (legacy parameter, will be removed in future)
 
     # Parameters for constructing the "assets above minimum" grid
     "aXtraMin" : 0.001,                    # Minimum end-of-period "assets above minimum" value
@@ -514,8 +519,8 @@ IdiosyncDict={
      "jacW"       : True, 
      
     #New Economy Parameters
-     "SSWmu " : 1.1 ,                      # Wage Markup from sequence space jacobian appendix
-     "SSPmu" :  1.2,                       # Price Markup from sequence space jacobian appendix
+     "SSWmu " : 1.025 ,                      # Wage Markup from sequence space jacobian appendix
+     "SSPmu" :  1.025,                       # Price Markup from sequence space jacobian appendix
      "calvo price stickiness":  .926,      # Auclert et al 2020
      "calvo wage stickiness": .899,        # Auclert et al 2020
      "B" : 0                               # Net Bond Supply
@@ -531,7 +536,7 @@ NumAgents = 150000
 ###############################################################################
 ###############################################################################
 
-target =  0.488908522298304
+target = 0.3425211355308573
 
 tolerance = .01
 
@@ -540,18 +545,18 @@ completed_loops=0
 go = True
 
 ss_agent = FBSNK_agent(**IdiosyncDict)
-ss_agent.cycles= 0
+ss_agent.cycles = 0
 ss_agent.jac = False
 ss_agent.jacW = False
 ss_agent.dx = 0
-ss_agent.T_sim = 1500
+ss_agent.T_sim = 500
 ss_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 
 
 num_consumer_types = 7     # num of types 
 
 
-center = 0.98051
+center = 0.9675
     
 
 while go:
@@ -593,7 +598,7 @@ while go:
         print('one consumer solved and simulated')
     
     pLvl = np.concatenate(list_pLvl)
-    aNrm = np.concatenate(list_aLvl)
+    aNrm = np.concatenate(list_aNrm)
     c = np.concatenate(litc)
     a = np.concatenate(list_aLvl)
     AggA = np.mean(np.array(a))
@@ -603,10 +608,10 @@ while go:
     
     if AggA - target > 0 :
         
-       center = center - .0001
+       center = center - .001
         
     elif AggA - target < 0: 
-        center = center + .0001
+        center = center + .001
         
     else:
         break
@@ -699,7 +704,7 @@ jac_agent.jacW = False
 
 jac_agent.T_sim = 200
 jac_agent.cycles = jac_agent.T_sim
-jac_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
+jac_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl','aLvl']
 
 
 consumers = [] 
@@ -715,20 +720,22 @@ for i in range(num_consumer_types):
         consumers[i].AgentCount = int(NumAgents*DiscFac_dist.pmf[i])
         consumers[i].solution_terminal = deepcopy(consumers_ss[i].solution[0]) ### Should it have a Deepcopy?
 
-        
+
 ##############################################################################
 
-testSet= [0,5,15,40]
+testSet= [0,1,15,40]
 
 Mega_list =[]
 CHist = []
 AHist=[]
+MHist=[]
 #for i in range(jac_agent.T_sim):
 for i in testSet:
 
         listC = []
         listH = []
         listA = []
+        listM = []
         for k in range(num_consumer_types):
             consumers[k].cList=[]
             consumers[k].s = i 
@@ -737,29 +744,41 @@ for i in testSet:
             consumers[k].simulate()
             
             listH.append([consumers[k].history['cNrm'],consumers[k].history['pLvl']])
-            listA.append([consumers[k].history['aNrm'],consumers[k].history['pLvl']])
+            #listM.append(consumers[k].history['mNrm'])
+            #listA.append([consumers[k].history['aNrm'],consumers[k].history['pLvl']])
+            
 
             
         for j in range(jac_agent.T_sim):
             
-            litc_jac=[]
+            litc_jac= []
             lita_jac =[]
+            litm_jac =[]
             for n in range(num_consumer_types):
                 litc_jac.append(listH[n][0][j,:]*listH[n][1][j,:])
-                lita_jac.append(listA[n][0][j,:]*listA[n][1][j,:])
+                #lita_jac.append(listA[n][0][j,:]*listA[n][1][j,:])
+                #litm_jac.append(listM[n][j,:]*listH[n][1][j,:])
 
             
             c = np.concatenate(litc_jac)
             c = np.mean(np.array(c))
             listC.append(c)
             
+            #a = np.concatenate(lita_jac)
+            #a = np.mean(np.array(a))
+            #listA.append(a)
+            
+            
+            #m = np.concatenate(litm_jac)
+            #m = np.mean(np.array(m))
+            #listM.append(m)
+            
 
         
-            
-        
-       # AHist.append(np.array(listA))
+        #AHist.append(np.array(listA))
+        #MHist.append(np.array(listM))
         CHist.append(np.array(listC))
-        Mega_list.append(np.array(listC)- C_dx0)  # Elements of this list are arrays. The index of the element +1 represents the 
+        #Mega_list.append(np.array(listC)- C_dx0)  # Elements of this list are arrays. The index of the element +1 represents the 
                                                   # Derivative with respect to a shock to the interest rate in period s.
                                                   # The ith element of the arrays in this list is the time t deviation in consumption to a shock in the interest rate in period s
         print(i)
@@ -767,20 +786,34 @@ for i in testSet:
 
 
 plt.plot(C_dx0 , label = 'Steady State')
-plt.plot(CHist[1], label = '5')
+plt.plot(CHist[1], label = '1')
 plt.plot(CHist[3], label = '40')
 plt.plot(CHist[2], label = '15')
-plt.ylim([.2,.26])
+plt.ylim([0.12,.14])
 plt.legend()
 plt.show()
 
 
 
+
+
+plt.plot((CHist[0]- C_dx0)/(.01), label = '0')
 plt.plot((CHist[3]- C_dx0)/(.01), label = '40')
-plt.plot((CHist[1]- C_dx0)/(.01), label = '5')
+plt.plot((CHist[1]- C_dx0)/(.01), label = '1')
 plt.plot((CHist[2] - C_dx0)/(.01), label = '15')
 plt.legend()
 plt.show()
+
+'''
+#plt.plot(C_dx0 , label = 'Steady State')
+plt.plot(MHist[1], label = '1')
+#plt.plot(MHist[3], label = '40')
+plt.plot(MHist[2], label = '15')
+plt.legend()
+plt.show()
+'''
+
+
 
 '''
 
@@ -812,12 +845,20 @@ plt.show()
 
 
 '''
+G=0
+t=.1
+Inc = .2
+
+w = (1/1.025)
+N = (.9*(Inc*.075))/ (w*t) + G
+r = (1.04)**.25 -1
 
 
+q = ((1-w)*N)/r
 
-
-
-
+print(w*N)
+print(N)
+print(q)
 
 
 
