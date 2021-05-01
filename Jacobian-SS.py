@@ -239,6 +239,7 @@ class FBSNK_agent(IndShockConsumerType):
                                                     "tax_rate",
                                                     "UnempPrb",
                                                     "IncUnemp",
+                                                    "G",
                                                  
                                                    
                     
@@ -266,8 +267,7 @@ class FBSNK_agent(IndShockConsumerType):
     def  update_income_process(self):
         
         self.wage = 1/(self.SSPmu) #calculate SS wage
-        self.N = (self.mu_u*(self.IncUnemp*self.UnempPrb ))/ (self.wage*self.tax_rate) + self.B*(self.Rfree - 1) #calculate SS labor supply from Budget Constraint
-        
+        self.N = (self.mu_u*(self.IncUnemp*self.UnempPrb ) + self.G )/ (self.wage*self.tax_rate) + self.B*(self.Rfree - 1) #calculate SS labor supply from Budget Constraint
         
         
         #self.wage = .833333
@@ -406,7 +406,7 @@ class FBSNK_agent(IndShockConsumerType):
         
       
         
-    '''
+    
     
     def get_Rfree(self):
         """
@@ -427,7 +427,7 @@ class FBSNK_agent(IndShockConsumerType):
             RfreeNow = self.Rfree * np.ones(self.AgentCount)
             
         return RfreeNow
-    '''
+    
      
     
     
@@ -480,8 +480,8 @@ IdiosyncDict={
     "PermShkCount" : 5,                    # Number of points in discrete approximation to permanent income shocks
     "TranShkStd" : [.2],        # Standard deviation of log transitory shocks to income
     "TranShkCount" : 5,                    # Number of points in discrete approximation to transitory income shocks
-    "UnempPrb" : 0.075,                     # Probability of unemployment while working
-    "IncUnemp" : 0.2,                      # Unemployment benefits replacement rate
+    "UnempPrb" : 0.05,                     # Probability of unemployment while working
+    "IncUnemp" : 0.08,                      # Unemployment benefits replacement rate
     "UnempPrbRet" : 0.0005,                # Probability of "unemployment" while retired
     "IncUnempRet" : 0.0,                   # "Unemployment" benefits when retired
     "T_retire" : 0,                        # Period of retirement (0 --> no retirement)
@@ -520,23 +520,23 @@ IdiosyncDict={
      
     #New Economy Parameters
      "SSWmu " : 1.025 ,                      # Wage Markup from sequence space jacobian appendix
-     "SSPmu" :  1.025,                       # Price Markup from sequence space jacobian appendix
+     "SSPmu" :  1.015,                       # Price Markup from sequence space jacobian appendix
      "calvo price stickiness":  .926,      # Auclert et al 2020
      "calvo wage stickiness": .899,        # Auclert et al 2020
-     "B" : 0                               # Net Bond Supply
-    
-}
+     "B" : 0,                               # Net Bond Supply
+     "G" : .01
+     }
 
 
     
-
+C_SS = .1294 
 
 NumAgents = 150000
 
 ###############################################################################
 ###############################################################################
 
-target = 0.3425211355308573
+target = 0.34505832912738216
 
 tolerance = .01
 
@@ -549,7 +549,7 @@ ss_agent.cycles = 0
 ss_agent.jac = False
 ss_agent.jacW = False
 ss_agent.dx = 0
-ss_agent.T_sim = 500
+ss_agent.T_sim = 1200
 ss_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 
 
@@ -630,7 +630,7 @@ while go:
     print('Completed loops')
     print(completed_loops)
     
-    go = distance >= tolerance and completed_loops < 1
+    go = distance >= tolerance and completed_loops < 10
         
 
 print(AggA)
@@ -698,7 +698,7 @@ plt.show()
 
 
 jac_agent = FBSNK_agent(**IdiosyncDict)
-jac_agent.dx = 0.2
+jac_agent.dx = 0.0001
 jac_agent.jac = True
 jac_agent.jacW = False
 
@@ -789,7 +789,7 @@ plt.plot(C_dx0 , label = 'Steady State')
 plt.plot(CHist[1], label = '1')
 plt.plot(CHist[3], label = '40')
 plt.plot(CHist[2], label = '15')
-plt.ylim([0.12,.14])
+plt.ylim([0.125,.135])
 plt.legend()
 plt.show()
 
@@ -797,10 +797,11 @@ plt.show()
 
 
 
-plt.plot((CHist[0]- C_dx0)/(.01), label = '0')
-plt.plot((CHist[3]- C_dx0)/(.01), label = '40')
-plt.plot((CHist[1]- C_dx0)/(.01), label = '1')
-plt.plot((CHist[2] - C_dx0)/(.01), label = '15')
+plt.plot((CHist[0][1:]- C_dx0[1:])/(jac_agent.dx), label = '0')
+plt.plot((CHist[3][1:]- C_dx0[1:])/(jac_agent.dx), label = '40')
+plt.plot((CHist[1][1:]- C_dx0[1:])/(jac_agent.dx), label = '1')
+plt.plot((CHist[2][1:] - C_dx0[1:])/(jac_agent.dx), label = '15')
+plt.ylim([-.075,.075])
 plt.legend()
 plt.show()
 
@@ -847,19 +848,22 @@ plt.show()
 '''
 G=0
 t=.1
-Inc = .2
+Inc = .1
 
 w = (1/1.025)
-N = (.9*(Inc*.075))/ (w*t) + G
+N = (.9*(Inc*.075))/ (w*t) 
 r = (1.04)**.25 -1
 
+N1 = (.9*(.08*.05)+.01)/ (w*t) 
 
-q = ((1-w)*N)/r
+q = ((1-w)*N1)/r
 
-print(w*N)
+print(q)
+
+print(w*N1)
 print(N)
 print(q)
 
-
-
+N1 = (.9*(.08*.05)+.01)/ (w*t) 
+print(N1)
         
