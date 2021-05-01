@@ -69,6 +69,7 @@ class FBSNK_solver(ConsIndShockSolver):
                 IncUnemp,
                 wage,
                 N,
+                SSPmu,
                 
                 
                 ):
@@ -89,6 +90,7 @@ class FBSNK_solver(ConsIndShockSolver):
         self.IncUnemp = IncUnemp
         self.wage=wage
         self.N=N
+        self.SSPmu = SSPmu
                 
         
         
@@ -114,12 +116,12 @@ class FBSNK_solver(ConsIndShockSolver):
           
           if len(self.cList) == self.T_sim - self.s  :
              
-            self.wage = .833333 + self.dx
+            self.wage = 1/(self.SSPmu) + self.dx
         
 
         else:
             
-              self.wage = .833333
+              self.wage = 1/(self.SSPmu)
         
               
         PermShkDstn_U = Lognormal(np.log(self.mu_u) - (self.L*(self.PermShkStd[0])**2)/2 , self.L*self.PermShkStd[0] , 123).approx(self.PermShkCount) #Permanent Shock Distribution faced when unemployed
@@ -406,7 +408,7 @@ class FBSNK_agent(IndShockConsumerType):
         
       
         
-    
+    '''
     
     def get_Rfree(self):
         """
@@ -428,6 +430,7 @@ class FBSNK_agent(IndShockConsumerType):
             
         return RfreeNow
     
+    '''
      
     
     
@@ -520,7 +523,7 @@ IdiosyncDict={
      
     #New Economy Parameters
      "SSWmu " : 1.025 ,                      # Wage Markup from sequence space jacobian appendix
-     "SSPmu" :  1.015,                       # Price Markup from sequence space jacobian appendix
+     "SSPmu" :  1.025,                       # Price Markup from sequence space jacobian appendix
      "calvo price stickiness":  .926,      # Auclert et al 2020
      "calvo wage stickiness": .899,        # Auclert et al 2020
      "B" : 0,                               # Net Bond Supply
@@ -556,7 +559,7 @@ ss_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 num_consumer_types = 7     # num of types 
 
 
-center = 0.9675
+center = 0.9875
     
 
 while go:
@@ -630,7 +633,7 @@ while go:
     print('Completed loops')
     print(completed_loops)
     
-    go = distance >= tolerance and completed_loops < 10
+    go = distance >= tolerance and completed_loops < 1
         
 
 print(AggA)
@@ -644,8 +647,8 @@ ghost_agent.T_sim = 200
 ghost_agent.cycles = ghost_agent.T_sim
 ghost_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 ghost_agent.dx = 0
-ghost_agent.jac = True
-ghost_agent.jacW = False
+ghost_agent.jac = False
+ghost_agent.jacW = True
 
 
 
@@ -699,8 +702,8 @@ plt.show()
 
 jac_agent = FBSNK_agent(**IdiosyncDict)
 jac_agent.dx = 0.0001
-jac_agent.jac = True
-jac_agent.jacW = False
+jac_agent.jac = False
+jac_agent.jacW = True
 
 jac_agent.T_sim = 200
 jac_agent.cycles = jac_agent.T_sim
@@ -801,7 +804,7 @@ plt.plot((CHist[0][1:]- C_dx0[1:])/(jac_agent.dx), label = '0')
 plt.plot((CHist[3][1:]- C_dx0[1:])/(jac_agent.dx), label = '40')
 plt.plot((CHist[1][1:]- C_dx0[1:])/(jac_agent.dx), label = '1')
 plt.plot((CHist[2][1:] - C_dx0[1:])/(jac_agent.dx), label = '15')
-plt.ylim([-.075,.075])
+plt.ylim([-.02,.02])
 plt.legend()
 plt.show()
 
@@ -846,9 +849,9 @@ plt.show()
 
 
 '''
-G=0
+G=.01
 t=.1
-Inc = .1
+Inc = .08
 
 w = (1/1.025)
 N = (.9*(Inc*.075))/ (w*t) 
@@ -858,12 +861,9 @@ N1 = (.9*(.08*.05)+.01)/ (w*t)
 
 q = ((1-w)*N1)/r
 
-print(q)
 
 print(w*N1)
-print(N)
 print(q)
 
-N1 = (.9*(.08*.05)+.01)/ (w*t) 
 print(N1)
         
