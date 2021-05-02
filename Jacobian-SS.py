@@ -348,7 +348,7 @@ class FBSNK_agent(IndShockConsumerType):
         """
         
         if self.jacW == True:
-            if self.t_sim == self.s:
+            if self.t_sim == self.s - 1:
                 self.IncShkDstn = self.IncShkDstnW
                 
             else:
@@ -420,7 +420,7 @@ class FBSNK_agent(IndShockConsumerType):
         """
         
         if self.jac == True:
-            if self.t_sim == self.s  :
+            if self.t_sim == self.s - 1 :
                 RfreeNow = (self.Rfree + self.dx)* np.ones(self.AgentCount)
             else:
                 RfreeNow = self.Rfree * np.ones(self.AgentCount)
@@ -470,9 +470,9 @@ class FBSNK_agent(IndShockConsumerType):
 IdiosyncDict={
     # Parameters shared with the perfect foresight model
     "CRRA":2,                           # Coefficient of relative risk aversion
-    "Rfree": 1.04**.25,                       # Interest factor on assets
+    "Rfree": 1.05**.25,                       # Interest factor on assets
     "DiscFac": 0.978,                     # Intertemporal discount factor
-    "LivPrb" : [.9725],                   # Survival probability
+    "LivPrb" : [.98],  #.9725                  # Survival probability
     "PermGroFac" :[1.00],                 # Permanent income growth factor
 
     # Parameters that specify the income distribution over the lifecycle
@@ -513,7 +513,7 @@ IdiosyncDict={
     
     # new parameters
      "mu_u"       : .9 ,
-     "L"          : 1.1, 
+     "L"          : 1.2, 
      "s"          : 1,
      "dx"         : .1,                  #Deviation from steady state
      "jac"        : True,
@@ -557,12 +557,12 @@ ss_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 num_consumer_types = 7     # num of types 
 
 
-center = 0.9875
+center = 0.976
     
 
 while go:
     
-    discFacDispersion = 0.0049
+    discFacDispersion = 0.0079
     bottomDiscFac     = center - discFacDispersion
     topDiscFac        = center + discFacDispersion
     
@@ -645,8 +645,8 @@ ghost_agent.T_sim = 200
 ghost_agent.cycles = ghost_agent.T_sim
 ghost_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 ghost_agent.dx = 0
-ghost_agent.jac = False
-ghost_agent.jacW = True
+ghost_agent.jac = True
+ghost_agent.jacW = False
 
 
 
@@ -699,9 +699,9 @@ plt.show()
 
 
 jac_agent = FBSNK_agent(**IdiosyncDict)
-jac_agent.dx = 0.8
-jac_agent.jac = False
-jac_agent.jacW = True
+jac_agent.dx = 0.1
+jac_agent.jac = True
+jac_agent.jacW = False
 
 jac_agent.T_sim = 200
 jac_agent.cycles = jac_agent.T_sim
@@ -788,11 +788,11 @@ for i in testSet:
 
 plt.plot(C_dx0 , label = 'Steady State')
 plt.plot(CHist[1], label = '1')
-#plt.plot(CHist[3], label = '40')
+plt.plot(CHist[3], label = '40')
 plt.plot(CHist[2], label = '15')
 plt.plot(CHist[4], label = '100')
 
-plt.ylim([0.125,.135])
+plt.ylim([0.11,.13])
 plt.legend()
 plt.show()
 
@@ -809,6 +809,7 @@ plt.plot((CHist[4][1:] - C_dx0[1:])/(jac_agent.dx), label = '100')
 plt.ylim([-.02,.02])
 plt.legend()
 plt.show()
+
 
 '''
 #plt.plot(C_dx0 , label = 'Steady State')
@@ -858,16 +859,99 @@ mho=.05
 
 w = (1/1.025)
 N = (.9*(Inc*mho)+G)/ (w*t) 
-r = (1.04)**.25 -1
+r = (1.05)**.25 -1
 print(N)
 
 N1 = (.9*(.08*.05)+.01)/ (w*t) 
 
 
-q = ((1-w)*N1)/r
+q = ((1-w)*N)/r
 
-print(N1)
+print(N)
 print(N1-N)
 print(q)
+
+funcs=[]
+list_mLvl = []
+list_mNrm = []
+for i in range(7):
+    list_mLvl.append(consumers_ss[i].state_now['mNrm']*consumers_ss[i].state_now['pLvl'] )
+    list_mNrm.append(consumers_ss[i].state_now['mNrm'])
+    funcs.append(consumers_ss[i].solution[0].cFunc)
+
+mNrm = np.concatenate(list_mNrm)   
+mLvl = np.concatenate(list_mLvl)
+plot_funcs(funcs,0,1.4)
+plt.hist(mNrm, bins=np.linspace(0,1.4,num=1000))
+plt.show()
+
+plt.hist(mLvl, bins=np.linspace(0,1.2,num=1000))
+plt.show()
+
+
+#for function in funcs:
+
+x = np.linspace(0, 1.4, 1000, endpoint=True)
+
+y=[]
+for i in range(7):
+    y.append(funcs[i](x))
+    
+
+
+
+
+plt.xlim([0, 1.4])
+plt.show()
+
+h = np.histogram(mNrm, bins=np.linspace(0,1.4,num=1000))
+
+
+fig = plt.figure()
+ax1 = fig.add_subplot(111)
+plt.xlabel('Cash on Hand')
+ax1.plot(x, y[0], 'm' )
+ax1.plot(x, y[1], 'k' )
+ax1.plot(x, y[2], 'darkorange' )
+ax1.plot(x, y[3], 'forestgreen' )
+ax1.plot(x, y[4], 'deepskyblue' )
+ax1.plot(x, y[5], 'r' )
+ax1.plot(x, y[6], 'darkslategrey' )
+
+ax1.set_ylabel('Consumption', color='k')
+
+ax2= ax1.twinx()
+ax2.hist(mNrm, bins=np.linspace(0,1.4,num=1000),color= 'salmon')
+ax2.set_ylabel('Number of Households', color='k')
+
+#ax1.set_ylabel('')
+
+
+#for tl in ax2.get_yticklabels():
+ #   tl.set_color()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
