@@ -242,8 +242,7 @@ class FBSNK_agent(IndShockConsumerType):
                                                     "UnempPrb",
                                                     "IncUnemp",
                                                     "G",
-                                                 
-                                                   
+                                                                                           
                     
                                                   ]
     
@@ -329,10 +328,10 @@ class FBSNK_agent(IndShockConsumerType):
         #Combine pmf Arrays
         pmf_I = np.concatenate(((1-self.UnempPrb)*IncShkDstn_Ew.pmf, self.UnempPrb*IncShkDstn_Uw.pmf))
         
-        IncShkDstnw = [DiscreteDistribution(pmf_I, X_I)]
+        IncShkDstnW = [DiscreteDistribution(pmf_I, X_I)]
         
-        self.IncShkDstnw = IncShkDstnw
-        self.add_to_time_vary('IncShkDstnw')
+        self.IncShkDstnW = IncShkDstnW
+        self.add_to_time_vary('IncShkDstnW')
         
         
         
@@ -350,7 +349,7 @@ class FBSNK_agent(IndShockConsumerType):
         
         if self.jacW == True:
             if self.t_sim == self.s:
-                self.IncShkDstn = self.IncShkDstnw
+                self.IncShkDstn = self.IncShkDstnW
                 
             else:
                 self.IncShkDstn = self.IncShkDstnN
@@ -406,12 +405,6 @@ class FBSNK_agent(IndShockConsumerType):
         self.shocks['PermShk'] = PermShkNow
         self.shocks['TranShk'] = TranShkNow
             
-        
-        
-
-                
-      
-        
     
     
     def get_Rfree(self):
@@ -436,9 +429,7 @@ class FBSNK_agent(IndShockConsumerType):
             
             
         return RfreeNow
-    
-    
-     
+         
     
     
     def transition(self):
