@@ -504,8 +504,8 @@ IdiosyncDict={
     # Parameters only used in simulation
     "AgentCount" : 100000,                  # Number of agents of this type
     "T_sim" : 500,                         # Number of periods to simulate
-    "aNrmInitMean" : -6.0,                 # Mean of log initial assets
-    "aNrmInitStd"  : 1.0,                  # Standard deviation of log initial assets
+    "aNrmInitMean" : np.log(.27)-(.5**2)/2,                 # Mean of log initial assets
+    "aNrmInitStd"  : 0.5,                  # Standard deviation of log initial assets
     "pLvlInitMean" : 0.0,                  # Mean of log initial permanent income
     "pLvlInitStd"  : 0.0,                  # Standard deviation of log initial permanent income
     "PermGroFacAgg" : 1.0,                 # Aggregate permanent income growth factor
@@ -537,7 +537,7 @@ NumAgents = 150000
 ###############################################################################
 ###############################################################################
 
-target = 0.34505832912738216
+target = .27704816263570453
 
 tolerance = .01
 
@@ -557,7 +557,7 @@ ss_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 num_consumer_types = 7     # num of types 
 
 
-center = 0.976
+center = 0.967
     
 
 while go:
@@ -889,23 +889,15 @@ plt.hist(mLvl, bins=np.linspace(0,1.2,num=1000))
 plt.show()
 
 
-#for function in funcs:
 
 x = np.linspace(0, 1.4, 1000, endpoint=True)
 
 y=[]
 for i in range(7):
     y.append(funcs[i](x))
-    
 
-
-
-
-plt.xlim([0, 1.4])
-plt.show()
 
 h = np.histogram(mNrm, bins=np.linspace(0,1.4,num=1000))
-
 
 fig = plt.figure()
 ax1 = fig.add_subplot(111)
@@ -921,21 +913,16 @@ ax1.plot(x, y[6], 'darkslategrey' )
 ax1.set_ylabel('Consumption', color='k')
 
 ax2= ax1.twinx()
-ax2.hist(mNrm, bins=np.linspace(0,1.4,num=1000),color= 'salmon')
+ax2.hist(mNrm, bins=np.linspace(0,1.4,num=1000),color= 'darkviolet')
 ax2.set_ylabel('Number of Households', color='k')
 
-#ax1.set_ylabel('')
 
 
-#for tl in ax2.get_yticklabels():
- #   tl.set_color()
+sigma=.5
+mean=np.log(.4)-(sigma**2)/2
 
-
-
-
-
-
-
+print(np.exp(mean + (sigma**2)/2))
+print((np.exp(sigma)-1)*np.exp(2*mean+sigma**2))
 
 
 
