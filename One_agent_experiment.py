@@ -11,6 +11,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 mystr = lambda number : "{:.4f}".format(number)
 
+from copy import copy, deepcopy
+from time import time
+from HARK.interpolation import (
+    CubicInterp,
+    LowerEnvelope,
+    LinearInterp,
+    ValueFuncCRRA,
+    MargValueFuncCRRA,
+    MargMargValueFuncCRRA
+)
+
 
 import HARK.ConsumptionSaving.ConsIndShockModel as ConsIndShockModel
 from HARK.ConsumptionSaving.ConsIndShockModel import (
@@ -20,8 +31,9 @@ from HARK.ConsumptionSaving.ConsIndShockModel import (
 )
 
 from HARK import Market, make_one_period_oo_solver
-from HARK.distribution import DiscreteDistribution,combine_indep_dstns, Lognormal, MeanOneLogNormal, Uniform
+from HARK.distribution import DiscreteDistribution,combine_indep_dstns, Lognormal, MeanOneLogNormal, Uniform, calc_expectation
 
+from HARK.core import solve_one_cycle
 
 
 class FBSNK_solver(ConsIndShockSolver):
@@ -45,6 +57,7 @@ class FBSNK_solver(ConsIndShockSolver):
                 s,
                 dx,
                 T_sim,
+                completed,
                 ):
                  
         self.s = s 
@@ -64,12 +77,65 @@ class FBSNK_solver(ConsIndShockSolver):
         self.def_utility_funcs()
         self.Rfree=Rfree
         self.T_sim = T_sim
+        self.completed = completed
         
-       
-        
+        '''
+        if self.jac == True and self.completed_cycles == self.T_sim -self.s:
+            self.Rfree =  self.Rfree + self.dx
             
+        
+        '''
+        
+    def m_nrm_next_dx(self, shocks, a_nrm):
+        """
+        Computes normalized market resources of the next period
+        from income shocks and current normalized market resources.
+        Parameters
+        ----------
+        shocks: [float]
+            Permanent and transitory income shock levels.       a_nrm: float
+            Normalized market assets this period
+        Returns
+        -------
+        float
+           normalized market resources in the next period
+        """
+        return self.Rfree / (self.PermGroFac * shocks[0]) \
+            * a_nrm + shocks[1] + .5
+
+    def calc_EndOfPrdvP_dx(self):
+        """
+        Calculate end-of-period marginal value of assets at each point in aNrmNow.
+        Does so by taking a weighted sum of next period marginal values across
+        income shocks (in a preconstructed grid self.mNrmNext).
+        Parameters
+        ----------
+        none
+        Returns
+        -------
+        EndOfPrdvP : np.array
+            A 1D array of end-of-period marginal value of assets
+        """
+
+        def vp_next(shocks, a_nrm):
+            return shocks[0] ** (-self.CRRA) \
+                * self.vPfuncNext(self.m_nrm_next_dx(shocks, a_nrm))
+
+        EndOfPrdvP = (
+            self.DiscFacEff
+            * self.Rfree
+            * self.PermGroFac ** (-self.CRRA)
+            * calc_expectation(
+                self.IncShkDstn,
+                vp_next,
+                self.aNrmNow
+            )
+        )
+
+        return EndOfPrdvP    
 
         
+    
     
     def solve(self):
         """
@@ -89,22 +155,39 @@ class FBSNK_solver(ConsIndShockSolver):
         """
         # Make arrays of end-of-period assets and end-of-period marginal value
         
-        if self.jac == True:
+        '''
+        
+        if self.jac == True and self.completed_cycles == self.T_sim - self.s:
+            self.Rfree = 1.03**.25 + self.dx
             
-            if len(self.cList) == self.T_sim - self.s  :
-                self.Rfree = self.Rfree + self.dx
-            else:
-                self.Rfree = self.Rfree
+        else:
+            self.Rfree = 1.03**.25
 
-        if self.Rfree ==  .6 + 1.03**.25:
-            print(self.Rfree)
             
-        if self.Rfree == .3 +1.03**25:
-            print(self.Rfree)
+        '''
+    
+        if self.jac==True and len(self.cList) == self.T_sim - self.s:
+            self.Rfree =1.03**.25 +self.dx
+        else:
+            self.Rfree = 1.03**.25
+        
+        
 
+     
         aNrm = self.prepare_to_calc_EndOfPrdvP()
-        EndOfPrdvP = self.calc_EndOfPrdvP()
+        
+        '''
+    
+        if self.jac==True and len(self.cList) == self.T_sim - self.s:
+            
+            EndOfPrdvP= self.calc_EndOfPrdvP_dx()
+            
+        else:
+            EndOfPrdvP = self.calc_EndOfPrdvP()
+            
+        '''
 
+        EndOfPrdvP = self.calc_EndOfPrdvP()
         # Construct a basic solution for this period
         if self.CubicBool:
             solution = self.make_basic_solution(
@@ -119,7 +202,6 @@ class FBSNK_solver(ConsIndShockSolver):
         solution = self.add_stable_points(solution)
             
         
-        
         self.cList.append(solution.cFunc)
         
         # Add the value function if requested, as well as the marginal marginal
@@ -129,14 +211,6 @@ class FBSNK_solver(ConsIndShockSolver):
         if self.CubicBool:
             solution = self.add_vPPfunc(solution)
         return solution
-
-
-
-
-
-
-
-
 
 
 
@@ -152,6 +226,8 @@ class Test_agent(IndShockConsumerType):
                                                    "dx",
                                                    "T_sim",
                                                    "jac",
+                                                   "Ghost",
+                                                   "completed",
                                                    #"wage",
                                                    #"N",
                                                   
@@ -168,9 +244,7 @@ class Test_agent(IndShockConsumerType):
         IndShockConsumerType.__init__(self, cycles = 200, **kwds)
         
         self.cList = []
-        self.s = self.s 
-        self.dx=self.dx
-        
+        self.completed = 95
         
         solver = FBSNK_solver
         self.solve_one_period = make_one_period_oo_solver(solver)
@@ -218,8 +292,8 @@ class Test_agent(IndShockConsumerType):
         
         
     
-    '''
-        
+
+    
     def get_Rfree(self):
         """
         Returns an array of size self.AgentCount with self.Rfree in every entry.
@@ -233,15 +307,14 @@ class Test_agent(IndShockConsumerType):
         """
     
         
-        if self.t_sim == self.s  :
-            RfreeNow = (self.Rfree + self.dx)* np.ones(self.AgentCount)
+        if self.jac==True and  self.t_sim == self.s-1  :
+            RfreeNow = (1.03**.25 + self.dx)* np.ones(self.AgentCount)
         else:
-            RfreeNow = self.Rfree * np.ones(self.AgentCount)
+            RfreeNow = 1.03**.25 * np.ones(self.AgentCount)
             
         return RfreeNow
-        
-    
-   '''
+     
+   
     
     
     def transition(self):
@@ -261,7 +334,7 @@ class Test_agent(IndShockConsumerType):
         mNrmNow = bNrmNow + self.shocks['TranShk']  # Market resources after income
         
         
-        if self.jac == True:
+        if self.jac == True or self.Ghost == True:
             if self.t_sim == 0:
                 
                     mNrmNow = ss.history['mNrm'][self.T_sim-1,:]
@@ -272,6 +345,7 @@ class Test_agent(IndShockConsumerType):
                        
 
         return pLvlNow, PlvlAggNow, bNrmNow, mNrmNow, None
+
 
 
 
@@ -311,10 +385,10 @@ IdiosyncDict={
     "T_cycle" : 1,                         # Number of periods in the cycle for this agent type
 
     # Parameters only used in simulation
-    "AgentCount" : 100000,                  # Number of agents of this type
-    "T_sim" : 500,                         # Number of periods to simulate
-    "aNrmInitMean" : -6.0,                 # Mean of log initial assets
-    "aNrmInitStd"  : 1.0,                  # Standard deviation of log initial assets
+    "AgentCount" : 150000,                  # Number of agents of this type
+    "T_sim" : 100,                         # Number of periods to simulate
+    "aNrmInitMean" : np.log(.27)-(.5**2)/2,                 # Mean of log initial assets
+    "aNrmInitStd"  : .3,                  # Standard deviation of log initial assets
     "pLvlInitMean" : 0.0,                  # Mean of log initial permanent income
     "pLvlInitStd"  : 0.0,                  # Standard deviation of log initial permanent income
     "PermGroFacAgg" : 1.0,                 # Aggregate permanent income growth factor
@@ -326,6 +400,8 @@ IdiosyncDict={
      "s"          : 7,
      "dx"         : .1,                  #Deviation from steady state
      "jac"        : True,
+     "Ghost"      : False,
+     
      
     #New Economy Parameters
      "SSWmu " : 1.1 ,                      # Wage Markup from sequence space jacobian appendix
@@ -344,24 +420,24 @@ ss.jac= False
 ss.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 ss.cycles=0
 ss.dx=0
-ss.T_sim= 1000
+ss.T_sim= 1200
 ss.solve()
 ss.initialize_sim()
 ss.simulate()
 
 ###############################################################################
  
-
-
-      
 listC_g = []
-listH_g = []
+listA_g = []
+listM_g = []
 
     
 ss_dx = Test_agent(**IdiosyncDict )
-ss_dx.track_vars = ['aNrm','mNrm','cNrm','pLvl']
-ss_dx.terminal_solution = ss.solution[0]
-ss_dx.jac = True
+ss_dx.track_vars = ['aNrm','mNrm','cNrm','pLvl','aLvl']
+ss_dx.solution_terminal = deepcopy( ss.solution[0])
+ss_dx.jac = False
+ss_dx.Ghost = True
+
 ss.cList=[]
 ss_dx.dx = 0
 ss_dx.cycles= ss_dx.T_sim
@@ -369,73 +445,77 @@ ss_dx.solve()
 ss_dx.initialize_sim()
 ss_dx.simulate()
 
-listH_g.append([ss_dx.history['cNrm'], ss_dx.history['pLvl']])
-
-litc_g=[]
 
 for j in range(ss_dx.T_sim):
 
-    
-    litc_g.append(listH_g[0][0][j,:]*listH_g[0][1][j,:])
-        
-    Cg = np.concatenate(litc_g)
-    Cg = np.mean(np.array(Cg))
+    Mg = np.mean(ss_dx.history['mNrm'][j,:]*ss_dx.history['pLvl'][j,:])
+    Ag = np.mean(ss_dx.history['aLvl'][j,:])
+    Cg = np.mean(ss_dx.history['cNrm'][j,:]*ss_dx.history['pLvl'][j,:])
 
+    listM_g.append(Mg)
+    listA_g.append(Ag)
     listC_g.append(Cg)
-        
+    
+M_dx0 = np.array(listM_g)
+A_dx0 = np.array(listA_g)
 C_dx0 = np.array(listC_g)
 
+plt.plot(C_dx0, label="steady state")
+plt.legend()
+plt.show()
 
-
+print('done with steady state')
 
 ##############################################################################
 
 example = Test_agent(**IdiosyncDict )
-example.terminal_solution = ss.solution[0]
-example.T_sim = 500
+example.solution_terminal = deepcopy(ss.solution[0])
+example.T_sim = 100
 example.cycles=example.T_sim
 example.jac = True
 example.dx= 0.1
-example.track_vars = ['aNrm','mNrm','cNrm','pLvl']
+example.track_vars = ['aNrm','mNrm','cNrm','pLvl','aLvl']
 
 
 
-
-Test_set=[0,1,5,20]
+Test_set=[1,5,20,50]
 Mega_list =[]
 CHist = []
+AHist =[]
+MHist =[]
 for i in Test_set:
     
+        listM = []
         listC = []
-        listH = []
+        listA = []
         
         example.cList=[]
         example.s = i 
-        example.track_vars = ['aNrm','mNrm','cNrm','pLvl']
-
         example.solve()
         example.initialize_sim()
         example.simulate()
         
-        listH.append([example.history['cNrm'],example.history['pLvl']])
-            
-        litc=[]
 
         for j in range(example.T_sim):
-            
-            litc.append(listH[0][0][j,:]*listH[0][1][j,:])
-            
-            c = np.concatenate(litc)
-            c = np.mean(np.array(c))
+           
+            m = np.mean(example.history['mNrm'][j,:]*example.history['pLvl'][j,:])
+            a = np.mean(example.history['aLvl'][j,:])
+            c = np.mean(example.history['cNrm'][j,:]*example.history['pLvl'][j,:])
         
+            listM.append(m)
             listC.append(c)
-            
+            listA.append(a)
+          
+        MHist.append(np.array(listA))
+        AHist.append(np.array(listA))
         CHist.append(np.array(listC))
         #Mega_list.append(np.array(listC)- C_dx0)  # Elements of this list are arrays. The index of the element +1 represents the 
                                                   # Derivative with respect to a shock to the interest rate in period s.
                                                   # The ith element of the arrays in this list is the time t deviation in consumption to a shock in the interest rate in period s
-        
+
         print(i)
+        
+        
 '''
 plt.plot(C_dx0 , label = 'Steady State')
 
@@ -487,26 +567,76 @@ plt.show()
 
 
 plt.plot(C_dx0 , label = 'Steady State')
+plt.plot(CHist[1], label = '5')
+plt.plot(CHist[2], label = '20')
+plt.plot(CHist[0], label = '1')
 
-plt.plot(CHist[1], label = '1')
-plt.plot(CHist[3], label = '20')
-plt.plot(CHist[0], label = '0')
-
-plt.ylim([0.425,0.475])
+plt.ylim([0.4,0.5])
 plt.legend()
 plt.show()
 
 
-plt.plot((CHist[1]-C_dx0)/(.1), label = '1')
-plt.plot((CHist[3]-C_dx0)/(.1), label = '20')
-plt.plot((CHist[2]-C_dx0)/(.1), label = '5')
-plt.plot((CHist[0]-C_dx0)/(.1), label = '0')
-plt.ylim([-.3,.01])
+plt.plot((CHist[1]-C_dx0)/(.1), label = '5')
+plt.plot((CHist[2]-C_dx0)/(.1), label = '20')
+plt.plot((CHist[0]-C_dx0)/(.1), label = '1')
+plt.plot(np.zeros(100), 'k')
+
+plt.ylim([-.5,.5])
 plt.legend()
 plt.show()
 
 
 
+plt.plot(M_dx0 , label = 'Steady State')
+plt.plot(MHist[1], label = '5')
+plt.plot(MHist[2], label = '20')
+plt.plot(MHist[0], label = '1')
+plt.ylim([0,4])
+plt.legend()
+plt.show()
+
+plt.plot((MHist[1]-M_dx0)/(.1), label = '5')
+plt.plot((MHist[2]-M_dx0)/(.1), label = '20')
+plt.plot((MHist[0]-M_dx0)/(.1), label = '1')
+plt.plot(np.zeros(100), 'k')
+
+plt.ylim([-7,10])
+plt.legend()
+plt.show()
+
+
+plt.plot(A_dx0 , label = 'Steady State')
+plt.plot(AHist[1], label = '5')
+plt.plot(AHist[2], label = '20')
+plt.plot(AHist[0], label = '1')
+plt.ylim([0,2])
+plt.legend()
+plt.show()
+
+plt.plot((AHist[1][1:]-A_dx0[1:])/(.1), label = '5')
+plt.plot((AHist[2][1:]-A_dx0[1:])/(.1), label = '20')
+plt.plot((AHist[0][1:]-A_dx0[1:])/(.1), label = '1')
+plt.plot((AHist[3][1:]-A_dx0[1:])/(.1), label = '50')
+
+plt.plot(np.zeros(100), 'k')
+
+plt.ylim([-4,5])
+plt.legend()
+plt.show()
+
+
+
+'''
+
+mNrm = ss.state_now['mNrm']  
+mLvl = ss.state_now['mNrm']*ss.state_now['pLvl']
+plt.hist(mNrm, bins=np.linspace(0,5,num=1000))
+plt.show()
+
+plt.hist(mLvl, bins=np.linspace(0,1.2,num=1000))
+plt.show()
+
+'''
 
 
 
