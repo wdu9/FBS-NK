@@ -30,12 +30,12 @@ from HARK.interpolation import (
     MargValueFuncCRRA,
     MargMargValueFuncCRRA
 )
-from HARK.distribution import Uniform
+from HARK.distribution import Uniform, Distribution
 from HARK.ConsumptionSaving.ConsAggShockModel import CobbDouglasEconomy, AggShockConsumerType
 from HARK import MetricObject, Market, AgentType
 from scipy.optimize import brentq, minimize_scalar
 import matplotlib.pyplot as plt
-from scipy.io import loadmat
+from scipy.io import loadmat, savemat
 
 from HARK.utilities import plot_funcs_der, plot_funcs
 
@@ -44,143 +44,243 @@ from HARK.utilities import plot_funcs_der, plot_funcs
 
 
 
-##############################################################################
-##############################################################################
+class DiscreteDistribution(Distribution):
+    """
+    A representation of a discrete probability distribution.
+    Parameters
+    ----------
+    pmf : np.array
+        An array of floats representing a probability mass function.
+    X : np.array or [np.array]
+        Discrete point values for each probability mass.
+        May be multivariate (list of arrays).
+    seed : int
+        Seed for random number generator.
+    """
 
+    pmf = None
+    X = None
 
-# =============================================================================
-# class FBSNK_solver(ConsIndShockSolver):
-#     
-#    
-#     def __init__(self, 
-#                 solution_next,
-#                 IncShkDstn,
-#                 LivPrb,
-#                 DiscFac,
-#                 CRRA,
-#                 Rfree,
-#                 PermGroFac,
-#                 BoroCnstArt,
-#                 aXtraGrid,
-#                 vFuncBool,
-#                 CubicBool,
-#                 
-#                 jac,
-#                 jacW,
-#                 cList,
-#                 s,
-#                 dx,
-#                 T_sim,
-#                 mu_u,
-#                 L,
-#                 PermShkStd,
-#                 PermShkCount,
-#                 TranShkCount,
-#                 TranShkStd,
-#                 tax_rate,
-#                 UnempPrb,
-#                 IncUnemp,
-#                 #wage,
-#                 #N,
-#                 Ghost,
-#                 
-#                 
-#                 ):
-#                  
-#         self.s = s 
-#         self.dx=dx
-#         self.cList = cList #need to change this to time state variable somehow
-#         self.jac = jac
-#         self.jacW = jacW
-#         self.mu_u = mu_u
-#         self.L = L
-#         self.PermShkStd = PermShkStd
-#         self.PermShkCount = PermShkCount
-#         self.TranShkCount = TranShkCount
-#         self.TranShkStd = TranShkStd
-#         self.tax_rate = tax_rate
-#         self.UnempPrb = UnempPrb
-#         self.IncUnemp = IncUnemp
-#         #self.wage=wage
-#         #self.N=N
-#         self.Ghost=Ghost
-#                 
-#         
-#         
-#         self.solution_next = solution_next
-#         self.IncShkDstn = IncShkDstn
-#         self.LivPrb = LivPrb
-#         self.DiscFac = DiscFac
-#         self.CRRA = CRRA
-#         self.PermGroFac = PermGroFac
-#         self.BoroCnstArt = BoroCnstArt
-#         self.aXtraGrid = aXtraGrid
-#         self.vFuncBool = vFuncBool
-#         self.CubicBool = CubicBool
-#         self.def_utility_funcs()
-#         self.Rfree=Rfree
-#         self.T_sim = T_sim
-#         
-#         
-#     
-# 
-#               
-#   
-#         
-#     
-#     def solve(self):
-#         """
-#         Solves the single period consumption-saving problem using the method of
-#         endogenous gridpoints.  Solution includes a consumption function cFunc
-#         (using cubic or linear splines), a marginal value function vPfunc, a min-
-#         imum acceptable level of normalized market resources mNrmMin, normalized
-#         human wealth hNrm, and bounding MPCs MPCmin and MPCmax.  It might also
-#         have a value function vFunc and marginal marginal value function vPPfunc.
-#         Parameters
-#         ----------
-#         none
-#         Returns
-#         -------
-#         solution : ConsumerSolution
-#             The solution to the single period consumption-saving problem.
-#         """
-#         # Make arrays of end-of-period assets and end-of-period marginal value
-#         
-# 
-# 
-#         aNrm = self.prepare_to_calc_EndOfPrdvP()
-#         EndOfPrdvP = self.calc_EndOfPrdvP()
-# 
-#         # Construct a basic solution for this period
-#         if self.CubicBool:
-#             solution = self.make_basic_solution(
-#                 EndOfPrdvP, aNrm, interpolator=self.make_cubic_cFunc
-#             )
-#         else:
-#             solution = self.make_basic_solution(
-#                 EndOfPrdvP, aNrm, interpolator=self.make_linear_cFunc
-#             )
-# 
-#         solution = self.add_MPC_and_human_wealth(solution)  # add a few things
-#         solution = self.add_stable_points(solution)
-#             
-#         
-#         
-#         self.cList.append(solution.cFunc)
-#         
-#         # Add the value function if requested, as well as the marginal marginal
-#         # value function if cubic splines were used (to prepare for next period)
-#         if self.vFuncBool:
-#             solution = self.add_vFunc(solution, EndOfPrdvP)
-#         if self.CubicBool:
-#             solution = self.add_vPPfunc(solution)
-#         return solution
-# 
-# =============================================================================
+    def __init__(self, pmf, X, seed=0):
+        self.pmf = pmf
+        self.X = X
+        # Set up the RNG
+        super().__init__(seed)
 
+        # Very quick and incomplete parameter check:
+        # TODO: Check that pmf and X arrays have same length.
+
+    def dim(self):
+        if isinstance(self.X, list):
+            return len(self.X)
+        else:
+            return 1
+
+    def draw_events(self, n):
+        """
+        Draws N 'events' from the distribution PMF.
+        These events are indices into X.
+        """
+        # Generate a cumulative distribution
+        base_draws = self.RNG.uniform(size=n)
+        cum_dist = np.cumsum(self.pmf)
+
+        # Convert the basic uniform draws into discrete draws
+        indices = cum_dist.searchsorted(base_draws)
+
+        return indices
     
+    def draw_perf(self, N, X=None, exact_match=True):
+        
+        """
+        Simulates N draws from a discrete distribution with probabilities P and outcomes X.
+        Parameters
+        ----------
+        N : int
+            Number of draws to simulate.
+        X : None, int, or np.array
+            If None, then use this distribution's X for point values.
+            If an int, then the index of X for the point values.
+            If an np.array, use the array for the point values.
+        exact_match : boolean
+            Whether the draws should "exactly" match the discrete distribution (as
+            closely as possible given finite draws).  When True, returned draws are
+            a random permutation of the N-length list that best fits the discrete
+            distribution.  When False (default), each draw is independent from the
+            others and the result could deviate from the input.
+        Returns
+        -------
+        draws : np.array
+            An array of draws from the discrete distribution; each element is a value in X.
+        """
+        if X is None:
+            X = self.X
+            J = self.dim()
+        elif isinstance(X, int):
+            X = self.X[X]
+            J = 1
+        else:
+            X = X
+            J = 1
+
+        if exact_match:
+            events = np.arange(self.pmf.size)  # just a list of integers
+            cutoffs = np.round(np.cumsum(self.pmf) * N).astype(
+                int
+            )  # cutoff points between discrete outcomes
+            top = 0
+
+            # Make a list of event indices that closely matches the discrete distribution
+            event_list = []
+            for j in range(events.size):
+                bot = top
+                top = cutoffs[j]
+                event_list += (top - bot) * [events[j]]
+                
+            indices = self.RNG.permutation(event_list)
+
+            # Randomly permute the event indices
+            
+        return indices 
+
+    def draw(self, N, X=None, exact_match=True):
+        """
+        Simulates N draws from a discrete distribution with probabilities P and outcomes X.
+        Parameters
+        ----------
+        N : int
+            Number of draws to simulate.
+        X : None, int, or np.array
+            If None, then use this distribution's X for point values.
+            If an int, then the index of X for the point values.
+            If an np.array, use the array for the point values.
+        exact_match : boolean
+            Whether the draws should "exactly" match the discrete distribution (as
+            closely as possible given finite draws).  When True, returned draws are
+            a random permutation of the N-length list that best fits the discrete
+            distribution.  When False (default), each draw is independent from the
+            others and the result could deviate from the input.
+        Returns
+        -------
+        draws : np.array
+            An array of draws from the discrete distribution; each element is a value in X.
+        """
+        if X is None:
+            X = self.X
+            J = self.dim()
+        elif isinstance(X, int):
+            X = self.X[X]
+            J = 1
+        else:
+            X = X
+            J = 1
+
+        if exact_match:
+            events = np.arange(self.pmf.size)  # just a list of integers
+            cutoffs = np.round(np.cumsum(self.pmf) * N).astype(
+                int
+            )  # cutoff points between discrete outcomes
+            top = 0
+
+            # Make a list of event indices that closely matches the discrete distribution
+            event_list = []
+            for j in range(events.size):
+                bot = top
+                top = cutoffs[j]
+                event_list += (top - bot) * [events[j]]
+
+            # Randomly permute the event indices
+            indices = self.RNG.permutation(event_list)
+
+        # Draw event indices randomly from the discrete distribution
+        else:
+            indices = self.draw_events(N)
+
+        # Create and fill in the output array of draws based on the output of event indices
+        if J > 1:
+            draws = np.zeros((J, N))
+            for j in range(J):
+                draws[j, :] = X[j][indices]
+        else:
+            draws = np.asarray(X)[indices]
+
+        return draws
 
 
+
+def combine_indep_dstns2(*distributions, seed=0):
+    """
+    Given n lists (or tuples) whose elements represent n independent, discrete
+    probability spaces (probabilities and values), construct a joint pmf over
+    all combinations of these independent points.  Can take multivariate discrete
+    distributions as inputs.
+    Parameters
+    ----------
+    distributions : [np.array]
+        Arbitrary number of distributions (pmfs).  Each pmf is a list or tuple.
+        For each pmf, the first vector is probabilities and all subsequent vectors
+        are values.  For each pmf, this should be true:
+        len(X_pmf[0]) == len(X_pmf[j]) for j in range(1,len(distributions))
+    Returns
+    -------
+    A DiscreteDistribution, consisting of:
+    P_out: np.array
+        Probability associated with each point in X_out.
+    X_out: np.array (as many as in *distributions)
+        Discrete points for the joint discrete probability mass function.
+    """
+    # Get information on the distributions
+    dist_lengths = ()
+    dist_dims = ()
+    for dist in distributions:
+        dist_lengths += (len(dist.pmf),)
+        dist_dims += (dist.dim(),)
+    number_of_distributions = len(distributions)
+
+    # Initialize lists we will use
+    X_out = []
+    P_temp = []
+
+    # Now loop through the distributions, tiling and flattening as necessary.
+    for dd, dist in enumerate(distributions):
+
+        # The shape we want before we tile
+        dist_newshape = (
+            (1,) * dd + (len(dist.pmf),) + (1,) * (number_of_distributions - dd)
+        )
+
+        # The tiling we want to do
+        dist_tiles = dist_lengths[:dd] + (1,) + dist_lengths[dd + 1 :]
+
+        # Now we are ready to tile.
+        # We don't use the np.meshgrid commands, because they do not
+        # easily support non-symmetric grids.
+
+        # First deal with probabilities
+        Pmesh = np.tile(dist.pmf.reshape(dist_newshape), dist_tiles)  # Tiling
+        flatP = Pmesh.ravel()  # Flatten the tiled arrays
+        P_temp += [
+            flatP,
+        ]  # Add the flattened arrays to the output lists
+
+        # Then loop through each value variable
+        for n in range(dist_dims[dd]):
+            if dist.dim() > 1:
+                Xmesh = np.tile(dist.X[n].reshape(dist_newshape), dist_tiles)
+            else:
+                Xmesh = np.tile(dist.X.reshape(dist_newshape), dist_tiles)
+            flatX = Xmesh.ravel()
+            X_out += [
+                flatX,
+            ]
+
+    # We're done getting the flattened X_out arrays we wanted.
+    # However, we have a bunch of flattened P_temp arrays, and just want one
+    # probability array. So get the probability array, P_out, here.
+    P_out = np.prod(np.array(P_temp), axis=0)
+
+    assert np.isclose(np.sum(P_out), 1), "Probabilities do not sum to 1!"
+    return DiscreteDistribution(P_out, X_out, seed=seed)
 
 
 
@@ -212,7 +312,7 @@ class FBSNK_agent(IndShockConsumerType):
                                                     "UnempPrb",
                                                     "IncUnemp",
                                                     "G",
-                                                    "cList"
+                                                    
                                                                                
                     
                                                   ]
@@ -224,14 +324,11 @@ class FBSNK_agent(IndShockConsumerType):
         
         IndShockConsumerType.__init__(self, cycles = 0, **kwds)
         
-        self.cList=[]
-# =============================================================================
-#         solver = FBSNK_solver
-#         self.solve_one_period = make_one_period_oo_solver(solver)
-# =============================================================================
-    
-    '''
 
+    
+
+    '''
+    
     def  update_income_process(self):
         
         self.wage = 1/(self.SSPmu) #calculate SS wage
@@ -271,7 +368,7 @@ class FBSNK_agent(IndShockConsumerType):
         self.add_to_time_vary('IncShkDstn')
         
         
-
+        
                 
         
         
@@ -312,13 +409,81 @@ class FBSNK_agent(IndShockConsumerType):
         TranShkDstn.pmf  = np.insert(TranShkDstn.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)
         TranShkDstn.X  = np.insert(TranShkDstn.X*(((1.0-self.tax_rate)*self.N*self.wage)/(1-self.UnempPrb)),0,self.IncUnemp)
         PermShkDstn     = MeanOneLogNormal(self.PermShkStd[0],123).approx(self.PermShkCount)
-        self.IncShkDstn = [combine_indep_dstns(PermShkDstn,TranShkDstn)]
+        self.IncShkDstn = [combine_indep_dstns2(PermShkDstn,TranShkDstn)]
         self.TranShkDstn = [TranShkDstn]
         self.PermShkDstn = [PermShkDstn]
         self.add_to_time_vary('IncShkDstn')
-    
         
+        TranShkDstnW     = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
+        TranShkDstnW.pmf  = np.insert(TranShkDstnW.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)
+        TranShkDstnW.X  = np.insert(TranShkDstnW.X*(((1.0-self.tax_rate)*self.N*(self.wage + self.dx))/(1-self.UnempPrb)),0,self.IncUnemp)
+        PermShkDstnW     = MeanOneLogNormal(self.PermShkStd[0],123).approx(self.PermShkCount)
+        self.IncShkDstnW = [combine_indep_dstns(PermShkDstnW,TranShkDstnW)]
+        self.TranShkDstnW = [TranShkDstnW]
+        self.PermShkDstnW = [PermShkDstnW]
+        self.add_to_time_vary('IncShkDstnW')
+     
+    
+    
+    
+    def get_shocks(self):
+        """
+        Gets permanent and transitory income shocks for this period.  Samples from IncShkDstn for
+        each period in the cycle.
+        Parameters
+        ----------
+        None
+        Returns
+        -------
+        None
+        """
+        
+        
+        PermShkNow = np.zeros(self.AgentCount)  # Initialize shock arrays
+        TranShkNow = np.zeros(self.AgentCount)
+        newborn = self.t_age == 0
+        for t in range(self.T_cycle):
+            these = t == self.t_cycle
+            N = np.sum(these)
+            if N > 0:
+                IncShkDstnNow = self.IncShkDstn[
+                    t - 1
+                ]  # set current income distribution
+                PermGroFacNow = self.PermGroFac[t - 1]  # and permanent growth factor
+                # Get random draws of income shocks from the discrete distribution
+                IncShks = IncShkDstnNow.draw(N, exact_match=True) 
 
+                PermShkNow[these] = (
+                    IncShks[0, :] * PermGroFacNow
+                )  # permanent "shock" includes expected growth
+                TranShkNow[these] = IncShks[1, :]
+
+        # That procedure used the *last* period in the sequence for newborns, but that's not right
+        # Redraw shocks for newborns, using the *first* period in the sequence.  Approximation.
+        
+        N = np.sum(newborn)
+        if N > 0:
+            these = newborn
+            IncShkDstnNow = self.IncShkDstn[0]  # set current income distribution
+            PermGroFacNow = self.PermGroFac[0]  # and permanent growth factor
+           
+
+            # Get random draws of income shocks from the discrete distribution
+            EventDraws = IncShkDstnNow.draw_perf(N)
+            #EventDraws = IncShkDstnNow.draw_events(N)
+            PermShkNow[these] = (
+                IncShkDstnNow.X[0][EventDraws] * PermGroFacNow
+            )  # permanent "shock" includes expected growth
+            TranShkNow[these] = IncShkDstnNow.X[1][EventDraws]
+        #        PermShkNow[newborn] = 1.0
+        #TranShkNow[newborn] = 1.0
+
+        # Store the shocks in self
+        self.EmpNow = np.ones(self.AgentCount, dtype=bool)
+        self.EmpNow[TranShkNow == self.IncUnemp] = False
+        self.shocks['PermShk'] = PermShkNow
+        self.shocks['TranShk'] = TranShkNow
+        
     
     def get_Rfree(self):
         """
@@ -380,7 +545,7 @@ FBSDict={
     "CRRA":2,                           # Coefficient of relative risk aversion
     "Rfree": 1.048**.25,                       # Interest factor on assets
     "DiscFac": 0.97,                     # Intertemporal discount factor
-    "LivPrb" : [.99],  #.9725                  # Survival probability
+    "LivPrb" : [.995],  #.9725                  # Survival probability
     "PermGroFac" :[1.00],                 # Permanent income growth factor
 
     # Parameters that specify the income distribution over the lifecycle
@@ -389,12 +554,12 @@ FBSDict={
     "PermShkCount" : 5,                    # Number of points in discrete approximation to permanent income shocks
     "TranShkStd" : [.2],        # Standard deviation of log transitory shocks to income
     "TranShkCount" : 5,                    # Number of points in discrete approximation to transitory income shocks
-    "UnempPrb" : 0.08,                     # Probability of unemployment while working
+    "UnempPrb" : 0.05, #.08                     # Probability of unemployment while working
     "IncUnemp" : 0.09535573122529638,                      # Unemployment benefits replacement rate
     "UnempPrbRet" : 0.0005,                # Probability of "unemployment" while retired
     "IncUnempRet" : 0.0,                   # "Unemployment" benefits when retired
     "T_retire" : 0,                        # Period of retirement (0 --> no retirement)
-    "tax_rate" : .16806722689075632,                      # Flat income tax rate (legacy parameter, will be removed in future)
+    "tax_rate" : 0.16563445378151262,                      # Flat income tax rate (legacy parameter, will be removed in future)
 
     # Parameters for constructing the "assets above minimum" grid
     "aXtraMin" : 0.001,                    # Minimum end-of-period "assets above minimum" value
@@ -410,9 +575,9 @@ FBSDict={
     "T_cycle" : 1,                         # Number of periods in the cycle for this agent type
 
     # Parameters only used in simulation
-    "AgentCount" : 150000,                 # Number of agents of this type
+    "AgentCount" : 250000,                 # Number of agents of this type
     "T_sim" : 1400,                         # Number of periods to simulate
-    "aNrmInitMean" : np.log(1.2)-(.5**2)/2,# Mean of log initial assets
+    "aNrmInitMean" : np.log(1.3)-(.5**2)/2,# Mean of log initial assets
     "aNrmInitStd"  : .5,                   # Standard deviation of log initial assets
     "pLvlInitMean" : 0.0,                  # Mean of log initial permanent income
     "pLvlInitStd"  : 0.0,                  # Standard deviation of log initial permanent income
@@ -445,8 +610,9 @@ FBSDict={
 
 G=.19
 t=.16806722689075632
+t=0.16563445378151262
 Inc = 0.09535573122529638
-mho=.08
+mho=.05
 
 w = (1/1.012)
 N = (Inc*mho + G) / (w*t) 
@@ -456,7 +622,7 @@ q = ((1-w)*N)/r
 print(N)
 print(q)
 
-
+'''
 N= 1 + G
 
 tnew = (Inc*mho + G)/(N*w)
@@ -468,7 +634,7 @@ print(new)
 print(N)
 print(N-G)
 print(q)
-
+'''
 
 
 
@@ -477,10 +643,11 @@ print(q)
 ss_agent = FBSNK_agent(**FBSDict)
 ss_agent.cycles = 0
 ss_agent.dx = 0
-ss_agent.T_sim = 3000
+ss_agent.T_sim = 2000
 #ss_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 
-target = 1.1968486068588406
+target = q
+
 
 NumAgents = 150000
 
@@ -490,15 +657,12 @@ completed_loops=0
 
 go = True
 
-num_consumer_types = 7     # number of types 
+num_consumer_types = 5     # number of types 
 
 
 
-#center = .974 #for Rfree 1.04**.25 and target 0.34505832912738216
-#center =.9681
-#center =.7
-center =.962
 
+center =.9675
 
 while go:
     
@@ -638,20 +802,12 @@ ax2.set_ylabel('Number of Households', color='k')
 #plt.savefig("Presentation.png", dpi=150)
 
 '''
-# =============================================================================
-# time_pref=[]
-# 
-# for i in range(num_consumer_types):
-#     time_pref.append((1/(DiscFac_list[i]*ss_agent.LivPrb[0])) - 1)
-# 
-# for i in range(num_consumer_types):
-#     print(time_pref[i]- (1.05**.25 - 1))
-# =============================================================================
+
 ################################################################################
 ################################################################################
 
 
-class FBSNK2(FBSNK_agent):
+class FBSNK_JAC(FBSNK_agent):
     
     
   
@@ -678,6 +834,122 @@ class FBSNK2(FBSNK_agent):
                 self.solution_terminal.vPPfunc =  deepcopy(consumers_ss[i].solution[0].vPPfunc)
 
   
+     def get_shocks(self):
+        
+        """
+        Gets permanent and transitory income shocks for this period.  Samples from IncShkDstn for
+        each period in the cycle.
+        Parameters
+        ----------
+        None
+        Returns
+        -------
+        None
+        """
+        
+        
+        PermShkNow = np.zeros(self.AgentCount)  # Initialize shock arrays
+        TranShkNow = np.zeros(self.AgentCount)
+        newborn = self.t_age == 0
+        
+        
+        for t in range(self.T_cycle):
+            these = t == self.t_cycle
+            N = np.sum(these)
+
+            if N > 0:
+                IncShkDstnNow = self.IncShkDstn[
+                    t - 1
+                ]  # set current income distribution
+                PermGroFacNow = self.PermGroFac[t - 1]  # and permanent growth factor
+                # Get random draws of income shocks from the discrete distribution
+                IncShks = IncShkDstnNow.draw(N, exact_match=True) 
+
+                PermShkNow[these] = (
+                    IncShks[0, :] * PermGroFacNow
+                )  # permanent "shock" includes expected growth
+                TranShkNow[these] = IncShks[1, :]
+
+        # That procedure used the *last* period in the sequence for newborns, but that's not right
+        # Redraw shocks for newborns, using the *first* period in the sequence.  Approximation.
+   
+        
+        N = np.sum(newborn)
+        if N > 0:
+            these = newborn
+            IncShkDstnNow = ss_agent.IncShkDstn[0]  # set current income distribution
+            PermGroFacNow = self.PermGroFac[0]  # and permanent growth factor
+           
+
+            # Get random draws of income shocks from the discrete distribution
+            EventDraws = IncShkDstnNow.draw_perf(N)
+            #EventDraws = IncShkDstnNow.draw_events(N)
+            PermShkNow[these] = (
+                IncShkDstnNow.X[0][EventDraws] * PermGroFacNow
+            )  # permanent "shock" includes expected growth
+            TranShkNow[these] = IncShkDstnNow.X[1][EventDraws]
+        
+        #PermShkNow[newborn] = 1.0
+        #TranShkNow[newborn] = 1.0
+
+        # Store the shocks in self
+        self.EmpNow = np.ones(self.AgentCount, dtype=bool)
+        self.EmpNow[TranShkNow == self.IncUnemp] = False
+        self.shocks['PermShk'] = PermShkNow
+        self.shocks['TranShk'] = TranShkNow
+
+     def sim_birth(self, which_agents):
+        """
+        Makes new consumers for the given indices.  Initialized variables include aNrm and pLvl, as
+        well as time variables t_age and t_cycle.  Normalized assets and permanent income levels
+        are drawn from lognormal distributions given by aNrmInitMean and aNrmInitStd (etc).
+        Parameters
+        ----------
+        which_agents : np.array(Bool)
+            Boolean array of size self.AgentCount indicating which agents should be "born".
+        Returns
+        -------
+        None
+        """
+        # Get and store states for newly born agents
+        #if self.t_sim != 0:
+            #which_agents = np.zeros(self.AgentCount, dtype=bool)
+        
+        
+        N = np.sum(which_agents)  # Number of new consumers to make
+        
+
+        self.state_now['aNrm'][which_agents] = Lognormal(
+            mu=self.aNrmInitMean,
+            sigma=self.aNrmInitStd,
+            seed=self.RNG.randint(0, 2 ** 31 - 1),
+        ).draw(N)
+        
+        
+        # why is a now variable set here? Because it's an aggregate.
+        pLvlInitMeanNow = self.pLvlInitMean + np.log(
+            self.state_now['PlvlAgg']
+        )  # Account for newer cohorts having higher permanent income
+        
+        self.state_now['pLvl'][which_agents] = Lognormal(
+            pLvlInitMeanNow,
+            self.pLvlInitStd,
+            seed=self.RNG.randint(0, 2 ** 31 - 1)
+        ).draw(N)
+        
+            
+        
+        
+        self.t_age[which_agents] = 0  # How many periods since each agent was born
+        
+# =============================================================================
+#         self.t_cycle[
+#             which_agents
+#         ] = 0  # Which period of the cycle each agent is currently in
+# =============================================================================
+ 
+        return None
+        
         
     
 
@@ -696,9 +968,11 @@ params['Rfree'] = params['T_cycle']*[ss_agent.Rfree]
 
 ###############################################################################
 
-ghost_agent = FBSNK2(**params)
+ghost_agent = FBSNK_JAC(**params)
 ghost_agent.pseudo_terminal = False
 ghost_agent.IncShkDstn = params['T_cycle']*ghost_agent.IncShkDstn
+
+
 ghost_agent.del_from_time_inv('Rfree')
 ghost_agent.add_to_time_vary('Rfree')
 
@@ -720,8 +994,7 @@ for i in range(num_consumer_types):
 for i in range(num_consumer_types):
         ghosts[i].DiscFac   = DiscFac_list[i]
         ghosts[i].AgentCount = int(NumAgents*DiscFac_dist.pmf[i])
-        #ghosts[i].solution_terminal = deepcopy(consumers_ss[i].solution[0]) ### Should it have a Deepcopy?
-        #ghosts[i].cFunc_terminal_ = deepcopy(consumers_ss[i].solution[0].cFunc)
+
 
         
 ##############################################################################
@@ -778,19 +1051,28 @@ plt.show()
 ###############################################################################
 ###############################################################################
 
-jac_agent = FBSNK2(**params)
+jac_agent = FBSNK_JAC(**params)
 
 #jac_agent = FBSNK2(**params)
 jac_agent.pseudo_terminal = False
-jac_agent.dx = 0.1
-jac_agent.jac = True
-jac_agent.jacW = False
+jac_agent.jac = False
+jac_agent.jacW = True
 jac_agent.IncShkDstn = params['T_cycle']*jac_agent.IncShkDstn
-jac_agent.del_from_time_inv('Rfree')
-jac_agent.add_to_time_vary('Rfree')
 jac_agent.T_sim = params['T_cycle']
 jac_agent.cycles = 1
 jac_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl','aLvl']
+
+if jac_agent.jac == True:
+    jac_agent.dx = .1
+    jac_agent.del_from_time_inv('Rfree')
+    jac_agent.add_to_time_vary('Rfree')
+    jac_agent.IncShkDstn = params['T_cycle']*ss_agent.IncShkDstn
+
+if jac_agent.jacW == True:
+    jac_agent.dx = 4
+    jac_agent.Rfree = ss_agent.Rfree
+    jac_agent.update_income_process()
+
 
 
 consumers = [] 
@@ -804,8 +1086,6 @@ for i in range(num_consumer_types):
 for i in range(num_consumer_types):
         consumers[i].DiscFac    = DiscFac_list[i]
         consumers[i].AgentCount = int(NumAgents*DiscFac_dist.pmf[i])
-        #consumers[i].solution_terminal = deepcopy(ghosts[i].solution_terminal) ### Should it have a Deepcopy?
-        #consumers[i].cFunc_terminal_ = deepcopy(consumers_ss[i].solution[0].cFunc)
 
 
 ###############################################################################
@@ -818,7 +1098,9 @@ Mega_list =[]
 CHist = []
 AHist = []
 MHist = []
-#for i in range(jac_agent.T_sim):
+#for i in range(jac_agent.T_sim +1):
+    
+    
 for i in testSet:
         
         listH_C = []
@@ -831,9 +1113,13 @@ for i in testSet:
             
             consumers[k].cList=[]
             consumers[k].s = i 
-            #consumers[k].IncShkDstn = (i-1)*ss_agent.IncShkDstn + jac_agent.IncShkDstnW + (params['T_cycle'] - i)*ss_agent.IncShkDstn
-            consumers[k].Rfree = (i)*[ss_agent.Rfree] + [ss_agent.Rfree + jac_agent.dx] + (params['T_cycle'] - i - 1)*[ss_agent.Rfree]
-
+            
+            if jac_agent.jacW == True:
+                consumers[k].IncShkDstn = i *ss_agent.IncShkDstn + jac_agent.IncShkDstnW + (params['T_cycle'] - i - 1)* ss_agent.IncShkDstn
+                
+            if jac_agent.jac == True:
+                consumers[k].Rfree = (i)*[ss_agent.Rfree] + [ss_agent.Rfree + jac_agent.dx] + (params['T_cycle'] - i - 1)*[ss_agent.Rfree]
+            
 
             consumers[k].solve()
             consumers[k].initialize_sim()
@@ -882,50 +1168,62 @@ for i in testSet:
 ###############################################################################
 ###############################################################################
 
+'''
+CJAC = []
+AJAC = []
+for i in range(201):
+    CJAC.append((CHist[i]-C_dx0)/jac_agent.dx)
+    AJAC.append((AHist[i]-A_dx0)/jac_agent.dx)
+    
+savemat('CJAC.mat', mdict={'CJAC' : CJAC})
+savemat('AJAC.mat', mdict={'AJAC' : AJAC})
+'''
+
 plt.plot(C_dx0 , label = 'Steady State')
-plt.plot(CHist[1], label = '15')
+plt.plot(CHist[1], label = '20')
 plt.plot(CHist[3], label = '100')
-plt.plot(CHist[2], label = '40')
+plt.plot(CHist[2], label = '50')
 plt.title("Aggregate Consumption")
 plt.ylabel("Aggregate Consumption")
 plt.xlabel("Period")
-plt.ylim([0.94,1.06])
+plt.ylim([.9,1.1])
 plt.legend()
-plt.savefig("AggregateConsumption.jpg", dpi=400)
+#plt.savefig("AggregateConsumption.jpg", dpi=400)
 plt.show()
 
 
 
 
 
-plt.plot((CHist[0][1:]- C_dx0[1:])/(jac_agent.dx), label = '1')
-plt.plot((CHist[3][1:]- C_dx0[1:])/(jac_agent.dx), label = '100')
-plt.plot((CHist[1][1:]- C_dx0[1:])/(jac_agent.dx), label = '20')
-plt.plot((CHist[2][1:] - C_dx0[1:])/(jac_agent.dx), label = '50')
+plt.plot((CHist[0][1 :]- C_dx0[1 :])/(jac_agent.dx), label = '0')
+#plt.plot((CHist[4]- C_dx0)/(jac_agent.dx), label = '175')
+
+plt.plot((CHist[3]- C_dx0)/(jac_agent.dx), label = '100')
+plt.plot((CHist[1]- C_dx0)/(jac_agent.dx), label = '20')
+plt.plot((CHist[2] - C_dx0)/(jac_agent.dx), label = '50')
 plt.plot(np.zeros(jac_agent.T_sim), 'k')
-plt.ylim([-.3,.4])
 plt.ylabel("dC / dr")
 
 plt.xlabel("Period")
 plt.title("Consumption Jacobians")
 plt.legend()
-plt.savefig("ConsumptionJacobian.jpg", dpi=400)
+plt.ylim([-.1,.12])
+#plt.savefig("ConsumptionJacobian.jpg", dpi=400)
 plt.show()
 
 
 
 
 plt.plot(M_dx0, label = 'm steady state')
-plt.plot(MHist[1], label = '15')
+plt.plot(MHist[1], label = '20')
 plt.plot(MHist[3], label = '100')
-plt.plot(MHist[2], label = '40')
+plt.plot(MHist[2], label = '50')
 plt.ylabel("Agregate Wealth")
-plt.ylim([2,2.6])
 plt.xlabel("Period")
 plt.title("Path of Aggregate Wealth")
+plt.ylim([2,3])
 plt.legend()
-plt.savefig("Path_Aggregate Wealth.jpg", dpi=400)
-
+#plt.savefig("Path_Aggregate Wealth.jpg", dpi=400)
 plt.show()
 
 
@@ -937,24 +1235,23 @@ plt.xlabel("Period")
 plt.ylabel("Aggregate Wealth")
 plt.title("Wealth Jacobians")
 plt.legend()
-plt.savefig("Aggregate Wealth.jpg", dpi=400)
+#plt.savefig("Aggregate Wealth.jpg", dpi=400)
 plt.show()
 
 
 
 
 plt.plot(A_dx0, label = 'Asset steady state')
-plt.plot(AHist[2], label = '40')
+plt.plot(AHist[2], label = '50')
+plt.plot(AHist[1], label = '20')
 plt.plot(AHist[3], label = '100')
-plt.plot(AHist[0], label = '15')
-plt.plot(AHist[0], label = '1')
-plt.ylim([1,1.5])
+plt.plot(AHist[0], label = '0')
 plt.xlabel("Period")
 plt.ylabel("Aggregate Assets")
 plt.title("Aggregate Assets")
+plt.ylim([0,2])
 plt.legend()
-plt.savefig("Aggregate Assets.jpg", dpi=400)
-
+#plt.savefig("Aggregate Assets.jpg", dpi=400)
 plt.show()
 
 
@@ -967,10 +1264,9 @@ plt.plot((AHist[3]- A_dx0)/(jac_agent.dx), label = '100')
 plt.plot(np.zeros(jac_agent.T_sim), 'k')
 plt.xlabel("Period")
 plt.ylabel("dA / dr")
-plt.ylim([-.2,2])
 plt.title("Asset Jacobians")
 plt.legend()
-plt.savefig("Rfree_AssetJacobian.jpg", dpi=400)
+#plt.savefig("Rfree_AssetJacobian.jpg", dpi=400)
 plt.show()
 
 
@@ -1031,7 +1327,7 @@ ax2.set_ylim((0,1600))
 ax2.set_ylabel('Number of Households', color='k')
 #plt.savefig("Presentation.png", dpi=150)
 
-'''
+
 mu=1.2
 sigma1= .5
 mean=np.log(mu)-(sigma1**2)/2
@@ -1052,7 +1348,7 @@ plt.hist(ad,bins=np.linspace(-2,20,num=10000))
 plt.hist(aLvl,bins=np.linspace(-2,20,num=10000))
 
 
-'''
+
 
 G=.3
 t=.15
