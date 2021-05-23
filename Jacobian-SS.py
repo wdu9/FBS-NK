@@ -42,6 +42,14 @@ from HARK.utilities import plot_funcs_der, plot_funcs
 
 
 
+    
+
+
+
+
+
+##############################################################################
+
 
 class FBSNK_agent(IndShockConsumerType):
     
@@ -52,7 +60,7 @@ class FBSNK_agent(IndShockConsumerType):
                                                    "wage",
                                                    "N",
                                                    "B",
-                                                   "cList",
+                                                 
                                                    "s",
                                                    "dx",
                                                    "T_sim",
@@ -68,7 +76,7 @@ class FBSNK_agent(IndShockConsumerType):
                                                     "UnempPrb",
                                                     "IncUnemp",
                                                     "G",
-                                                                                           
+                                                                               
                     
                                                   ]
     
@@ -79,18 +87,15 @@ class FBSNK_agent(IndShockConsumerType):
         
         IndShockConsumerType.__init__(self, cycles = 200, **kwds)
         
-        #Steady State values for Wage , Labor and tax rate
-        self.cList = []
-        self.s = self.s 
-        self.dx=self.dx
-
+     
     
     
 
     def  update_income_process(self):
         
         self.wage = 1/(self.SSPmu) #calculate SS wage
-        self.N = (self.mu_u*(self.IncUnemp*self.UnempPrb ) + self.G )/ (self.wage*self.tax_rate)  #calculate SS labor supply from Budget Constraint
+        self.N = (self.mu_u*(self.IncUnemp*self.UnempPrb ) + self.G )/ (self.wage*self.tax_rate)#calculate SS labor supply from Budget Constraint
+        
 
         
         
@@ -155,7 +160,6 @@ class FBSNK_agent(IndShockConsumerType):
         self.IncShkDstnW = IncShkDstnW
         self.add_to_time_vary('IncShkDstnW')
         
-        
  
     
     def get_Rfree(self):
@@ -213,7 +217,7 @@ class FBSNK_agent(IndShockConsumerType):
     
     
     
-IdiosyncDict={
+FBSDict={
     # Parameters shared with the perfect foresight model
     "CRRA":2,                           # Coefficient of relative risk aversion
     "Rfree": 1.05**.25,                       # Interest factor on assets
@@ -277,26 +281,13 @@ IdiosyncDict={
 
 
     
-
+###############################################################################
 
 
 
 ###############################################################################
-NumAgents = 150000
 
-
-
-
-###############################################################################
-target = .27704816263570453
-
-tolerance = .001
-
-completed_loops=0
-
-go = True
-
-ss_agent = FBSNK_agent(**IdiosyncDict)
+ss_agent = FBSNK_agent(**FBSDict)
 ss_agent.cycles = 0
 ss_agent.jac = False
 ss_agent.jacW = False
@@ -304,8 +295,17 @@ ss_agent.dx = 0
 ss_agent.T_sim = 1400
 ss_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl']
 
+target = .27704816263570453
 
-num_consumer_types = 7     # number of types 
+NumAgents = 150000
+
+tolerance = .001
+
+completed_loops=0
+
+go = True
+
+num_consumer_types = 5     # number of types 
 
 
 '''
@@ -406,9 +406,7 @@ while go:
     
     go = distance >= tolerance and completed_loops < 1
         
-
-print(AggA)
-print(AggC)
+print("Done Computing Steady State")
 
 
 ###############################################################################
@@ -430,12 +428,6 @@ mNrm = np.concatenate(list_mNrm)
 mLvl = np.concatenate(list_mLvl)
 aNrm = np.concatenate(list_aNrm)
 
-plt.hist(mNrm, bins=np.linspace(0,1.4,num=1000))
-plt.show()
-
-plt.hist(mLvl, bins=np.linspace(0,1.2,num=1000))
-plt.show()
-
 
 
 x = np.linspace(0, 1.4, 1000, endpoint=True)
@@ -450,6 +442,7 @@ h = np.histogram(mNrm, bins=np.linspace(0,1.4,num=1000))
 fig = plt.figure()
 ax1 = fig.add_subplot(111)
 plt.xlabel('Cash on Hand')
+plt.xlim(0,1.4)
 ax1.plot(x, y[0], 'k' )
 
 ax1.plot(x, y[1], 'm' )
@@ -470,14 +463,16 @@ ax2.hist(mNrm, bins=np.linspace(0,1.4,num=1000),color = 'darkviolet')
 ax2.set_ylim((0,1600))
 ax2.set_ylabel('Number of Households', color='k')
 #plt.savefig("Presentation.png", dpi=150)
-
 '''
+
 
 ################################################################################
 ################################################################################
 
 
 class FBSNK2(FBSNK_agent):
+    
+    
     
      def update_solution_terminal(self):
         """
@@ -493,28 +488,75 @@ class FBSNK2(FBSNK_agent):
         
         for i in range(num_consumer_types):
             if self.DiscFac == DiscFac_list[i]:
-                self.solution_terminal.vFunc = consumers_ss[i].solution[0].vFunc
-                self.solution_terminal.vPfunc = consumers_ss[i].solution[0].vPfunc
-                self.solution_terminal.vPPfunc =  consumers_ss[i].solution[0].vPPfunc
+                self.solution_terminal.cFunc = deepcopy(consumers_ss[i].solution[0].cFunc)
+                self.solution_terminal.vFunc = deepcopy(consumers_ss[i].solution[0].vFunc)
+                self.solution_terminal.vPfunc = deepcopy(consumers_ss[i].solution[0].vPfunc)
+                self.solution_terminal.vPPfunc =  deepcopy(consumers_ss[i].solution[0].vPPfunc)
+                
+     def sim_birth(self, which_agents):
+        """
+        Makes new consumers for the given indices.  Initialized variables include aNrm and pLvl, as
+        well as time variables t_age and t_cycle.  Normalized assets and permanent income levels
+        are drawn from lognormal distributions given by aNrmInitMean and aNrmInitStd (etc).
+        Parameters
+        ----------
+        which_agents : np.array(Bool)
+            Boolean array of size self.AgentCount indicating which agents should be "born".
+        Returns
+        -------
+        None
+        """
+        # Get and store states for newly born agents
+        #if self.t_sim != 0:
+            #which_agents = np.zeros(self.AgentCount, dtype=bool)
+        
+        
+        N = np.sum(which_agents)  # Number of new consumers to make
+        
+
+        self.state_now['aNrm'][which_agents] = Lognormal(
+            mu=self.aNrmInitMean,
+            sigma=self.aNrmInitStd,
+            seed=self.RNG.randint(0, 2 ** 31 - 1),
+        ).draw(N)
+        
+        
+        # why is a now variable set here? Because it's an aggregate.
+        pLvlInitMeanNow = self.pLvlInitMean + np.log(
+            self.state_now['PlvlAgg']
+        )  # Account for newer cohorts having higher permanent income
+        
+        self.state_now['pLvl'][which_agents] = Lognormal(
+            pLvlInitMeanNow,
+            self.pLvlInitStd,
+            seed=self.RNG.randint(0, 2 ** 31 - 1)
+        ).draw(N)
+        
+            
+        self.t_age[which_agents] = 0  # How many periods since each agent was born
+ 
+
+        return None
         
 
 ###############################################################################
 
-params = deepcopy(IdiosyncDict)
+params = deepcopy(FBSDict)
 
 
-params['T_cycle']= 200
+params['T_cycle']= 100
 params['LivPrb']= params['T_cycle']*[.98]
 params['PermGroFac']=params['T_cycle']*[1]
 params['PermShkStd'] = params['T_cycle']*[(0.01*4/11)**0.5]
 params['TranShkStd']= params['T_cycle']*[.2]
-listRfree = 5*[ss_agent.Rfree ] + [ss_agent.Rfree + 0] + (params['T_cycle'] - 6)*[ss_agent.Rfree ]
+listRfree = params['T_cycle']*[ss_agent.Rfree]
 params['Rfree'] = listRfree
 
 ###############################################################################
 
 
 ghost_agent = FBSNK2(**params)
+ghost_agent.pseudo_terminal = False
 ghost_agent.IncShkDstn = params['T_cycle']*ghost_agent.IncShkDstn
 ghost_agent.del_from_time_inv('Rfree')
 ghost_agent.add_to_time_vary('Rfree')
@@ -537,9 +579,12 @@ for i in range(num_consumer_types):
 for i in range(num_consumer_types):
         ghosts[i].DiscFac   = DiscFac_list[i]
         ghosts[i].AgentCount = int(NumAgents*DiscFac_dist.pmf[i])
-        ghosts[i].solution_terminal = deepcopy(consumers_ss[i].solution[0]) ### Should it have a Deepcopy?
+        #ghosts[i].solution_terminal = deepcopy(consumers_ss[i].solution[0]) ### Should it have a Deepcopy?
+        #ghosts[i].cFunc_terminal_ = deepcopy(consumers_ss[i].solution[0].cFunc)
+
         
-#############################################################################      
+##############################################################################
+     
      
 listA_g = []
 listH_Ag= []
@@ -584,19 +629,18 @@ M_dx0 = np.array(listM_g)
 A_dx0 = np.array(listA_g)
 C_dx0 = np.array(listC_g)
 
-plt.plot(C_dx0, label = 'steady state')
+plt.plot(C_dx0, label = 'Consumption Steady State')
 plt.legend()
 plt.show()
 
-plt.plot(A_dx0, label = 'Asset steady state')
-plt.legend()
-plt.show()
+
 ###############################################################################
 ###############################################################################
 
 
 jac_agent = FBSNK2(**params)
-jac_agent.dx = 0.01
+jac_agent.pseudo_terminal = False
+jac_agent.dx = 0.0001
 jac_agent.jac = True
 jac_agent.jacW = False
 jac_agent.IncShkDstn = params['T_cycle']*jac_agent.IncShkDstn
@@ -618,12 +662,15 @@ for i in range(num_consumer_types):
 for i in range(num_consumer_types):
         consumers[i].DiscFac    = DiscFac_list[i]
         consumers[i].AgentCount = int(NumAgents*DiscFac_dist.pmf[i])
-        consumers[i].solution_terminal = deepcopy(consumers_ss[i].solution[0]) ### Should it have a Deepcopy?
+        #consumers[i].solution_terminal = deepcopy(consumers_ss[i].solution[0]) ### Should it have a Deepcopy?
+        #consumers[i].cFunc_terminal_ = deepcopy(consumers_ss[i].solution[0].cFunc)
 
 
-##############################################################################
+###############################################################################
+###############################################################################
 
-testSet= [1,15,40,100]
+
+testSet= [1,15,40,90]
 
 Mega_list =[]
 CHist = []
@@ -640,8 +687,8 @@ for i in testSet:
         listM = []
         for k in range(num_consumer_types):
             
-            consumers[k].cList=[]
             consumers[k].s = i 
+            #consumers[k].IncShkDstn = (i-1)*ss_agent.IncShkDstn + jac_agent.IncShkDstnW + (params['T_cycle'] - i)*ss_agent.IncShkDstn
             consumers[k].Rfree = (i- 1)*[ss_agent.Rfree] + [ss_agent.Rfree + jac_agent.dx] + (params['T_cycle']- i)*[ss_agent.Rfree]
 
 
@@ -692,15 +739,65 @@ for i in testSet:
 ###############################################################################
 ###############################################################################
 
+
+
+
+'''
+plt.plot(M_dx0, label = 'm steady state')
+plt.plot(MHist[1], label = '15')
+plt.plot(MHist[3], label = '100')
+plt.plot(MHist[2], label = '40')
+plt.legend()
+plt.show()
+
+plt.plot(MHist[1] - M_dx0, label = '15')
+plt.plot(MHist[3] - M_dx0, label = '100')
+plt.plot(MHist[2] - M_dx0, label = '40')
+plt.plot(np.zeros(jac_agent.T_sim), 'k')
+plt.legend()
+plt.show()
+'''
+
+
+plt.plot(A_dx0, label = 'Asset steady state')
+plt.plot(AHist[2], label = '40')
+plt.plot(AHist[3], label = '100')
+plt.plot(AHist[0], label = '15')
+plt.plot(AHist[0], label = '1')
+plt.ylim([.240,.33])
+plt.xlabel("Period")
+plt.ylabel("Aggregate Assets")
+plt.title("Aggregate Assets")
+plt.legend()
+plt.show()
+
+
+
+plt.plot((AHist[0][1:]- A_dx0[1:])/(jac_agent.dx), label = '1')
+plt.plot((AHist[1][1:]- A_dx0[1:])/(jac_agent.dx), label = '15')
+plt.plot((AHist[2][1:] - A_dx0[1:])/(jac_agent.dx), label = '40')
+plt.plot((AHist[3][1:] - A_dx0[1:])/(jac_agent.dx), label = '100')
+plt.plot(np.zeros(jac_agent.T_sim), 'k')
+plt.xlabel("Period")
+plt.ylabel("dA / dr")
+plt.ylim([-.2,.6])
+plt.title("Asset Jacobians")
+plt.legend()
+plt.show()
+#plt.savefig("Rfree_jacobian.jpg", dpi=150)
+
+
 plt.plot(C_dx0 , label = 'Steady State')
 plt.plot(CHist[1], label = '15')
 plt.plot(CHist[3], label = '100')
 plt.plot(CHist[2], label = '40')
+plt.title("Aggregate Consumption")
+plt.ylabel("Aggregate Consumption")
+plt.xlabel("Period")
 
 plt.ylim([0.12,.1350])
 plt.legend()
 #plt.savefig("May3rdWage.jpg", dpi=150)
-
 plt.show()
 
 
@@ -712,85 +809,38 @@ plt.plot((CHist[3][1:]- C_dx0[1:])/(jac_agent.dx), label = '100')
 plt.plot((CHist[1][1:]- C_dx0[1:])/(jac_agent.dx), label = '15')
 plt.plot((CHist[2][1:] - C_dx0[1:])/(jac_agent.dx), label = '40')
 plt.plot(np.zeros(jac_agent.T_sim), 'k')
-plt.ylim([-.075,.075])
+plt.ylim([-.04,.04])
+plt.ylabel("dC / dr")
+
+plt.xlabel("Period")
+plt.title("Consumption Jacobians")
 plt.legend()
 #plt.savefig("wage_jacobian.jpg", dpi=150)
-
 plt.show()
 
 
-
-plt.plot(M_dx0, label = 'm steady state')
-plt.plot(MHist[1], label = '15')
-plt.plot(MHist[3], label = '100')
-plt.plot(MHist[2], label = '40')
-plt.legend()
-plt.show()
-
-
-
-
-
-plt.plot(A_dx0, label = 'steady state')
-plt.plot(AHist[2], label = '40')
-plt.plot(AHist[3], label = '100')
-plt.plot(AHist[0], label = '15')
-
-plt.plot(AHist[0], label = '1')
-
-plt.legend()
-plt.show()
-
-
-
-plt.plot((AHist[0][1:]- A_dx0[1:])/(jac_agent.dx), label = '1')
-plt.plot((AHist[1][1:]- A_dx0[1:])/(jac_agent.dx), label = '15')
-plt.plot((AHist[2][1:] - A_dx0[1:])/(jac_agent.dx), label = '40')
-plt.plot((AHist[3][1:] - A_dx0[1:])/(jac_agent.dx), label = '100')
-plt.plot(np.zeros(jac_agent.T_sim), 'k')
-plt.ylim([0,.4])
-plt.legend()
-#plt.savefig("Rfree_jacobian.jpg", dpi=150)
-
-'''
-
-plt.ylim([0.036,.039])
-plt.legend()
-plt.show()
-
-#plt.plot(CHist[56], label = '56')
-plt.plot(CHist[44], label = '44')
-
-#plt.plot(CHist[49], label = '49')
-plt.plot(CHist[35], label = '35')
-
-plt.plot(CHist[0], label = '0')
-
-plt.ylim([0.035,.045])
-plt.legend()
-plt.show()
-
-
-
-'''
-G=.01
-t=.1
-Inc = .08
-mho=.05
-
-w = (1/1.025)
-N = (.9*(Inc*mho)+G)/ (w*t) 
-r = (1.05)**.25 -1
-print(N)
-
-N1 = (.9*(.08*.05)+.01)/ (w*t) 
-
-
-q = ((1-w)*N)/r
-
-print(N)
-print(N1-N)
-print(q)
+# =============================================================================
+# 
+# G=.01
+# t=.1
+# Inc = .08
+# mho=.05
+# 
+# w = (1/1.025)
+# N = (.9*(Inc*mho)+G)/ (w*t) 
+# r = (1.05)**.25 -1
+# print(N)
+# 
+# N1 = (.9*(.08*.05)+.01)/ (w*t) 
+# 
+# 
+# q = ((1-w)*N)/r
+# 
+# print(N)
+# print(N1-N)
+# print(q)
+# 
+# =============================================================================
 
 '''
 funcs=[]
@@ -850,14 +900,7 @@ mean=np.log(.4)-(sigma**2)/2
 print(np.exp(mean + (sigma**2)/2))
 print((np.exp(sigma)-1)*np.exp(2*mean+sigma**2))
 
-
-
-
 '''
-
-
-
-
 
 
 
