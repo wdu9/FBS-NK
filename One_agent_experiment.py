@@ -306,12 +306,12 @@ class FBSNK_solver(ConsIndShockSolver):
                 
                 jac,
                 cList,
-                s,
+            
                 dx,
                 T_sim,
                 ):
                  
-        self.s = s 
+        
         self.dx=dx
         self.cList = cList #need to change this to time state variable somehow
         self.jac = jac
@@ -393,13 +393,16 @@ class Test_agent(IndShockConsumerType):
                                                  
                                                    "B",
                                                    "cList",
-                                                   "s",
+                                                  
                                                    "dx",
                                                    "T_sim",
                                                    "jac",
                                                    "Ghost",
                                                    "G",
-                                                   "jacW"
+                                                   "jacW",
+                                                   "jacN"
+                                                   
+                                                   
                                                   
                                                   ]
     
@@ -452,9 +455,9 @@ class Test_agent(IndShockConsumerType):
         IncShkDstn = [DiscreteDistribution(pmf_I, X_I)]
         self.IncShkDstn = IncShkDstn
         self.add_to_time_vary('IncShkDstn')
-     '''  
+       
     
-
+    '''
     def  update_income_process(self):
         
         self.wage = 1/(self.SSPmu) #calculate SS wage
@@ -474,12 +477,20 @@ class Test_agent(IndShockConsumerType):
         TranShkDstnW     = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
         TranShkDstnW.pmf  = np.insert(TranShkDstnW.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)
         TranShkDstnW.X  = np.insert(TranShkDstnW.X*(((1.0-self.tax_rate)*self.N*(self.wage + self.dx))/(1-self.UnempPrb)),0,self.IncUnemp)
-        PermShkDstnW     = MeanOneLogNormal(self.PermShkStd[0],123).approx(self.PermShkCount)
-        self.IncShkDstnW = [combine_indep_dstns(PermShkDstnW,TranShkDstnW)]
+        self.IncShkDstnW = [combine_indep_dstns(PermShkDstn,TranShkDstnW)]
         self.TranShkDstnW = [TranShkDstnW]
-        self.PermShkDstnW = [PermShkDstnW]
         self.add_to_time_vary('IncShkDstnW')
         
+        TranShkDstnN     = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
+        TranShkDstnN.pmf  = np.insert(TranShkDstnN.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)
+        TranShkDstnN.X  = np.insert(TranShkDstnN.X*(((1.0-self.tax_rate)*(self.N + self.dx)*self.wage)/(1-self.UnempPrb)),0,self.IncUnemp)
+        self.IncShkDstnN = [combine_indep_dstns(PermShkDstn,TranShkDstnN)]
+        self.TranShkDstnN = [TranShkDstnN]
+        self.add_to_time_vary('IncShkDstnN')
+     
+        
+    
+    '''
     
     def sim_birth(self, which_agents):
         """
@@ -501,18 +512,20 @@ class Test_agent(IndShockConsumerType):
             mu=self.aNrmInitMean,
             sigma=self.aNrmInitStd,
             seed=self.RNG.randint(0, 2 ** 31 - 1),
-        ).approx(N)
+        ).approx(100)
         
         self.state_now['aNrm'][which_agents] = aNrmDstn.draw(N,exact_match=True)
         
-        '''
-        self.state_now['aNrm'][which_agents] = Lognormal(
-            mu=self.aNrmInitMean,
-            sigma=self.aNrmInitStd,
-            seed=self.RNG.randint(0, 2 ** 31 - 1),
-        ).draw(N)
-        '''
-        
+# =============================================================================
+#         
+#         self.state_now['aNrm'][which_agents] = Lognormal(
+#             mu=self.aNrmInitMean,
+#             sigma=self.aNrmInitStd,
+#             seed=self.RNG.randint(0, 2 ** 31 - 1),
+#         ).draw(N)
+#         
+#         
+# =============================================================================
         # why is a now variable set here? Because it's an aggregate.
         pLvlInitMeanNow = self.pLvlInitMean + np.log(
             self.state_now['PlvlAgg']
@@ -523,49 +536,26 @@ class Test_agent(IndShockConsumerType):
             pLvlInitMeanNow,
             self.pLvlInitStd,
             seed=self.RNG.randint(0, 2 ** 31 - 1)
-        ).approx(N)
+        ).approx(100)
         self.state_now['pLvl'][which_agents]=pLvlDstn.draw(N,exact_match=True)
         
-        '''
-        self.state_now['pLvl'][which_agents] = Lognormal(
-            pLvlInitMeanNow,
-            self.pLvlInitStd,
-            seed=self.RNG.randint(0, 2 ** 31 - 1)
-        ).draw(N)
-        
-        '''
+# =============================================================================
+#       
+#         self.state_now['pLvl'][which_agents] = Lognormal(
+#             pLvlInitMeanNow,
+#             self.pLvlInitStd,
+#             seed=self.RNG.randint(0, 2  ** 31 - 1)
+#         ).draw(N)
+#         
+# =============================================================================
+
         self.t_age[which_agents] = 0  # How many periods since each agent was born
         self.t_cycle[
             which_agents
         ] = 0  # Which period of the cycle each agent is currently in
         return None
     
-    def sim_death(self):
-        """
-        Determines which agents die this period and must be replaced.  Uses the sequence in LivPrb
-        to determine survival probabilities for each agent.
-        Parameters
-        ----------
-        None
-        Returns
-        -------
-        which_agents : np.array(bool)
-            Boolean array of size AgentCount indicating which agents die.
-        """
-        # Determine who dies
-        DiePrb_by_t_cycle = 1.0 - np.asarray(self.LivPrb)
-        DiePrb = DiePrb_by_t_cycle[
-            self.t_cycle - 1
-        ]  # Time has already advanced, so look back one
-        
-        DeathDstn=Uniform(seed=self.RNG.randint(0, 2 ** 31 - 1)).approx(N=self.AgentCount)
-        DeathShks = DeathDstn.draw(N=self.AgentCount,exact_match=True)
-        
-        which_agents = DeathShks < DiePrb
-        if self.T_age is not None:  # Kill agents that have lived for too many periods
-            too_old = self.t_age >= self.T_age
-            which_agents = np.logical_or(which_agents, too_old)
-        return which_agents
+    '''
     
     
     def get_shocks(self):
@@ -602,6 +592,7 @@ class Test_agent(IndShockConsumerType):
 
         # That procedure used the *last* period in the sequence for newborns, but that's not right
         # Redraw shocks for newborns, using the *first* period in the sequence.  Approximation.
+        
         N = np.sum(newborn)
         if N > 0:
             these = newborn
@@ -624,6 +615,9 @@ class Test_agent(IndShockConsumerType):
         self.EmpNow[TranShkNow == self.IncUnemp] = False
         self.shocks['PermShk'] = PermShkNow
         self.shocks['TranShk'] = TranShkNow
+        
+        #self.shocks['PermShk'] = np.ones(self.AgentCount)
+        #self.shocks['TranShk'] = np.ones(self.AgentCount)
     
     
     def get_Rfree(self):
@@ -645,12 +639,9 @@ class Test_agent(IndShockConsumerType):
             RfreeNow = self.Rfree * np.ones(self.AgentCount)
             
         return RfreeNow
-     
-   
     
     
     def transition(self):
-        
         
         pLvlPrev = self.state_prev['pLvl']
         aNrmPrev = self.state_prev['aNrm']
@@ -666,7 +657,7 @@ class Test_agent(IndShockConsumerType):
         mNrmNow = bNrmNow + self.shocks['TranShk']  # Market resources after income
         
         
-        if self.jac == True or self.Ghost == True or self.jacW == True:
+        if self.jac == True or self.Ghost == True or self.jacW == True or self.jacN == True:
             if self.t_sim == 0:
                 
                     mNrmNow = ss.state_now['mNrm']
@@ -676,13 +667,12 @@ class Test_agent(IndShockConsumerType):
 
 
 
-
     
 IdiosyncDict={
     # Parameters shared with the perfect foresight model
-    "CRRA":2,                            # Coefficient of relative risk aversion
-    "Rfree": 1.048**.25,                   # Interest factor on assets
-    "DiscFac": 0.9671,                     # Intertemporal discount factor
+    "CRRA":2,                             # Coefficient of relative risk aversion
+    "Rfree": 1.048**.25,                  # Interest factor on assets
+    "DiscFac": 0.9674,                    # Intertemporal discount factor
     "LivPrb" : [.995],                    # Survival probability
     "PermGroFac" :[1.00],                 # Permanent income growth factor
 
@@ -690,18 +680,18 @@ IdiosyncDict={
    
     "PermShkStd" :  [(0.01*4/11)**0.5],    # Standard deviation of log permanent shocks to income
     "PermShkCount" : 5,                    # Number of points in discrete approximation to permanent income shocks
-    "TranShkStd" : [.2],        # Standard deviation of log transitory shocks to income
+    "TranShkStd" : [.2],                   # Standard deviation of log transitory shocks to income
     "TranShkCount" : 5,                    # Number of points in discrete approximation to transitory income shocks
     "UnempPrb" : 0.05,                     # Probability of unemployment while working
-    "IncUnemp" : 0.09535573122529638,                      # Unemployment benefits replacement rate
+    "IncUnemp" : 0.09535573122529638,      # Unemployment benefits replacement rate
     "UnempPrbRet" : 0.0005,                # Probability of "unemployment" while retired
     "IncUnempRet" : 0.0,                   # "Unemployment" benefits when retired
     "T_retire" : 0,                        # Period of retirement (0 --> no retirement)
-    "tax_rate" : 0.16563445378151262,                      # Flat income tax rate (legacy parameter, will be removed in future)
+    "tax_rate" : 0.16563445378151262,      # Flat income tax rate (legacy parameter, will be removed in future)
 
     # Parameters for constructing the "assets above minimum" grid
     "aXtraMin" : 0.001,                    # Minimum end-of-period "assets above minimum" value
-    "aXtraMax" : 5,                       # Maximum end-of-period "assets above minimum" value
+    "aXtraMax" : 15,                       # Maximum end-of-period "assets above minimum" value
     "aXtraCount" : 48,                     # Number of points in the base grid of "assets above minimum"
     "aXtraNestFac" : 3,                    # Exponential nesting factor when constructing "assets above minimum" grid
     "aXtraExtra" : [None],                 # Additional values to add to aXtraGrid
@@ -713,31 +703,31 @@ IdiosyncDict={
     "T_cycle" : 1,                         # Number of periods in the cycle for this agent type
 
     # Parameters only used in simulation
-    "AgentCount" : 100000,                  # Number of agents of this type
-    "T_sim" : 100,                          # Number of periods to simulate
-    "aNrmInitMean" : np.log(1.5)-(.5**2)/2,                 # Mean of log initial assets
+    "AgentCount" : 10000,                  # Number of agents of this type
+    "T_sim" : 100,                         # Number of periods to simulate
+    "aNrmInitMean" : np.log(1.3)-(.5**2)/2,# Mean of log initial assets
     "aNrmInitStd"  : .5,                   # Standard deviation of log initial assets
-    "pLvlInitMean" : 0.0,                  # Mean of log initial permanent income
-    "pLvlInitStd"  : 0.0,                  # Standard deviation of log initial permanent income
+    "pLvlInitMean" : 0,               # Mean of log initial permanent income
+    "pLvlInitStd"  : 0,                  # Standard deviation of log initial permanent income
     "PermGroFacAgg" : 1.0,                 # Aggregate permanent income growth factor
     "T_age" : None,                        # Age after which simulated agents are automatically killed
     
     # new parameters
      "mu_u"       : .9 ,
      "L"          : 1.3, 
-     "s"          : 7,
      "dx"         : 0,                     #Deviation from steady state
      "jac"        : False,
      "Ghost"      : False,
      "jacW"       : False,
+     "jacN"       : False,
      
      
     #New Economy Parameters
      "SSWmu " : 1.1 ,                      # Wage Markup from sequence space jacobian appendix
-     "SSPmu" :  1.012,                       # Price Markup from sequence space jacobian appendix
+     "SSPmu" :  1.012,                     # Price Markup from sequence space jacobian appendix
      "calvo price stickiness":  .926,      # Auclert et al 2020
      "calvo wage stickiness": .899,        # Auclert et al 2020
-     "B" : 0 ,                              # Net Bond Supply
+     "B" : 0 ,                             # Net Bond Supply
      "G" : 0.19
 }
 
@@ -773,16 +763,13 @@ print(q)
 '''
 
 
-
 ####################################################################
-ss = Test_agent(**IdiosyncDict )
-ss.jac= False 
 
+
+ss = Test_agent(**IdiosyncDict )
 ss.cycles = 0
 ss.dx = 0
 ss.T_sim= 1700
-
-
 
 
 ########################################################################
@@ -797,9 +784,7 @@ while go:
     ss.solve()
     ss.initialize_sim()
     ss.simulate()
-
     
-
 
     AggA = np.mean(ss.state_now['aLvl'])
     AggC = np.mean((ss.state_now['mNrm'] - ss.state_now['aNrm'])  * ss.state_now['pLvl'])
@@ -833,12 +818,9 @@ while go:
     print('Completed loops')
     print(completed_loops)
     
-    go = distance >= tolerance and completed_loops < 1     
+    go = distance >= tolerance and completed_loops < 1
+     
 print("Done Computing Steady State")
-
-
-
-
 
 
 
@@ -882,9 +864,20 @@ class Test_agent2(Test_agent):
         PermShkNow = np.zeros(self.AgentCount)  # Initialize shock arrays
         TranShkNow = np.zeros(self.AgentCount)
         newborn = self.t_age == 0
+        
+# =============================================================================
+#         ta=[]
+#         for i in range(10000):
+#             if self.t_cycle[i] ==0:
+#                 ta.append(self.t_cycle[i])
+#                 
+#         print(len(ta))
+# =============================================================================
+        
         for t in range(self.T_cycle):
             these = t == self.t_cycle
             N = np.sum(these)
+
             if N > 0:
                 IncShkDstnNow = self.IncShkDstn[
                     t - 1
@@ -900,6 +893,8 @@ class Test_agent2(Test_agent):
 
         # That procedure used the *last* period in the sequence for newborns, but that's not right
         # Redraw shocks for newborns, using the *first* period in the sequence.  Approximation.
+   
+        
         N = np.sum(newborn)
         if N > 0:
             these = newborn
@@ -914,8 +909,9 @@ class Test_agent2(Test_agent):
                 IncShkDstnNow.X[0][EventDraws] * PermGroFacNow
             )  # permanent "shock" includes expected growth
             TranShkNow[these] = IncShkDstnNow.X[1][EventDraws]
-        #        PermShkNow[newborn] = 1.0
-        TranShkNow[newborn] = 1.0
+        
+        #PermShkNow[newborn] = 1.0
+        #TranShkNow[newborn] = 1.0
 
         # Store the shocks in self
         self.EmpNow = np.ones(self.AgentCount, dtype=bool)
@@ -924,6 +920,58 @@ class Test_agent2(Test_agent):
         self.shocks['TranShk'] = TranShkNow
 
     
+        #self.shocks['PermShk'] = np.ones(self.AgentCount)
+        #self.shocks['TranShk'] = np.ones(self.AgentCount)
+
+
+     def sim_birth(self, which_agents):
+        """
+        Makes new consumers for the given indices.  Initialized variables include aNrm and pLvl, as
+        well as time variables t_age and t_cycle.  Normalized assets and permanent income levels
+        are drawn from lognormal distributions given by aNrmInitMean and aNrmInitStd (etc).
+        Parameters
+        ----------
+        which_agents : np.array(Bool)
+            Boolean array of size self.AgentCount indicating which agents should be "born".
+        Returns
+        -------
+        None
+        """
+        # Get and store states for newly born agents
+        #if self.t_sim != 0:
+            #which_agents = np.zeros(self.AgentCount, dtype=bool)
+        
+        
+        N = np.sum(which_agents)  # Number of new consumers to make
+        
+
+        self.state_now['aNrm'][which_agents] = Lognormal(
+            mu=self.aNrmInitMean,
+            sigma=self.aNrmInitStd,
+            seed=self.RNG.randint(0, 2 ** 31 - 1),
+        ).draw(N)
+        
+        
+        # why is a now variable set here? Because it's an aggregate.
+        pLvlInitMeanNow = self.pLvlInitMean + np.log(
+            self.state_now['PlvlAgg']
+        )  # Account for newer cohorts having higher permanent income
+        
+        self.state_now['pLvl'][which_agents] = Lognormal(
+            pLvlInitMeanNow,
+            self.pLvlInitStd,
+            seed=self.RNG.randint(0, 2 ** 31 - 1)
+        ).draw(N)
+        
+            
+        self.t_age[which_agents] = 0  # How many periods since each agent was born
+ 
+
+        return None
+        
+    
+    
+
     
 
 ##############################################################################
@@ -949,9 +997,7 @@ ss_dx.track_vars = ['aNrm','mNrm','cNrm','pLvl','aLvl']
 #ss_dx.cFunc_terminal_ = deepcopy(ss.solution[0].cFunc)
 
 
-ss_dx.jac = False
 ss_dx.Ghost = True
-ss_dx.jacW = False
 ss_dx.T_sim = params['T_cycle']
 ss.cList=[]
 ss_dx.dx = 0
@@ -964,6 +1010,9 @@ ss_dx.add_to_time_vary('Rfree')
 
 
 ss_dx.solve()
+
+#ss_dx.LivPrb = params['T_cycle']*[1]
+
 ss_dx.initialize_sim()
 ss_dx.simulate()
 
@@ -1001,7 +1050,6 @@ example = Test_agent2(**params )
 example.pseudo_terminal=False 
 
 
-
 #example.cFunc_terminal_ = deepcopy(ss.solution[0].cFunc)
 #example.solution_terminal = deepcopy(ss.solution[0])
 
@@ -1009,25 +1057,23 @@ example.T_sim = params['T_cycle']
 example.cycles = 1
 example.jac = True
 example.jacW = False
-example.dx = .1
-example.update_income_process()
+example.jacN = False
 example.track_vars = ['aNrm','mNrm','cNrm','pLvl','aLvl']
 
 
 if example.jac == True:
-    
+    example.dx = .1
     example.del_from_time_inv('Rfree')
     example.add_to_time_vary('Rfree')
     example.IncShkDstn = params['T_cycle']*example.IncShkDstn
 
-if example.jacW == True:
+if example.jacW == True or example.jacN==True:
+    example.dx = 5
     example.Rfree = ss.Rfree
+    example.update_income_process()
     
 
-
-
-
-Test_set=[0,20,50,75]
+Test_set=[0,20,50,175]
 
 Mega_list =[]
 CHist = []
@@ -1051,9 +1097,11 @@ for i in Test_set:
         
         if example.jacW == True:
             example.IncShkDstn = i *ss.IncShkDstn + example.IncShkDstnW + (params['T_cycle'] - i - 1)* ss.IncShkDstn
+            
+        if example.jacN == True:
+            example.IncShkDstn = i *ss.IncShkDstn + example.IncShkDstnN + (params['T_cycle'] - i - 1)* ss.IncShkDstn
         
 
-            
         example.solve()
         example.initialize_sim()
         example.simulate()
@@ -1075,7 +1123,7 @@ for i in Test_set:
         
         aNrmHist.append(np.array(listaNrm))
         mNrmHist.append(np.array(listmNrm))
-        MHist.append(np.array(listA))
+        MHist.append(np.array(listM))
         AHist.append(np.array(listA))
         CHist.append(np.array(listC))
         #Mega_list.append(np.array(listC)- C_dx0)  # Elements of this list are arrays. The index of the element +1 represents the 
@@ -1085,15 +1133,17 @@ for i in Test_set:
         print(i)
         
         
+        
+    
 plt.plot(C_dx0 , label = 'Steady State')
 plt.plot(CHist[1], label = '20')
 plt.plot(CHist[2], label = '50')
 plt.plot(CHist[0], label = '0')
 plt.legend()
 plt.show()
- 
 
-plt.plot((CHist[3]-C_dx0)/(example.dx), label = '75')
+
+plt.plot((CHist[3]-C_dx0)/(example.dx), label = '175')
 plt.plot((CHist[1]-C_dx0)/(example.dx), label = '20')
 plt.plot((CHist[2]-C_dx0)/(example.dx), label = '50')
 plt.plot((CHist[0]-C_dx0)/(example.dx), label = '0')
@@ -1115,9 +1165,9 @@ plt.legend()
 plt.show()
 
 # 
-plt.plot((MHist[1]-M_dx0)/(.1), label = '5')
-plt.plot((MHist[2]-M_dx0)/(.1), label = '20')
-plt.plot((MHist[0]-M_dx0)/(.1), label = '1')
+plt.plot((MHist[1]-M_dx0)/(example.dx), label = '5')
+plt.plot((MHist[2]-M_dx0)/(example.dx), label = '20')
+plt.plot((MHist[0]-M_dx0)/(example.dx), label = '1')
 plt.plot(np.zeros(params['T_cycle']), 'k')
 plt.ylim([-1,1])
 plt.legend()
@@ -1140,18 +1190,16 @@ plt.show()
 plt.plot((AHist[0]-A_dx0)/(example.dx), label = '0')
 plt.plot((AHist[1]-A_dx0)/(example.dx), label = '20')
 plt.plot((AHist[2]-A_dx0)/(example.dx), label = '50')
-plt.plot((AHist[3]-A_dx0)/(example.dx), label = '75')
-plt.plot(np.zeros(params['T_cycle']), 'k')
-plt.legend()
+plt.plot((AHist[3]-A_dx0)/(example.dx), label = '175')
 
-plt.ylim([-.1,.1])
+plt.plot(np.zeros(params['T_cycle']), 'k')
 plt.legend()
 plt.show()
 
 
 
 
-
+'''
 plt.plot(mNrm_dx0 , label = 'Steady State')
 plt.plot(mNrmHist[1], label = '20')
 plt.plot(mNrmHist[2], label = '50')
@@ -1172,7 +1220,7 @@ plt.legend()
 plt.show()
 
 
-plt.plot(np.zeros(example.T_cycle), label = 'Steady State')
+plt.plot(np.zeros(example.T_cycle),'k')
 plt.plot((aNrmHist[1]-aNrm_dx0)/example.dx, label = '20')
 plt.plot((aNrmHist[2]-aNrm_dx0)/example.dx, label = '50')
 plt.plot((aNrmHist[3]-aNrm_dx0)/example.dx, label = '75')
@@ -1182,7 +1230,6 @@ plt.legend()
 plt.show()
 
 
-'''
 Shks=[]
 for i in range(100):
     Shks.append(ss.IncShkDstn[0].draw(1000))
@@ -1192,6 +1239,17 @@ meanp=[]
 for i in range(100):
     mean.append(np.mean(Shks[i][1]))
     meanp.append(np.mean(Shks[i][0]))
+
+
+t_cycle_0=[]
+t_age_0=[]
+for i in range(50000):
+    if example.t_cycle[i] == 0:
+        t_cycle_0.append(example.t_cycle[i])
+    if example.t_age[i] == 1:
+        t_age_0.append(example.t_age[i])
+        
+print(len(t_cycle_0))
+print(len(t_age_0))
+
 '''
-
-
