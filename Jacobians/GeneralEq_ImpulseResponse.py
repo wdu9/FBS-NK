@@ -97,7 +97,7 @@ w_ss = 1/1.012
 Z_ss = 1
 LivPrb = .99375
 DiscFac = .968
-v=2
+v=20
 
 rstar = 1.048**.25 -1
 
@@ -110,11 +110,11 @@ C_ss = 1
 #lambda_W = .899 #probability a firm won't be able to change wage
 #lambda_P = .926  #probability a firm won't be able to change wage
 
-lambda_W = .75 #probability a firm won't be able to change wage
+lambda_W = .9 #probability a firm won't be able to change wage
 lambda_P = .75  #probability a firm won't be able to change wage
 
 Lambda = (1-lambda_P)*(1-(lambda_P/(1+rstar)))/lambda_P
-ParamW = ( (1-lambda_W) / lambda_W) * ( 1 - LivPrb * lambda_W )
+ParamW = ( (1-lambda_W) / lambda_W) * ( 1 - DiscFac*LivPrb * lambda_W )
 
 
 
@@ -131,8 +131,8 @@ phi_y = 0
 
 # Shock Parameters       
 Z = .01 # Initial Productivity shock
-m_e = .01 # Initial Monetary Policy Shock
-p=.96 # AR1 Coefficient
+m_e = -.01 # Initial Monetary Policy Shock
+p=.7 # AR1 Coefficient
 
 
 ZshkList=[]
@@ -151,7 +151,7 @@ mshk = np.array(mshkList)
             
 # Specify Shock, if Shk = 0 then productivity shock, else Shk = 1 => monetary policy Shock
 
-Shk = 0
+Shk = 1
 
 dZ = np.zeros((400,1))
 ShkLength = 200
