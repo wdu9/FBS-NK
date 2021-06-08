@@ -3,6 +3,15 @@
 Created on Mon Jun  7 02:28:50 2021
 
 @author: wdu
+
+
+python 3.8.8
+
+econ-ark 0.11.0
+
+numpy 1.20.2
+
+matplotlib 3.4.1
 """
 import numpy as np
 from copy import copy, deepcopy

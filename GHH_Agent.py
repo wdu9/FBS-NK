@@ -4,6 +4,14 @@ Created on Mon Jun  7 19:12:11 2021
 
 @author: wdu
 
+python 3.8.8
+
+econ-ark 0.11.0
+
+numpy 1.20.2
+
+matplotlib 3.4.1
+
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -490,9 +498,7 @@ class FBSNK_Solver(ConsIndShockSolver):
         self.mNrmNow = mNrmNow
         
     
-        
-        print(cNrmNow)
-        
+                
         return cNrmNow, mNrmNow
     
     
@@ -607,7 +613,7 @@ class FBSNK_agent(IndShockConsumerType):
         
         TranShkDstnTEST = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
         self.ThetaShk = np.insert(TranShkDstnTEST.X ,0, self.IncUnemp)
-
+        #self.ThetaShk = np.ones(len(self.ThetaShk))
 
         TranShkDstn     = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
         TranShkDstn.pmf  = np.insert(TranShkDstn.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)   
@@ -666,7 +672,120 @@ class FBSNK_agent(IndShockConsumerType):
         self.solution_terminal.vPfunc = vPF
         self.solution_terminal.vPPfunc = vPPF
         
+        
+    def transition(self):
+        pLvlPrev = self.state_prev['pLvl']
+        aNrmPrev = self.state_prev['aNrm']
+        RfreeNow = self.get_Rfree()
+
+        # Calculate new states: normalized market resources and permanent income level
+        pLvlNow = pLvlPrev*self.shocks['PermShk']  # Updated permanent income level
+        # Updated aggregate permanent productivity level
+        PlvlAggNow = self.state_prev['PlvlAgg']*self.PermShkAggNow
+        # "Effective" interest factor on normalized assets
+        ReffNow = RfreeNow/self.shocks['PermShk']
+        bNrmNow = ReffNow*aNrmPrev         # Bank balances before labor income
+        
+        
+        mNrmNow = bNrmNow + self.shocks['TranShk']  # Market resources after income
+
+
+
+
+        
+        self.note = np.zeros_like(self.shocks['TranShk'])
+        
+        if self.t_sim > 0:
+            
+            for i in range(len(self.shocks['TranShk'])):
+                
+                if self.shocks['TranShk'][i] != 0.0954:
+                    
+                    for j in range(len(self.ThetaShk)):
+                        
+                        if abs(self.shocks['TranShk'][i]* (1-self.UnempPrb) / ( (1.0-self.tax_rate) * self.N * self.wage) - self.ThetaShk[j]) < 1e-10:
+                        
+                            self.note[i] = j
+                        
+                   
+                else:
+                    self.note[i] = 0
+                    
+        
+                    
+        
+
+        
+        
+        return pLvlNow, PlvlAggNow, bNrmNow, mNrmNow, None
     
+
+    def get_controls(self):
+        """
+        Calculates consumption for each consumer of this type using the consumption functions.
+        Parameters
+        ----------
+        None
+        Returns
+        -------
+        None
+        """
+        cNrmNow = np.zeros(self.AgentCount) + np.nan
+        MPCnow = np.zeros(self.AgentCount) + np.nan
+        
+            
+        thes = np.zeros((len( self.ThetaShk),len(self.note) ), dtype =bool)
+        for j in range(len( self.ThetaShk)):
+            thes[j,:] = j == self.note
+        
+                
+        for t in range(self.T_cycle):
+            
+            theses = t == self.t_cycle
+            
+            
+            for i in range(len( self.ThetaShk)):
+                
+                these = np.logical_and(theses, thes[i,:])
+                
+                cNrmNow[these], MPCnow[these] = self.solution[t].cFunc[i].eval_with_derivative(
+                self.state_now['mNrm'][these]
+            )
+                
+                
+            #cNrmNow[these], MPCnow[these] = self.solution[t].cFunc[3].eval_with_derivative(
+                #self.state_now['mNrm'][these]
+           # )
+           
+                        
+        self.controls['cNrm'] = cNrmNow
+
+        # MPCnow is not really a control
+        self.MPCnow = MPCnow
+        return None
+        
+    def get_states(self):
+        """
+        Gets values of state variables for the current period.
+        By default, calls transition function and assigns values
+        to the state_now dictionary.
+        Parameters
+        ----------
+        None
+        Returns
+        -------
+        None
+        """
+        new_states = self.transition()
+        
+        
+        for i, var in enumerate(self.state_now):
+            # a hack for now to deal with 'post-states'
+            if i < len(new_states):
+                self.state_now[var] = new_states[i]
+
+        return None
+
     
     
 FBSDict={
@@ -704,7 +823,7 @@ FBSDict={
     "T_cycle" : 1,                         # Number of periods in the cycle for this agent type
 
     # Parameters only used in simulation
-    "AgentCount" : 250000,                 # Number of agents of this type
+    "AgentCount" : 50000,                 # Number of agents of this type
     "T_sim" : 1400,                         # Number of periods to simulate
     "aNrmInitMean" : np.log(1.3)-(.5**2)/2,# Mean of log initial assets
     "aNrmInitStd"  : .5,                   # Standard deviation of log initial assets
@@ -731,7 +850,7 @@ FBSDict={
      "B" : 0,                               # Net Bond Supply
      "G" : .19, #.18
      "DisULabor": 38,
-     "v": 2, 
+     "v": 1, 
      "varphi": 1
      }
 
@@ -740,12 +859,13 @@ FBSDict={
 
 #---------------------------------------------------------------------
 
-ss_agent = FBSNK_agent(**FBSDict)
-ss_agent.cycles = 0
-ss_agent.dx = 0
+GHHagent = FBSNK_agent(**FBSDict)
+GHHagent.cycles = 0
+GHHagent.dx = 0
+GHHagent.solve()
 
-ss_agent.solve()
-
+GHHagent.initialize_sim()
+GHHagent.simulate()
 
 
     
