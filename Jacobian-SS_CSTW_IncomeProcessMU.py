@@ -582,7 +582,7 @@ FBSDict={
      "calvo wage stickiness": .899,        # Auclert et al 2020
      "B" : 0,                               # Net Bond Supply
      "G" : .19,#.18
-     "DisULabor": 38,
+     "DisULabor": 1.1057299984326825,
      "InvFrisch": 2 
      }
 
@@ -693,14 +693,14 @@ while go:
         litc.append((consumers_ss[i].state_now['mNrm'] - consumers_ss[i].state_now['aNrm'])*consumers_ss[i].state_now['pLvl'])
         list_aLvl.append(consumers_ss[i].state_now['aLvl'])
         
-        '''
+        
         for k in range(len(consumers_ss[i].shocks['TranShk'])):
             if consumers_ss[i].shocks['TranShk'][k] != ss_agent.IncUnemp:
                 consumers_ss[i].shocks['TranShk'][k] = ((1-ss_agent.UnempPrb)/(ss_agent.wage * ss_agent.N * (1 - ss_agent.tax_rate)))*consumers_ss[i].shocks['TranShk'][k]
         
         
-        litMU.append(consumers_ss[i].DiscFac*consumers_ss[i].shocks['TranShk']*((consumers_ss[i].state_now['mNrm'] - consumers_ss[i].state_now['aNrm'])*consumers_ss[i].state_now['pLvl'])**(- ss_agent.CRRA))
-    '''
+        litMU.append(consumers_ss[i].DiscFac*consumers_ss[i].shocks['TranShk']*consumers_ss[i].state_now['pLvl']*((consumers_ss[i].state_now['mNrm'] - consumers_ss[i].state_now['aNrm'])*consumers_ss[i].state_now['pLvl'])**(- ss_agent.CRRA))
+    
         print('one consumer solved and simulated')
     
     pLvl = np.concatenate(list_pLvl)
@@ -711,16 +711,19 @@ while go:
     AggA = np.mean(np.array(aLvl))
     AggC = np.mean(c)
 
-    '''  
+    
     MU = np.array(np.concatenate(litMU))
     MU = np.mean(MU)
     
-    MV = center*ss_agent.DisULabor* ss_agent.N**ss_agent.InvFrisch
+    MV = ss_agent.DisULabor* ss_agent.N**ss_agent.InvFrisch
 
     MRS = MV / MU
     
     AMRS = ss_agent.SSWmu*ss_agent.wage* (1-ss_agent.tax_rate)
-    '''
+    
+    AMV = AMRS *MU
+    
+    disu_act = AMV/MV 
     
     if AggA - target > 0 :
         
@@ -733,9 +736,9 @@ while go:
         break
     
     
-   # print('MU=' + str(MU))
-    #print('MRS =' + str(MRS))
-    #print('what it needs to be:' + str(AMRS))
+    print('MU=' + str(MU))
+    print('MRS =' + str(MRS))
+    print('what it needs to be:' + str(AMRS))
     print('Assets =' + str(AggA))
     print('consumption =' + str(AggC))
     print('center =' + str(center))
