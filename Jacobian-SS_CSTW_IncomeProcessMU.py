@@ -6,7 +6,11 @@ Created on Sat Apr 24 00:51:38 2021
 
 python 3.8.8
 
+econ-ark 0.11.0
 
+numpy 1.20.2
+
+matplotlib 3.4.1
 """
 import numpy as np
 import matplotlib.pyplot as plt
@@ -20,6 +24,7 @@ from HARK.ConsumptionSaving.ConsIndShockModel2 import (
     ConsIndShockSolver,
     IndShockConsumerType,
     PerfForesightConsumerType,
+    ConsumerSolution,
 )
 
 from HARK.interpolation import (
@@ -31,13 +36,41 @@ from HARK.interpolation import (
     MargMargValueFuncCRRA
 )
 from HARK.distribution import Uniform, Distribution
-from HARK.ConsumptionSaving.ConsAggShockModel import CobbDouglasEconomy, AggShockConsumerType
 from HARK import MetricObject, Market, AgentType
 from scipy.optimize import brentq, minimize_scalar
 import matplotlib.pyplot as plt
 from scipy.io import loadmat, savemat
 
 from HARK.utilities import plot_funcs_der, plot_funcs
+
+
+
+from GHH_Utility import ( GHHutility,         
+ GHHutilityP,
+ GHHutilityPP,
+ GHHutilityP_inv,
+GHHutility_invP,
+GHHutility_inv,
+ GHHutilityP_invP
+ )
+
+
+#---------------------------------------------------------------------------------
+
+
+
+utility = GHHutility
+utilityP = GHHutilityP
+utilityPP = GHHutilityPP
+utilityP_inv = GHHutilityP_inv
+utility_invP = GHHutility_invP
+utility_inv = GHHutility_inv
+utilityP_invP = GHHutilityP_invP
+
+
+
+
+#-----------------------------------------------------------------------------
 
 
 ##############################################################################
@@ -284,6 +317,50 @@ def combine_indep_dstns2(*distributions, seed=0):
 
 
 
+
+
+
+
+
+
+
+
+class FBSNK_Solver(ConsIndShockSolver):
+    
+    
+    
+    
+    
+    
+    def def_utility_funcs(self):
+        """
+        Defines CRRA utility function for this period (and its derivatives),
+        saving them as attributes of self for other methods to use.
+        Parameters
+        ----------
+        None
+        Returns
+        -------
+        None
+        """
+        
+        self.u = lambda c: utility(c, n = self.N,v= self.v, varphi = self.varphi, gam=self.CRRA ) # utility function
+        self.uP = lambda c: utilityP(c, n = self.N,v= self.v, varphi = self.varphi, gam=self.CRRA)   # marginal utility function
+        self.uPP = lambda c: utilityPP(c, n = self.N,v= self.v, varphi = self.varphi, gam=self.CRRA ) # marginal marginal utility function
+        
+        
+        self.uPinv = lambda u: utilityP_inv(u, n = self.N,v= self.v, varphi = self.varphi, gam=self.CRRA )
+        self.uPinvP = lambda u: utilityP_invP(u, n = self.N,v= self.v, varphi = self.varphi, gam=self.CRRA )
+        self.uinvP = lambda u: utility_invP(u, n = self.N,v= self.v, varphi = self.varphi, gam=self.CRRA )
+        if self.vFuncBool:
+            self.uinv = lambda u: utility_inv(u, n = self.N,v= self.v, varphi = self.varphi, gam=self.CRRA )
+            
+            
+            
+            
+            
+
+
 ###############################################################################
 
 
@@ -296,11 +373,10 @@ class FBSNK_agent(IndShockConsumerType):
                                                    "SSWmu",
                                                    
                                                    #"wage",
-                                                   #"N",
+                                                   "N",
                                                    
                                                    "B",
                                                  
-                                                   "s",
                                                    "dx",
                                                    "T_sim",
                                                    "jac",
@@ -329,7 +405,6 @@ class FBSNK_agent(IndShockConsumerType):
         
         IndShockConsumerType.__init__(self, cycles = 0, **kwds)
 
-    
 
     '''
     
@@ -403,14 +478,18 @@ class FBSNK_agent(IndShockConsumerType):
         
     '''
         
+    
     def  update_income_process(self):
         
         self.wage = 1/(self.SSPmu) #calculate SS wage
         self.N = ((self.IncUnemp*self.UnempPrb ) + self.G )/ (self.wage*self.tax_rate)#calculate SS labor supply from Budget Constraint
         
+        TranShkDstnTEST = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
+        self.ThetaShk = np.insert(TranShkDstnTEST.X ,0, self.IncUnemp)
+
 
         TranShkDstn     = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
-        TranShkDstn.pmf  = np.insert(TranShkDstn.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)
+        TranShkDstn.pmf  = np.insert(TranShkDstn.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)   
         TranShkDstn.X  = np.insert(TranShkDstn.X*(((1.0-self.tax_rate)*self.N*self.wage)/(1-self.UnempPrb)),0,self.IncUnemp)
         PermShkDstn     = MeanOneLogNormal(self.PermShkStd[0],123).approx(self.PermShkCount)
         self.IncShkDstn = [combine_indep_dstns2(PermShkDstn,TranShkDstn)]
@@ -440,11 +519,6 @@ class FBSNK_agent(IndShockConsumerType):
     
         
     
-
-    
-
-    
-    
     
     
 FBSDict={
@@ -452,7 +526,7 @@ FBSDict={
     "CRRA":2,                           # Coefficient of relative risk aversion
     "Rfree": 1.048**.25,                       # Interest factor on assets
     "DiscFac": 0.97,                     # Intertemporal discount factor
-    "LivPrb" : [.99375],  #.9725                  # Survival probability
+    "LivPrb" : [.99375],                    # Survival probability
     "PermGroFac" :[1.00],                 # Permanent income growth factor
 
     # Parameters that specify the income distribution over the lifecycle
@@ -462,7 +536,7 @@ FBSDict={
     "TranShkStd" : [.2],        # Standard deviation of log transitory shocks to income
     "TranShkCount" : 5,                    # Number of points in discrete approximation to transitory income shocks
     "UnempPrb" : 0.05, #.08                     # Probability of unemployment while working
-    "IncUnemp" :  0.09535573122529638, #0.29535573122529635,                      # Unemployment benefits replacement rate
+    "IncUnemp" :  0.0954, #0.29535573122529635,                      # Unemployment benefits replacement rate
     "UnempPrbRet" : 0.0005,                # Probability of "unemployment" while retired
     "IncUnempRet" : 0.0,                   # "Unemployment" benefits when retired
     "T_retire" : 0,                        # Period of retirement (0 --> no retirement)
@@ -482,8 +556,8 @@ FBSDict={
     "T_cycle" : 1,                         # Number of periods in the cycle for this agent type
 
     # Parameters only used in simulation
-    "AgentCount" : 250000,                 # Number of agents of this type
-    "T_sim" : 1400,                         # Number of periods to simulate
+    "AgentCount" : 50000,                 # Number of agents of this type
+    "T_sim" : 200,                         # Number of periods to simulate
     "aNrmInitMean" : np.log(1.3)-(.5**2)/2,# Mean of log initial assets
     "aNrmInitStd"  : .5,                   # Standard deviation of log initial assets
     "pLvlInitMean" : 0.0,                  # Mean of log initial permanent income
@@ -494,7 +568,6 @@ FBSDict={
     # new parameters
      "mu_u"       : .9 ,
      "L"          : 1.3, 
-     "s"          : 1,
      "dx"         : .1,                  #Deviation from steady state
      "jac"        : False,
      "jacW"       : False, 
@@ -516,7 +589,6 @@ FBSDict={
 
     
 ###############################################################################
-
 
 
 G=.19
@@ -550,6 +622,10 @@ print(q)
 '''
 
 
+
+
+
+
 ###############################################################################
 
 ss_agent = FBSNK_agent(**FBSDict)
@@ -561,7 +637,7 @@ ss_agent.T_sim = 1200
 target = q
 
 
-NumAgents = 250000
+NumAgents = 50000
 
 tolerance = .001
 
@@ -923,7 +999,7 @@ for j in range(ghost_agent.T_sim):
         litc_g.append(listH_g[n][0][j,:]*listH_g[n][1][j,:])
         lita_g.append(listH_Ag[n][j,:])
         litm_g.append(listH_Mg[n][j,:]*listH_g[n][1][j,:])
-        litMU_g.append(listH_MUg[n][j,:] *(listH_g[n][0][j,:]*listH_g[n][1][j,:])**(-ss_agent.CRRA))
+        litMU_g.append(listH_MUg[n][j,:] * listH_g[n][1][j,:] * (listH_g[n][0][j,:]*listH_g[n][1][j,:])**(-ss_agent.CRRA))
     
     MU = np.array(np.concatenate(litMU_g))
     MU = np.mean(MU)
@@ -979,7 +1055,7 @@ jac_agent.cycles = 1
 jac_agent.track_vars = ['aNrm','mNrm','cNrm','pLvl','aLvl','TranShk']
 
 if jac_agent.jac == True:
-    jac_agent.dx = .0001
+    jac_agent.dx = .05
     jac_agent.del_from_time_inv('Rfree')
     jac_agent.add_to_time_vary('Rfree')
     jac_agent.IncShkDstn = params['T_cycle']*ss_agent.IncShkDstn
@@ -1074,7 +1150,7 @@ for i in testSet:
                 litc_jac.append(listH_C[n][0][j,:]*listH_C[n][1][j,:])
                 lita_jac.append(listH_A[n][j,:])
                 litm_jac.append(listH_M[n][j,:]*listH_C[n][1][j,:])
-                litMU_jac.append(listH_MU[n][j,:] *(listH_C[n][0][j,:]*listH_C[n][1][j,:])**(-ss_agent.CRRA))
+                litMU_jac.append(listH_MU[n][j,:] * listH_C[n][1][j,:]*(listH_C[n][0][j,:]*listH_C[n][1][j,:])**(-ss_agent.CRRA))
 
 
             
@@ -1118,7 +1194,11 @@ savemat('CJAC.mat', mdict={'CJAC' : CJAC})
 savemat('AJAC.mat', mdict={'AJAC' : AJAC})
 '''
 
-
+plt.plot((MUHist[0][1:]), label = '0')
+#plt.plot((CHist[4]- C_dx0)/(jac_agent.dx), label = '175')
+plt.plot((MUHist[3][1:]), label = '100')
+plt.plot((MUHist[1][1:]), label = '20')
+plt.plot((MUHist[2][1:] ), label = '50')
 
 
 
