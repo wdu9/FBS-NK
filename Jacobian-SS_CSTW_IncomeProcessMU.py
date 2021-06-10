@@ -393,7 +393,8 @@ class FBSNK_agent(IndShockConsumerType):
                                                     "IncUnemp",
                                                     "G",
                                                     "DisULabor",
-                                                    "InvFrisch"
+                                                    "InvFrisch",
+                                                    "s",
     
                                                     
                                                   ]
@@ -583,7 +584,8 @@ FBSDict={
      "B" : 0,                               # Net Bond Supply
      "G" : .19,#.18
      "DisULabor": 1.1057299984326825,
-     "InvFrisch": 2 
+     "InvFrisch": 2 ,
+     "s" : 1
      }
 
 
@@ -637,7 +639,7 @@ ss_agent.T_sim = 1200
 target = q
 
 
-NumAgents = 50000
+NumAgents = 150000
 
 tolerance = .001
 
@@ -693,14 +695,15 @@ while go:
         litc.append((consumers_ss[i].state_now['mNrm'] - consumers_ss[i].state_now['aNrm'])*consumers_ss[i].state_now['pLvl'])
         list_aLvl.append(consumers_ss[i].state_now['aLvl'])
         
+        '''
+        emp = consumers_ss[i].shocks['TranShk'] != ss_agent.IncUnemp
         
-        for k in range(len(consumers_ss[i].shocks['TranShk'])):
-            if consumers_ss[i].shocks['TranShk'][k] != ss_agent.IncUnemp:
-                consumers_ss[i].shocks['TranShk'][k] = ((1-ss_agent.UnempPrb)/(ss_agent.wage * ss_agent.N * (1 - ss_agent.tax_rate)))*consumers_ss[i].shocks['TranShk'][k]
+        consumers_ss[i].shocks['TranShk'][emp] = ((1-ss_agent.UnempPrb)/(ss_agent.wage * ss_agent.N * (1 - ss_agent.tax_rate)))*consumers_ss[i].shocks['TranShk'][emp]
         
-        
+
         litMU.append(consumers_ss[i].DiscFac*consumers_ss[i].shocks['TranShk']*consumers_ss[i].state_now['pLvl']*((consumers_ss[i].state_now['mNrm'] - consumers_ss[i].state_now['aNrm'])*consumers_ss[i].state_now['pLvl'])**(- ss_agent.CRRA))
-    
+        '''
+        
         print('one consumer solved and simulated')
     
     pLvl = np.concatenate(list_pLvl)
@@ -712,18 +715,18 @@ while go:
     AggC = np.mean(c)
 
     
-    MU = np.array(np.concatenate(litMU))
-    MU = np.mean(MU)
+    #MU = np.array(np.concatenate(litMU))
+    #MU = np.mean(MU)
     
-    MV = ss_agent.DisULabor* ss_agent.N**ss_agent.InvFrisch
+    #MV = ss_agent.DisULabor* ss_agent.N**ss_agent.InvFrisch
 
-    MRS = MV / MU
+    #MRS = MV / MU
     
-    AMRS = ss_agent.SSWmu*ss_agent.wage* (1-ss_agent.tax_rate)
+    #AMRS = ss_agent.SSWmu*ss_agent.wage* (1-ss_agent.tax_rate)
     
-    AMV = AMRS *MU
+    #AMV = AMRS *MU
     
-    disu_act = AMV/MV 
+    #disu_act = AMV/MV 
     
     if AggA - target > 0 :
         
@@ -736,9 +739,9 @@ while go:
         break
     
     
-    print('MU=' + str(MU))
-    print('MRS =' + str(MRS))
-    print('what it needs to be:' + str(AMRS))
+   # print('MU=' + str(MU))
+    #print('MRS =' + str(MRS))
+    #print('what it needs to be:' + str(AMRS))
     print('Assets =' + str(AggA))
     print('consumption =' + str(AggC))
     print('center =' + str(center))
@@ -916,7 +919,7 @@ class FBSNK_JAC(FBSNK_agent):
 ###############################################################################
 
 params = deepcopy(FBSDict)
-params['T_cycle']= 200
+params['T_cycle']= 201
 params['LivPrb']= params['T_cycle']*[ss_agent.LivPrb[0]]
 params['PermGroFac']=params['T_cycle']*[1]
 params['PermShkStd'] = params['T_cycle']*[ss_agent.PermShkStd[0]]
@@ -967,7 +970,7 @@ listM_g = []
 listH_MUg = []
 listMU_g =[]
 
-norm = ((1-ss_agent.UnempPrb)/(ss_agent.wage * ss_agent.N * (1 - ss_agent.tax_rate)))
+norm = ((1-ss_agent.UnempPrb)/((ss_agent.wage) * ss_agent.N * (1 - ss_agent.tax_rate)))
 
 for k in range(num_consumer_types):
     ghosts[k].solve()
@@ -977,6 +980,8 @@ for k in range(num_consumer_types):
     for j in range(ghost_agent.T_sim):
 
         for i in range(ghosts[k].AgentCount):
+            
+            
             if ghosts[k].history['TranShk'][j][i] != ss_agent.IncUnemp:
         
                 ghosts[k].history['TranShk'][j][i] = norm*ghosts[k].history['TranShk'][j][i]
@@ -1002,7 +1007,12 @@ for j in range(ghost_agent.T_sim):
         litc_g.append(listH_g[n][0][j,:]*listH_g[n][1][j,:])
         lita_g.append(listH_Ag[n][j,:])
         litm_g.append(listH_Mg[n][j,:]*listH_g[n][1][j,:])
-        litMU_g.append(listH_MUg[n][j,:] * listH_g[n][1][j,:] * (listH_g[n][0][j,:]*listH_g[n][1][j,:])**(-ss_agent.CRRA))
+        
+        emp = listH_MUg[n][j,:] != ss_agent.IncUnemp
+        
+        litMU_g.append( listH_MUg[n][j,:][emp] * listH_g[n][1][j,:][emp] * ( listH_g[n][0][j,:][emp] * listH_g[n][1][j,:][emp] )**(-ss_agent.CRRA) )
+    
+    
     
     MU = np.array(np.concatenate(litMU_g))
     MU = np.mean(MU)
@@ -1048,8 +1058,8 @@ jac_agent = FBSNK_JAC(**params)
 #jac_agent = FBSNK2(**params)
 jac_agent.pseudo_terminal = False
 jac_agent.PerfMITShk = True
-jac_agent.jac = True
-jac_agent.jacW = False
+jac_agent.jac = False
+jac_agent.jacW = True
 jac_agent.jacN = False
 
 jac_agent.IncShkDstn = params['T_cycle']*jac_agent.IncShkDstn
@@ -1064,7 +1074,7 @@ if jac_agent.jac == True:
     jac_agent.IncShkDstn = params['T_cycle']*ss_agent.IncShkDstn
 
 if jac_agent.jacW == True or jac_agent.jacN == True:
-    jac_agent.dx = 1.1 #.8
+    jac_agent.dx = 4.7 #.8
     jac_agent.Rfree = ss_agent.Rfree
     jac_agent.update_income_process()
 
@@ -1128,10 +1138,33 @@ for i in testSet:
             
             for j in range(jac_agent.T_sim):
                 
+                if jac_agent.jacW == True:
+                    
+                    if j == consumers[k].s + 1:
+                        norm1 =  ((1-ss_agent.UnempPrb)/((ss_agent.wage + jac_agent.dx) * ss_agent.N * (1 - ss_agent.tax_rate)))
+
+                    else:
+                         norm1 =norm
+                         
+                if jac_agent.jacN == True:
+                    
+                    if j == consumers[k].s + 1:
+                        norm1 =  ((1-ss_agent.UnempPrb)/((ss_agent.wage) * (ss_agent.N + jac_agent.dx) * (1 - ss_agent.tax_rate)))
+
+                    else:
+                         norm1 =norm
+                
+                    
+                
+                
                 for m in range(consumers[k].AgentCount):
                     if consumers[k].history['TranShk'][j][m] != ss_agent.IncUnemp:
+                        
     
-                        consumers[k].history['TranShk'][j][m] = norm*consumers[k].history['TranShk'][j][m]
+                            
+                        consumers[k].history['TranShk'][j][m] = norm1*consumers[k].history['TranShk'][j][m]
+
+               
         
         
             listH_C.append([consumers[k].history['cNrm'],consumers[k].history['pLvl']])
@@ -1153,7 +1186,10 @@ for i in testSet:
                 litc_jac.append(listH_C[n][0][j,:]*listH_C[n][1][j,:])
                 lita_jac.append(listH_A[n][j,:])
                 litm_jac.append(listH_M[n][j,:]*listH_C[n][1][j,:])
-                litMU_jac.append(listH_MU[n][j,:] * listH_C[n][1][j,:]*(listH_C[n][0][j,:]*listH_C[n][1][j,:])**(-ss_agent.CRRA))
+                
+                emp = listH_MU[n][j,:]  != ss_agent.IncUnemp
+
+                litMU_jac.append(listH_MU[n][j,:][emp] * listH_C[n][1][j,:][emp] *(listH_C[n][0][j,:][emp] * listH_C[n][1][j,:][emp])**(-ss_agent.CRRA))
 
 
             
@@ -1202,7 +1238,7 @@ plt.plot((MUHist[0][1:]), label = '0')
 plt.plot((MUHist[3][1:]), label = '100')
 plt.plot((MUHist[1][1:]), label = '20')
 plt.plot((MUHist[2][1:] ), label = '50')
-
+plt.show()
 
 
 plt.plot((MUHist[0][1:]- MU_dx0[1:])/(jac_agent.dx), label = '0')
@@ -1210,7 +1246,8 @@ plt.plot((MUHist[0][1:]- MU_dx0[1:])/(jac_agent.dx), label = '0')
 plt.plot((MUHist[3][1:]- MU_dx0[1:])/(jac_agent.dx), label = '100')
 plt.plot((MUHist[1][1:]- MU_dx0[1:])/(jac_agent.dx), label = '20')
 plt.plot((MUHist[2][1:] - MU_dx0[1:])/(jac_agent.dx), label = '50')
-
+plt.legend()
+plt.show()
 
 
 
