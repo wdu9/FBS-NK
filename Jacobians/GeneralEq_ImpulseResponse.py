@@ -129,6 +129,8 @@ rho = 2
 C_ss = 1
 MU=1.8172334548115672
 
+q_ss = N_ss*( 1 - w_ss ) / rstar
+
 
 #Phillips Curves parameters
 #lambda_W = .899 #probability a firm won't be able to change wage
@@ -143,7 +145,7 @@ ParamW = ( (1 - lambda_W) / lambda_W) * ( 1 - DiscFac*LivPrb * lambda_W )
 
 
 #Policy
-phi = .3
+phi = 0
 phi_y = 0
 
 #------------------------------------------------------------------------------
@@ -171,7 +173,7 @@ mshk = np.array(mshkList)
             
 # Specify Shock, if Shk = 0 then productivity shock, else Shk = 1 => monetary policy Shock
 
-Shk = 0
+Shk = 1
 
 dZ = np.zeros((400,1))
 ShkLength = 200
@@ -555,8 +557,8 @@ axs[0, 0].set_title("Output")
 axs[1, 0].plot(100*dC/C_ss)
 axs[1, 0].set_title("Consumption")
 axs[1, 0].sharex(axs[0, 0])
-axs[0, 1].plot(dG)
-axs[0, 1].set_title("Government Spending")
+axs[0, 1].plot(100*dq/q_ss)
+axs[0, 1].set_title("Stock Price")
 axs[1, 1].plot(100*dN/N_ss)
 axs[1, 1].set_title("Labor")
 fig.tight_layout()
@@ -650,8 +652,8 @@ axs[0, 0].set_title("Output")
 axs[1, 0].plot(100*dC[0:rangelen])
 axs[1, 0].set_title("Consumption")
 axs[1, 0].sharex(axs[0, 0])
-axs[0, 1].plot(100*dG[0:rangelen]/.19)
-axs[0, 1].set_title("Government Spending")
+axs[0, 1].plot(dq)
+axs[0, 1].set_title("Stock Price")
 axs[1, 1].plot(100*dN[0:rangelen]/N_ss)
 axs[1, 1].set_title("Labor")
 fig.tight_layout()
