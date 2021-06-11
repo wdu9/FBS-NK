@@ -137,7 +137,7 @@ q_ss = N_ss*( 1 - w_ss ) / rstar
 #lambda_P = .926  #probability a firm won't be able to change wage
 
 lambda_W = .75 #probability a firm won't be able to change wage
-lambda_P = .75  #probability a firm won't be able to change wage
+lambda_P = .8  #probability a firm won't be able to change wage
 
 Lambda = ( (1 - lambda_P) / lambda_P) * (1- (lambda_P / (1+rstar)) )
 ParamW = ( (1 - lambda_W) / lambda_W) * ( 1 - DiscFac*LivPrb * lambda_W )
@@ -192,6 +192,17 @@ if Shk == 1:
 
 
 #------------------------------------------------------------------------------
+
+''' 
+Jacobians:
+    
+Jacobian matrices are square matrices whose ith row denotes the current period, 
+and the jth column  denotes the period in which the the change in the variable occurs'''
+
+#-----------------------------------------------------------------------------------------
+# Price inflation
+
+
 # this jacobian for pi_{t+1} wrt t=>0, below is jacobian for pi_{t} wrt t=>0
 
 J_pi_w_1 = np.zeros((200,200)) # jacobian of inflation response to change in wage. Rows represent period in which there is a wage change. Columns represent period of inflation
@@ -203,6 +214,7 @@ for j in range(200):
         if i < j:
             
             J_pi_w_1[i][j] = -Lambda*( -1/w_ss ) * (1 / (1+rstar) ** (j-i) )
+            
             
 # this jacobian for pi_{t+1} wrt t=>0, below is jacobian for pi_{t} wrt t=>0
 
@@ -216,10 +228,8 @@ for j in range(200):
             J_pi_Z_1[i][j] =  -(1/(1+rstar)**(j-i))*(Lambda/Z_ss)
         
 
-# Price inflation
 
-
-J_pi_w = np.zeros((200,200)) # jacobian of inflation response to change in wage. Rows represent period in which there is a wage change. Columns represent period of inflation
+J_pi_w = np.zeros((200,200)) # jacobian of inflation wrt to wage. Rows represent period in which there is a wage change. Columns represent period of inflation
 
 for j in range(200):
     
@@ -231,7 +241,7 @@ for j in range(200):
             J_pi_w[i][j] = -Lambda * (-1/w_ss) * ( 1 / (1+rstar)**(j-i))
             
             
-J_pi_Z = np.zeros((200,200))
+J_pi_Z = np.zeros((200,200)) # Jacobian of price inflation wrt to productivity
 
 for j in range(200):
     
@@ -336,7 +346,7 @@ for i in range(200):
 
 #Wage inflation
 
-J_piw_MU = np.zeros((200,200))
+J_piw_MU = np.zeros((200,200)) #Jacobian of wage inflation wrt to Marginal Utility of Consumption
 
 for j in range(200):
     
@@ -359,10 +369,10 @@ for j in range(200):
     
     for i in range(200):
         
-        J_piw_w[i][i] =  -ParamW *(1/w_ss)
+        J_piw_w[i][i] =  -ParamW * (1/w_ss)
             
         if i<j:
-            J_piw_w[i][j] = -ParamW* (1/w_ss) *((DiscFac*LivPrb)**(j-i)) 
+            J_piw_w[i][j] = -ParamW * (1/w_ss) *((DiscFac*LivPrb)**(j-i)) 
             
             
 J_piw_w = J_piw_w + np.dot(J_piw_MU,MUJACW)     
@@ -375,19 +385,40 @@ for j in range(200):
     
     for i in range(200):
         
-        J_piw_N[i][i] =  -ParamW*( -v / N_ss ) 
+        J_piw_N[i][i] =  -ParamW*( - v / N_ss ) 
             
         if i < j:
             
-            J_piw_N[i][j] =  - ParamW*( -v / N_ss  ) *((DiscFac*LivPrb)**(j-i))
+            J_piw_N[i][j] =  - ParamW*( -v / N_ss  ) * ( (DiscFac*LivPrb)**(j-i) )
             
 J_piw_N = J_piw_N  + np.dot(J_piw_MU,MUJACW) 
-            
+
+#--------------------------------------------------------------------------------------
+
+# Finance
+# because r_{t} =r_{t+1}^{a}
+
+J_ra_r = np.zeros((200,200)) # jacobian of return to mutual fund assets wrt to real interest rate
+for j in range(200):
+    for i in range(199):
+        if  i + 1 == j :
+            J_ra_r[i-1, i ] = 1 # because r_{t} =r_{t+1}^{a}
          
 
 
 
 #-----------------------------------------------------------------------------
+
+
+# derivative of log(w_{t-1}) wrt w_{t-1} given today is period t
+
+
+h2_wagelag = np.zeros((200,200))
+for j in range(200):
+    for i in range(199):
+        if  i + 1 == j :
+            h2_wagelag[i, i-1  ] = (1/w_ss) 
+
 
 # Composing HU jacobian ways through DAG
 
@@ -402,44 +433,26 @@ h1[:,400:600] = CJACN - J_Y_N + J_G_N #Partials wrt N
 # Wage Residual Target
 h2 = np.zeros((200,600))
 h2[:,0:200] =   - np.dot(J_piw_MU, MUJAC) 
-h2[:,200:400] = np.identity(200)*(1/w_ss) - J_piw_w + J_pi_w
-
-
-h2_wagelag = np.zeros((200,200))
-for j in range(200):
-    for i in range(199):
-        if  i + 1 == j :
-            h2_wagelag[i, i-1  ] = (1/w_ss)  #+ (-ParamW*(-rho/C_ss)*(CJACW[i][i-1] ))  
-
-                        
+#h2[:,200:400] = np.identity(200)*(1/w_ss) - J_piw_w + J_pi_w                        
 h2[:,200:400]= np.identity(200)*(1/w_ss) - h2_wagelag - J_piw_w + J_pi_w  
-h2[:,400:600] =   -J_piw_N 
+h2[:,400:600] =   - J_piw_N 
     
 
-
-h3_r = np.zeros((200,200))
-for j in range(200):
-    for i in range(199):
-        if  i + 1 == j :
-            h3_r[i-1, i ] = 1 # because r_{t} =r_{t+1}^{a}
-
-#h3_r[0][0]= 1
 # Fisher Residual Target
 h3 = np.zeros((200,600))
-h3[:, 0:200] = h3_r
-h3[:, 200:400] = (1+rstar)*J_pi_w_1 - phi*J_pi_w 
-h3[:, 400:600] = - np.dot(J_i_Y,J_Y_N)
+h3[:, 0:200] = J_ra_r 
+h3[:, 200:400] = (1+rstar)*J_pi_w_1 - phi * J_pi_w 
+h3[:, 400:600] = - np.dot( J_i_Y, J_Y_N )
 
-    
+
 h1h2= np.vstack((h1,h2))
-
 HU = np.vstack((h1h2,h3))
 
 
 #-------------------------------------------------------------------------------
 
-# Composing HZ with DAG method
 
+# Composing HZ with DAG method
 
 h1z  = np.zeros((200,400))
 h1z[:,0:200] = - J_Y_Z
@@ -450,6 +463,7 @@ h2z[:,0:200] = J_pi_Z
 h3z = np.zeros((200,400))
 h3z[:,0:200] = (1+rstar)*J_pi_Z_1 - phi * J_pi_Z - phi_y * J_Y_Z
 h3z[:,200:400] = - J_i_v
+
 
 # Stack all the matrices
 h1zh2z= np.vstack((h1z,h2z))
