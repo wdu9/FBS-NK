@@ -55,13 +55,10 @@ h = Sum( w[n]**2 , (n, 1, 3)).doit()
 
 #------------------------------------------------------------------------------
 
-
-#format e.g.  C = (C1, C2, C3,... CT), J = [dC/dr1 , dC/dr2, ..., dC/drT]
-
 CJAC=loadmat('AltCJAC')
 CJAC=list(CJAC.items())
 CJAC=np.array(CJAC)
-CJAC = CJAC[3][1].T # Make sure format of matrix is that rows represent period , while columns represent period in which interest rate Changes
+CJAC = CJAC[3][1].T
 
 CJACW=loadmat('AltCJACW')
 CJACW=list(CJACW.items())
@@ -110,16 +107,22 @@ C_ss = 1
 
 
 #Phillips Curves parameters
-lambda_W = .899
-lambda_P = .926
+#lambda_W = .899 #probability a firm won't be able to change wage
+#lambda_P = .926  #probability a firm won't be able to change wage
+
+lambda_W = .75 #probability a firm won't be able to change wage
+lambda_P = .75  #probability a firm won't be able to change wage
+
 Lambda = (1-lambda_P)*(1-(lambda_P/(1+rstar)))/lambda_P
 ParamW = ( (1-lambda_W) / lambda_W) * ( 1 - LivPrb * lambda_W )
 
 
 
 #Policy
-phi = 1.2
-phi_y= .2
+phi = 0
+phi_y = 0
+
+
 
 
 
@@ -129,7 +132,7 @@ phi_y= .2
 # Shock Parameters       
 Z = .01 # Initial Productivity shock
 m_e = .01 # Initial Monetary Policy Shock
-p=.57 # AR1 Coefficient
+p=.66 # AR1 Coefficient
 
 
 ZshkList=[]
@@ -169,7 +172,7 @@ if Shk == 1:
 #------------------------------------------------------------------------------
 # this jacobian for pi_{t+1} wrt t=>0, below is jacobian for pi_{t} wrt t=>0
 
-J_pi_w_1 = np.zeros((200,200)) # format of matrix is that rows represent period , while columns represent period in which wage changes
+J_pi_w_1 = np.zeros((200,200)) # jacobian of inflation response to change in wage. Rows represent period in which there is a wage change. Columns represent period of inflation
 
 for j in range(200):
     
@@ -181,8 +184,7 @@ for j in range(200):
             
 # this jacobian for pi_{t+1} wrt t=>0, below is jacobian for pi_{t} wrt t=>0
 
-J_pi_Z_1 = np.zeros((200,200)) # format of matrix is that rows represent period , while columns represent period in which variable changes , 
-#that let C = (C1, C2, C3,... CT), J = [dC/dr1 , dC/dr2, ..., dC/drT]
+J_pi_Z_1 = np.zeros((200,200)) # jacobian of inflation response to change in wage. Rows represent period in which wage change occurs. Columns denotes period of inflation 
 
 for j in range(200):
     
@@ -195,16 +197,16 @@ for j in range(200):
 # Price inflation
 
 
-J_pi_w = np.zeros((200,200) )#format e.g.  C = (C1, C2, C3,... CT), J = [dC/dr1 , dC/dr2, ..., dC/drT]
+J_pi_w = np.zeros((200,200)) # jacobian of inflation response to change in wage. Rows represent period in which there is a wage change. Columns represent period of inflation
 
 for j in range(200):
     
     for i in range(200):
         
-        J_pi_w[i][j] = -Lambda*(-1/w_ss)
+        J_pi_w[i][i] = -Lambda*(-1/w_ss)
         
         if i < j:
-            J_pi_w[i][j] = -Lambda * (-1/w_ss) * (1/(1+rstar)**(j-i))
+            J_pi_w[i][j] = -Lambda * (-1/w_ss) * ( 1 / (1+rstar)**(j-i))
             
             
 J_pi_Z = np.zeros((200,200))
@@ -212,15 +214,14 @@ J_pi_Z = np.zeros((200,200))
 for j in range(200):
     
     for i in range(200):
+            
+        J_pi_Z[i][i] =   -Lambda/Z_ss
+            
+        if i < j :
+            
+            J_pi_Z[i][j] =  -(1/(1+rstar)**(j-i))*(Lambda/Z_ss)
         
-        if i == j :
-            
-            J_pi_Z[i][j] =   -Lambda/Z_ss
-            
-        elif i < j :
-            
-            J_pi_Z[i][j] =  (-Lambda/Z_ss)*(1/(1+rstar)**(j-i))
-        
+
 
 
 
@@ -286,62 +287,9 @@ for i in range(200):
     
     
 
-#----------------------------------------------------------------------------
-# Wage Inflation
-'''
-for period t, -ParamW * (log(w) - log(tau) - v*log(varphi*N) - rho*log(C))
-
-
-'''
-'''
-J_piw_C = np.zeros((200,200))
-
-for j in range(200):
-    
-    for i in range(200):
-                
-        if i==j:
-            J_piw_C[i][j] =  -ParamW *(-rho/C_ss)
-            
-        elif i<j:
-            J_piw_C[i][j] =  -ParamW*(-rho/C_ss)*((DiscFac*LivPrb)**(j-i)) 
-
-
-
-J_piw_w = np.zeros((200,200)) # Jacobian of wage Inflation wrt wage
-
-for j in range(200):
-    
-    for i in range(200):
-        
-        if i==j:
-            J_piw_w[i][j] = - ParamW/w_ss
-            
-        elif i<j:
-            J_piw_w[i][j] = (-ParamW/w_ss)*((DiscFac*LivPrb)**(j-i)) 
-            
-            
-J_piw_w = J_piw_w + np.dot(J_piw_C,CJACW.T)      
-
-
-
-J_piw_N = np.zeros((200,200)) # Jacobian of wage inflation wrt N  
-
-for j in range(200):
-    
-    for i in range(200):
-        
-        if i==j:
-            J_piw_N[i][j] = - ParamW * (-v/N_ss) 
-            
-        elif i<j:
-            J_piw_N[i][j] =  - ParamW*(-v/N_ss)*((DiscFac*LivPrb)**(j-i))
-            
-J_piw_N = J_piw_N  + np.dot(J_piw_C,CJACN.T) 
-
-    '''     
+#--------------------------------------------]
 #----------------------------------------------------------------------
-
+#Wage inflation
 
 J_piw_C = np.zeros((200,200))
 
@@ -349,10 +297,10 @@ for j in range(200):
     
     for i in range(200):
                 
-        if i==j:
-            J_piw_C[i][j] =  (-rho/C_ss)
+    
+        J_piw_C[i][i] =  (-rho/C_ss)
             
-        elif i<j:
+        if i<j:
             J_piw_C[i][j] =  (-rho/C_ss)*((DiscFac*LivPrb)**(j-i)) 
 
 J_piw_C = -ParamW*J_piw_C
@@ -364,10 +312,9 @@ for j in range(200):
     
     for i in range(200):
         
-        if i==j:
-            J_piw_w[i][j] =  -ParamW *(1/w_ss)
+        J_piw_w[i][i] =  -ParamW *(1/w_ss)
             
-        elif i<j:
+        if i<j:
             J_piw_w[i][j] = -ParamW* (1/w_ss) *((DiscFac*LivPrb)**(j-i)) 
             
             
@@ -381,17 +328,15 @@ for j in range(200):
     
     for i in range(200):
         
-        if i==j:
-            J_piw_N[i][j] =  -ParamW*(-v/N_ss ) 
+        J_piw_N[i][i] =  -ParamW*(-v/N_ss ) 
             
-        elif i<j:
+        if i<j:
             J_piw_N[i][j] =  -ParamW*(-v/N_ss) *((DiscFac*LivPrb)**(j-i))
             
 J_piw_N = J_piw_N  + np.dot(J_piw_C,CJACN) 
             
          
 
-         
 
 
 #-----------------------------------------------------------------------------
@@ -408,34 +353,39 @@ h1[:,400:600] = CJACN - J_Y_N + J_G_N #Partials wrt N
 
 # Wage Residual Target
 h2 = np.zeros((200,600))
-h2[:,0:200] =     -np.dot(J_piw_C, CJAC) 
+h2[:,0:200] =    - np.dot(J_piw_C, CJAC) 
 h2[:,200:400] = np.identity(200)*(1/w_ss) - J_piw_w + J_pi_w
 
 
-'''
 for j in range(400):
-    for i in range(199):
-        if  i + 200 == j and j>199 and j<400 :
-            h2[i+1, i + 200 ] = (-1/w_ss) - (-ParamW*(-rho/C_ss)*(CJACW[i+1][i] ))
-            
-'''
+    for i in range(200):
+        if 200 + i == j and j>199 and j<400 :
+            h2[i,j-1] = (-1/w_ss) - (-ParamW*(-rho/C_ss)*(CJACW[i][i-1] ))
             
 
-h2test = np.zeros((200,200))
+h2_wagelag = np.zeros((200,200))
 for j in range(200):
     for i in range(199):
         if  i + 1 == j :
-            h2test[i+1, i ] = (-1/w_ss)  - (-ParamW*(-rho/C_ss)*(CJACW[i+1][i] ))  
-            
+            h2_wagelag[i+1, i ] = (1/w_ss)  + (-ParamW*(-rho/C_ss)*(CJACW[i+1][i] ))  
+
                         
-h2[:,200:400]= np.identity(200)*(1/w_ss) - J_piw_w + J_pi_w + h2test
-            
-h2[:,400:600] =   -J_piw_N  
+h2[:,200:400]= np.identity(200)*(1/w_ss) - h2_wagelag - J_piw_w + J_pi_w  
     
+ 
+h2[:,400:600] =   -J_piw_N  #should be a negative here but it breaks things, 
+    
+
+
+h3_r = np.zeros((200,200))
+for j in range(200):
+    for i in range(199):
+        if  i + 1 == j :
+            h3_r[i-1, i ] = 1 # because r_{t} =r_{t+1}^{a}
 
 # Fisher Residual Target
 h3 = np.zeros((200,600))
-h3[:, 0:200] = np.identity(200)
+h3[:, 0:200] = h3_r
 h3[:, 200:400] = (1+rstar)*J_pi_w_1 - phi*J_pi_w 
 h3[:, 400:600] = - np.dot(J_i_Y,J_Y_N)
 
@@ -457,18 +407,19 @@ h2z = np.zeros((200,400))
 h2z[:,0:200] = J_pi_Z
 
 h3z = np.zeros((200,400))
-h3z[:,0:200] = (1+rstar)*J_pi_Z_1 - phi*J_pi_Z - phi_y*J_Y_Z
-h3z[:,200:400] = -J_i_v
+h3z[:,0:200] = (1+rstar)*J_pi_Z_1 - phi * J_pi_Z - phi_y * J_Y_Z
+h3z[:,200:400] = - J_i_v
 
 # Stack all the matrices
 h1zh2z= np.vstack((h1z,h2z))
 HZ = np.vstack((h1zh2z,h3z))
 
 #----------------------------------------------------------------------------------------
+# Putting it all together 
 
 invHU = np.linalg.inv(HU)      
-
-dU = np.dot(np.dot(-invHU,HZ),dZ)
+G =np.dot(-invHU,HZ)
+dU = np.dot(G,dZ)
 
 
 dr = dU[0:200]
@@ -486,48 +437,97 @@ plt.show()
 
 #Consumption
 dC =  np.dot(CJAC,dr) + np.dot(CJACW,dw) + np.dot(CJACN,dN) 
-plt.plot(dC)
-plt.title("Consumption")
-plt.show()
+#plt.plot(dC)
+#plt.title("Consumption")
+#plt.show()
 
 #Government Spending
 dG = np.dot(J_G_N,dN) + np.dot(J_G_w,dw)
-plt.plot(dG)
-plt.title("Government Spending")
-plt.show()
+#plt.plot(dG)
+#plt.title("Government Spending")
+#plt.show()
 
 
 #output
 dY = np.dot(J_Y_N, dN) + np.dot(J_Y_Z,dZ[0:200])
-plt.plot(dY)
-plt.title("Output")
-plt.show()
+#plt.plot(dY)
+#plt.title("Output")
+#plt.show()
 
 #price inflation
 dpi = np.dot(J_pi_w,dw) + np.dot(J_pi_Z,dZ[0:200])
-plt.plot(dpi)
-plt.title("Price Inflation")
-plt.show()
+#plt.plot(dpi)
+#plt.title("Price Inflation")
+#plt.show()
 
 #wage inflation       
 dpiw = np.dot(J_piw_N,dN) + np.dot(J_piw_w,dw) +  np.dot(J_piw_C,dC)
-plt.plot(dpiw)
-plt.title("Wage Inflation")
-plt.show()
+#plt.plot(dpiw)
+#plt.title("Wage Inflation")
+#plt.show()
 
 #nominal Rate
 di = np.dot(J_i_pi, dpi) + np.dot(J_i_Y, dY) + np.dot(J_i_v, dZ[200:400]) 
-plt.plot(di)
-plt.title("Nominal Rate")
-plt.show()
+#plt.plot(di)
+#plt.title("Nominal Rate")
+#plt.show()
 
 #Dividends
 dD = dY - dw*dN
-plt.plot(dD)
-plt.title("Dividends")
-plt.show()
+#plt.plot(dD)
+#plt.title("Dividends")
+#plt.show()
 
 #Stock Price
+
+
+#percentages
+
+
+fig, axs = plt.subplots(2, 2)
+axs[0, 0].plot(100*dr )
+axs[0, 0].set_title("Real Interest Rate")
+axs[1, 0].plot(100*dw/w_ss)
+axs[1, 0].set_title("Real Wage")
+axs[1, 0].sharex(axs[0, 0])
+axs[0, 1].plot(100*dpiw)
+axs[0, 1].set_title("Nominal Wage Inflation")
+axs[1, 1].plot(100*dpi)
+axs[1, 1].set_title("Price Inflation")
+fig.tight_layout()
+#plt.savefig("GIPR1.jpg", dpi=500)
+
+
+
+
+fig, axs = plt.subplots(2, 2)
+axs[0, 0].plot(100*dY/N_ss)
+axs[0, 0].set_title("Output")
+axs[1, 0].plot(100*dC/C_ss)
+axs[1, 0].set_title("Consumption")
+axs[1, 0].sharex(axs[0, 0])
+axs[0, 1].plot(100*dG/.19)
+axs[0, 1].set_title("Government Spending")
+axs[1, 1].plot(100*dN/N_ss)
+axs[1, 1].set_title("Labor")
+fig.tight_layout()
+#plt.savefig("GIPR2.jpg", dpi=500)
+
+fig, axs = plt.subplots(2, 2)
+axs[0, 0].plot(dD)
+axs[0, 0].set_title("Dividends")
+axs[1, 0].plot(100*di)
+axs[1, 0].set_title("Nominal Rate")
+axs[1, 0].sharex(axs[0, 0])
+axs[0, 1].plot(dZ[0:200])
+axs[0, 1].set_title("Z")
+axs[1, 1].plot(dZ[200:400])
+axs[1, 1].set_title("v")
+fig.tight_layout()
+
+
+
+'''
 
 
 
@@ -535,7 +535,7 @@ plt.show()
 fig, axs = plt.subplots(2, 2)
 axs[0, 0].plot(dr)
 axs[0, 0].set_title("Real Interest Rate")
-axs[1, 0].plot(dw)
+axs[1, 0].plot(dw/w_ss)
 axs[1, 0].set_title("Real Wage")
 axs[1, 0].sharex(axs[0, 0])
 axs[0, 1].plot(dpiw)
@@ -549,28 +549,31 @@ fig.tight_layout()
 
 
 fig, axs = plt.subplots(2, 2)
-axs[0, 0].plot(dY)
+axs[0, 0].plot(dY/N_ss)
 axs[0, 0].set_title("Output")
-axs[1, 0].plot(dC)
+axs[1, 0].plot(dC/C_ss)
 axs[1, 0].set_title("Consumption")
 axs[1, 0].sharex(axs[0, 0])
-axs[0, 1].plot(dG)
+axs[0, 1].plot(dG/.19)
 axs[0, 1].set_title("Government Spending")
-axs[1, 1].plot(dN)
+axs[1, 1].plot(dN/N_ss)
 axs[1, 1].set_title("Labor")
 fig.tight_layout()
 #plt.savefig("GIPR2.jpg", dpi=500)
 
 fig, axs = plt.subplots(2, 2)
-axs[0, 0].plot(dD)
+axs[0, 0].plot(dD/(N_ss*(1-w_ss)))
 axs[0, 0].set_title("Dividends")
 axs[1, 0].plot(di)
 axs[1, 0].set_title("Nominal Rate")
 fig.tight_layout()
 
-'''
 
-rangelen = 40
+
+
+
+
+rangelen = 30
 
 fig, axs = plt.subplots(2, 2)
 axs[0, 0].plot(dr[0:rangelen])
@@ -606,10 +609,15 @@ axs[0, 0].plot(dD[0:rangelen])
 axs[0, 0].set_title("Dividends")
 axs[1, 0].plot(di[0:rangelen])
 axs[1, 0].set_title("Nominal Rate")
+axs[1, 0].sharex(axs[0, 0])
+axs[0, 1].plot(dZ[0:200])
+axs[0, 1].set_title("Z")
+axs[1, 1].plot(dZ[200:400])
+axs[1, 1].set_title("v")
 fig.tight_layout()
 
-
 '''
+
 
 
 
