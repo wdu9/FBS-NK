@@ -168,21 +168,116 @@ the problem allows us to rewrite it more compactly in Bellman equation form,
 
 
 
+Beginning of  period outstanding value of assets must equal value of the portfolio of shares and bonds.
+
+$$(1+r^{a}_{t}) A_{t-1} =  B_{t-1} + \int_{0}^{1} (q^{s}_{jt}+ D_{jt})\mathit{v}_{jt-1} \, dj +(1+i_{t-1}) \frac{M_{t-1}}{P_{t}}$$
+
+ Portfolio-Investment Constraint: End of the period t value of newly issued assets equals value of newly purchased shares and bonds. 
+
+$$A_{t} = \frac{M_{t}}{P_{t}} +q^{b}_{t} B_{t} + \int_{0}^{1} q^{s}_{jt}\mathit{v}_{jt}\,dj$$
+
+
+Mutual Fund's Problem
+
+$$\max_{\{B_{t}, M_{t} , \mathit{v}_{jt} \}} \mathrm{E}_{t}\left[1+r^{a}_{t+1} \right] = \mathrm{E}\left[ \frac{ B_{t} + \int_{0}^{1} (q^{s}_{jt+1}+ D_{jt+1})\mathit{v}_{jt} \, dj +(1+i_{t}) \frac{M_{t}}{P_{t+1}}}{\frac{M_{t}}{P_{t}} +q^{b}_{t} B_{t} + \int_{0}^{1} q^{s}_{jt}\mathit{v}_{jt}\,dj} \right]$$
+
+ 
+ FOC: Asset Pricing Equations/ No Arbitrage
+
+$$ \mathrm{E}_{t}\left[1+r^{a}_{t+1}\right]= \frac{1}{q^{b}_{t}}  =\frac{\mathrm{E}_{t}\left[q^{s}_{jt+1} + D_{jt+1} \right]}{q^{s}_{jt}} = (1+i_{t}) \mathrm{E}_{t}\left[\frac{P_{t}}{P_{t+1}}\right] \equiv 1 +r_{t}$$
+
+
+
 \hypertarget{Firms}{}
 \subsection{Firms}
 
 \hypertarget{Final Good Producer}{}
 \subsubsection{Final Good Producer}
 
+Perfectly Competitive Final Good Producer aggregates goods with CES technology
+
+$$ Y_{t} = \left(\int_{0}^{1} Y_{jt}^{\frac{\epsilon_{p}-1}{\epsilon_{p}}}\, dj\right)^{\frac{\epsilon_{p}}{\epsilon_{p}-1}}$$
+
+Final Good Producer Profit maximzation Problem
+
+$$ \max_{Y_{jt}} P_{t} \left(\int_{0}^{1} Y_{jt}^{\frac{\epsilon_{p}-1}{\epsilon_{p}}}\, dj\right)^{\frac{\epsilon_{p}}{\epsilon_{p}-1}} - \int_{0}^{1} P_{jt} Y_{jt} ,\ dj $$
+
+
+This leads to demand
+
+$$ Y_{jt} = \left(\frac {P_{jt}}{P_{t}}\right)^{- \epsilon_{p}} Y_{t}$$
+
+Plugging this demand into $ P_{t}Y_{t} = \int_{0}^{1} P_{jt} Y_{jt} ,\ dj$ , we obtain
+
+Price index $$P_{t} = \left(\int_{0}^{1} P_{jt}^{1-\epsilon_{p}}\,dj \right )^{\frac{1}{1-\epsilon_{p}}}$$
+
+
 \hypertarget{Intermediate Good Producer}{}
 \subsubsection{Intermediate Good Producer}
 
+$$Y_{jt} =  Z_{t}  N_{jt}$$ 
+
+where $log(Z_{t}) = \rho_{Z} log( Z_{t-1}) + \epsilon_{Z}$
+
+
+ Firm Maximization Problem
+ 
+ Firm $j$ chooses $P_{jt}$ to maximize its dividend $D_{jt}$ and its stock price $q^{s}_{jt} $
+ 
+ $$\max_{\{P_{jt}\}} \overbrace{\frac{(P_{jt} - MC_{t})Y_{jt}}{P_{t}}}^{=D_{jt}} + q^{s}_{jt}\left(P_{jt}\right) $$
+ 
+Given $q^{s}_{jt}\left(P_{jt}\right) = \frac{\mathrm{E}_{t}\left[q^{s}_{jt+1} +D_{jt+1}\left(P_{jt}\right)\right]}{1+r_{t}}$, this is equivalent to: 
+ 
+ $$\max_{\{P_{jt}\}} \mathrm{E}_{t}\left[\sum_{s=0}^{\infty} (\lambda_{P}) ^{s} M_{t,t+s} \left[ \frac{(P_{jt} - MC_{t+s})Y_{jt+s}}{P_{t+s}}\right]\right]$$
+ 
+subject to $$Y_{jt} = \left(\frac {P_{jt}}{P_{t}}\right)^{- \epsilon_{p}} Y_{t}$$
+ 
+where $ \lambda_{P}$ is the  probability a firm cannot change its price,  $M_{t, t+s} = \prod_{k=t}^{t+s-1} \frac{1}{1+r_{k}}$ is the stochastic discount factor and $MC_{t} = \frac{W_{t}}{A_{t}}$ is the marginal cost
+
+Phillips Curve
+
+$$ \pi_{t} = \frac{\mathrm{E}_{t}[\pi_{t+1}]}{1+r^{*}} + \lambda (\mu_{t}-\mu)$$
+
+where $r^{*}$ is the natural rate of interest in the steady state, $\lambda = \frac{(1-\lambda_{p})(1-\frac{\lambda_{p}}{1+r^{*}})}{\lambda_{p}}$,  $ \mu_{t} = log(P_{t}) - log(W_{t}) + log(Z_{t})$ and $\mu = \frac{\epsilon_{p}}{1-\epsilon_{p}}$
 
 \hypertarget{Labor Market}{}
 \subsection{Labor Market}
 
+
+Every worker $i \in [\mho,1]$ provides $n_{igt}$ hours of work to labor union $g \in [0,1]$ and assume $n_{igt} = \mathit{n}_{gt}$. This assumption will imply labor income heterogeneity is only due to transitory income shocks.
+
+Therefore, 
+
+$$n_{it} = \int_{0}^{1} n_{igt}\,dg$$ WLOG assume employed workers are $i \in [\mho,1]$
+
+and 
+
+$$N_{gt} = \int_{\mho}^{1} n_{igt}\,di = (1-\mho_{t}) \mathit{n}_{gt}$$ 
+
+Can think of LHS as labor demand for labor type $g$ o, and RHS is effective labor supply of labor type $g$ from households. There is an underlying assumption that unemployed households supply  "useless" labor. That they're labor supply is effectively useless. Or assumption can be thought as labor union only asks for labor from unemployed households. So if labor unions need to supply $N_{gt}$ to the labor packer, then the labor union will demand $ n_{gt} = \frac{N_{gt}}{1-\mho}$ from each household that is working.
+
+
 \hypertarget{Competitive Labor Packer}{}
 \subsubsection{Competitive Labor Packer}
+
+
+
+Perfectly Competitive Labor Packer purchases labor from Labor Unions and  aggregates Labor using CES technology and sells $N_{t}$ to firms at price $W_{t}$
+
+
+$$ N_{t} = \left(\int_{0}^{1} N_{gt}^{\frac{\epsilon_{w}-1}{\epsilon_{w}}}\,dg\right)^{\frac{\epsilon_{w}}{\epsilon_{w}-1}}$$
+
+The Competitve Labor Packer's profit maximizing Problem 
+
+$$ \max_{n_{jgt}} W_{t} \left(\int_{0}^{1} N_{jgt}^{\frac{\epsilon_{w}-1}{\epsilon_{w}}} \, dg \right)^ {\frac{\epsilon_{w}}{\epsilon_{w}-1}} - \int_{0}^{1} W_{gt}N_{jgt}\, dj $$
+
+
+ Competitive Labor Packer Demand for labor types
+
+$$ N_{gt} = \left(\frac{W_{gt}}{W_{t}}\right)^{-\epsilon_{w}} N_{t} $$
+
+Wage index follows
+$$ W_{t} = \left(\int_{0}^{1} W_{gt}^{1-\epsilon_{w}}\,dg\right)^{\frac{1}{1-\epsilon_{w}}}$$
 
 
 
@@ -190,19 +285,89 @@ the problem allows us to rewrite it more compactly in Bellman equation form,
 \hypertarget{Labor Unions}{}
 \subsubsection{Labor Unions}
 
+Labor Union Maximization Problem
 
+Labor Union $g$ will set a wage to maximize expected lifetime utility. It may only adjust its price given it is chosen by the calvo fairy. 
+
+$$ \max_{\{W_{gt}\}} \mathrm{E_{t}}\left[\sum_{s=0}^{\infty} (\bar{\beta} \not D \lambda_{w})^{s} \int_{\mho}^{1}  U\left (c_{it+s}(W_{gt+s}), n_{i t+s}) \, di \right)\right] $$
+
+where $\bar{\beta} = \int_{\mho}^{1} \beta_{i} \, di$
+
+subject to the following three constraints $$ N_{gt} = \left(\frac{W_{gt}}{W_{t}}\right)^{-\epsilon_{w}} N_{t} $$
+
+$$ W_{t} = \left(\int_{0}^{1} W_{gt}^{1-\epsilon_{w}}\,dg\right)^{\frac{1}{1-\epsilon_{w}}}$$
+
+where $\lambda_{w}$ probability labor union cannot adjust its wage and $\Phi_{it+s}$ is the distribution of  liquid assets, transitory and permanent shocks over households at period $t+s$.
+
+
+Wage Phillips Curve
+
+
+$$ \pi_{t}^{w} =   \bar{\beta} \not D  \mathrm{E}_{t} \left[ \pi_{t+1}^{w}\right] + \frac{(1-\lambda_{w})}{\lambda_{w}} (1- \bar{\beta} \not D \lambda_{w}) (\mu^{w} - \mu_{t}^{w})$$
+
+where $\mu_{t}^{w} = w_{t} - p_{t} - \tau_{t} - mrs_{t}$
 
 
 \hypertarget{Government Policy}{}
 \subsection{Government Policy}
 
 
+
 \hypertarget{Fiscal Policy}{}
 \subsubsection{Fiscal Policy}
 
+The government follows the balanced budget
+
+$$ q^{b}_{t} B_{t} + G_{t} + \mathit{u} \mho_{t} =  B_{t-1} +  \tau_{t} w_{t} N_{t} $$ 
 
 \hypertarget{Monetary Policy}{}
 \subsubsection{Monetary Policy}
+
+
+The central bank follows the taylor rule: 
+
+$$i_{t} = r_{t}^{*} +\phi \pi_{t} + \phi_{y} (Y_{t} - Y_{ss}) + v_{t}$$
+
+where $v_{t} = \rho_{v} v_{t-1} +\varepsilon_{t}$
+
+
+\hypertarget{Equilibrium}{}
+\subsection{Equilibrium}
+
+
+An equilibrium in this economy is a sequence of: \\
+
+- Policy Functions $\left( \mathcal{A}_{t}(m) , \mathcal{C}_{t}(m) \right )_{t=0}^{\infty}$ \\
+
+- Value functions $ \left( V_{t}(m) \right)_{t=0}^{\infty}$\\
+
+- Distributions $ \left(\Phi_{t}(m) \right)_{t=0}^{\infty}$\\
+
+- Prices $ \left( r^{a}_{t}, i_{t}, q^{s}_{t}, q^{b}_{t}, P_{t}, W_{t} , w_{t} , \pi_{t}, \pi^{w}_{t} \right) _{t=0}^{\infty}$\\
+
+- Aggregates $ \left(C_{t}, Y_{t} , N_{t},D_{t} , A_{t},M_{t},  G_{t} , B_{t}, \tau_{t} \right)_{t=0}^{\infty}$\\
+
+Such that: \\
+
+$ \left( \mathcal{A}_{t}(m) , \mathcal{C}_{t}(m), V_{t}(m)\right)_{t=0}^{\infty}$  solves the household's maximization problem given $  \left( w_{t}, N_{t},  r^{a}_{t}, \tau_{t}, \Phi_{t-1}(m)\right)_{t=0}^{\infty}$.\\
+
+The Mutual Fund, final Goods producer, intermediate goods producers, labor packer, and labor unions maximize their objective function.
+
+The government budget constraint holds.
+
+The nominal interest rate is set according to the central bank's Taylor rule.
+
+
+$ \Phi_{t+1}(m) = H(\Phi_{t}(m))$ holds.\\
+
+
+Markets clear:\\
+
+ $$ A_t = \int_{0}^{1} \mathcal{A}(m)\, d\Phi_{t}(m)$$
+ 
+ $$ Y_t = C_{t} +G_{t} $$
+ 
+ where $C_{t} = \int_{0}^{1} \mathcal{C}(m)\, d\Phi_{t}(m)$
 
 
 \hypertarget{Calibration}{}
