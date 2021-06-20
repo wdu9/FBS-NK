@@ -177,7 +177,7 @@ class FBSNK_agent(IndShockConsumerType):
     def  update_income_process(self):
         
         self.wage = 1/(self.SSPmu) #calculate SS wage
-        self.N = ((self.IncUnemp*self.UnempPrb ) + self.G )/ (self.wage*self.tax_rate)#calculate SS labor supply from Budget Constraint
+        self.N = ((self.IncUnemp*self.UnempPrb ) + self.G + (1 - (1/(self.Rfree) ) ) * self.B) / (self.wage*self.tax_rate)#calculate SS labor supply from Budget Constraint
         
         TranShkDstnTEST = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
         self.ThetaShk = np.insert(TranShkDstnTEST.X ,0, self.IncUnemp)
@@ -288,9 +288,9 @@ FBSDict={
      "SSPmu" :  1.012,                       # Price Markup from sequence space jacobian appendix
      "calvo price stickiness":  .926,      # Auclert et al 2020
      "calvo wage stickiness": .899,        # Auclert et al 2020
-     "B" : 0,                               # Net Bond Supply
+     "B" : .5,                               # Net Bond Supply
      "G" : .19,#.18
-     "DisULabor": 1.0070579357311797,
+     "DisULabor": 0.8823685356415617,
      "InvFrisch": 2 ,
      "s" : 1
      }
@@ -305,14 +305,19 @@ t=.16806722689075632
 t=0.16563445378151262
 Inc = 0.09535573122529638
 mho=.05
+r = (1.048)**.25 - 1 
+B=.5
 
 w = (1/1.012)
-N = (Inc*mho + G) / (w*t) 
-r = (1.048)**.25 - 1 
+N = (Inc*mho + G  + (1 - (1/(1+r)) ) *B) / (w*t) 
 q = ((1-w)*N)/r
+
+A = ( B/(1+r) ) + q
 
 print(N)
 print(q)
+print(A)
+
 
 
 '''
@@ -346,7 +351,7 @@ ss_agent.T_sim = 1200
 target = q
 
 
-NumAgents = 300000
+NumAgents = 50000
 
 tolerance = .001
 
@@ -357,7 +362,7 @@ go = True
 num_consumer_types = 5     # number of types 
 
 
-center =.968 #98 
+center =.9778 #98 
 
 while go:
     
@@ -406,6 +411,7 @@ while go:
         print('one consumer solved and simulated')
     
     
+    
     pLvl = np.concatenate(list_pLvl)
     aNrm = np.concatenate(list_aNrm)
     c = np.array(np.concatenate(litc))
@@ -443,7 +449,6 @@ while go:
     
     print('MRS =' + str(MRS))
     print('what it needs to be:' + str(AMRS))
-    
     print('Assets =' + str(AggA))
     print('consumption =' + str(AggC))
     print('center =' + str(center))
@@ -537,6 +542,58 @@ ax2.set_ylabel('Number of Households', color='k')
 
 class FBSNK_JAC(FBSNK_agent):
     
+    
+     def  update_income_process(self):
+        
+        self.wage = 1/(self.SSPmu) #calculate SS wage
+        self.N = ss_agent.N #calculate SS labor supply from Budget Constraint
+        
+        TranShkDstnTEST = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
+        self.ThetaShk = np.insert(TranShkDstnTEST.X ,0, self.IncUnemp)
+
+
+        TranShkDstn     = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
+        TranShkDstn.pmf  = np.insert(TranShkDstn.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)   
+        TranShkDstn.X  = np.insert(TranShkDstn.X*(((1.0-self.tax_rate)*self.N*self.wage)/(1-self.UnempPrb)),0,self.IncUnemp)
+        PermShkDstn     = MeanOneLogNormal(self.PermShkStd[0],123).approx(self.PermShkCount)
+        self.IncShkDstn = [combine_indep_dstns2(PermShkDstn,TranShkDstn)]
+        self.TranShkDstn = [TranShkDstn]
+        self.PermShkDstn = [PermShkDstn]
+        self.add_to_time_vary('IncShkDstn')
+        
+        TranShkDstnW     = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
+        TranShkDstnW.pmf  = np.insert(TranShkDstnW.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)
+        TranShkDstnW.X  = np.insert(TranShkDstnW.X*(((1.0-self.tax_rate)*self.N*(self.wage + self.dx))/(1-self.UnempPrb)),0,self.IncUnemp)
+        PermShkDstnW     = MeanOneLogNormal(self.PermShkStd[0],123).approx(self.PermShkCount)
+        self.IncShkDstnW = [combine_indep_dstns2(PermShkDstnW,TranShkDstnW)]
+        self.TranShkDstnW = [TranShkDstnW]
+        self.PermShkDstnW = [PermShkDstnW]
+        self.add_to_time_vary('IncShkDstnW')
+     
+        
+     
+        TranShkDstnN     = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
+        TranShkDstnN.pmf  = np.insert(TranShkDstnN.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)
+        TranShkDstnN.X  = np.insert(TranShkDstnN.X*(((1.0-self.tax_rate)*(self.N + self.dx)*self.wage)/(1-self.UnempPrb)),0,self.IncUnemp)
+        PermShkDstnN     = MeanOneLogNormal(self.PermShkStd[0],123).approx(self.PermShkCount)
+        self.IncShkDstnN= [combine_indep_dstns2(PermShkDstnN,TranShkDstnN)]
+        self.TranShkDstnN = [TranShkDstnN]
+        self.PermShkDstnN = [PermShkDstnN]
+        self.add_to_time_vary('IncShkDstnN')
+        
+        
+             
+        TranShkDstnT     = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
+        TranShkDstnT.pmf  = np.insert(TranShkDstnT.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)
+        TranShkDstnT.X  = np.insert(TranShkDstnT.X*(((1.0- (self.tax_rate +self.dx)) *self.N*self.wage)/(1-self.UnempPrb)),0,self.IncUnemp)
+        PermShkDstnT     = MeanOneLogNormal(self.PermShkStd[0],123).approx(self.PermShkCount)
+        self.IncShkDstnT= [combine_indep_dstns2(PermShkDstnT,TranShkDstnT)]
+        self.TranShkDstnT = [TranShkDstnT]
+        self.PermShkDstnT = [PermShkDstnT]
+        self.add_to_time_vary('IncShkDstnT')
+        
+        
+
     
   
      def update_solution_terminal(self):
@@ -756,10 +813,10 @@ print('done with Ghosts')
 jac_agent = FBSNK_JAC(**params)
 jac_agent.pseudo_terminal = False
 jac_agent.PerfMITShk = True
-jac_agent.jac = False
+jac_agent.jac = True
 jac_agent.jacW = False
 jac_agent.jacN = False
-jac_agent.jacT = True
+jac_agent.jacT = False
 
 
 jac_agent.IncShkDstn = params['T_cycle']*jac_agent.IncShkDstn
@@ -774,7 +831,7 @@ if jac_agent.jac == True:
     jac_agent.IncShkDstn = params['T_cycle']*ss_agent.IncShkDstn
 
 if jac_agent.jacW == True or jac_agent.jacN == True or jac_agent.jacT ==True:
-    jac_agent.dx = .8  #.8
+    jac_agent.dx = 2.7  #.8
     jac_agent.Rfree = ss_agent.Rfree
     jac_agent.update_income_process()
 
@@ -796,14 +853,14 @@ for i in range(num_consumer_types):
 ###############################################################################
 
 
-testSet= [0,20,50]
+testSet= [0,20,50,100]
 
 CHist = []
 AHist = []
 MHist = []
 MUHist = []
 pLvlHist =[]
-#for i in range(jac_agent.T_sim +1):
+#for i in range(params['T_cycle']):
     
     
 for i in testSet:
@@ -834,12 +891,11 @@ for i in testSet:
             if jac_agent.jacT == True:
                 consumers[k].IncShkDstn = i *ss_agent.IncShkDstn + jac_agent.IncShkDstnT + (params['T_cycle'] - i - 1)* ss_agent.IncShkDstn
 
-            
-
 
             consumers[k].solve()
             consumers[k].initialize_sim()
             consumers[k].simulate()
+            
             
             for j in range(jac_agent.T_sim):
                 
@@ -863,7 +919,7 @@ for i in testSet:
                 if jac_agent.jacT == True:
                     
                     if j == consumers[k].s + 1  :
-                        norm1 =  ( (1-ss_agent.UnempPrb)/((ss_agent.wage) * (ss_agent.N ) * (1 -  (ss_agent.tax_rate + jac_agent.dx) ) ) )
+                        norm1 =  ( ( 1-ss_agent.UnempPrb ) / (  (ss_agent.wage)  * (ss_agent.N ) * (1 -  ( ss_agent.tax_rate + jac_agent.dx ) ) ) )
 
                     else:
                         norm1 = norm
@@ -939,7 +995,7 @@ for i in testSet:
 '''
 CJAC = []
 AJAC = []
-for i in range(201):
+for i in range(params['T_cycle']):
     CJAC.append((CHist[i]-C_dx0)/jac_agent.dx)
     AJAC.append((AHist[i]-A_dx0)/jac_agent.dx)
     
@@ -956,16 +1012,15 @@ plt.show()
 
 
 plt.plot((MUHist[0]- MU_dx0)/(jac_agent.dx), label = '0')
-#plt.plot((CHist[4]- C_dx0)/(jac_agent.dx), label = '175')
 #plt.plot((MUHist[3]- MU_dx0)/(jac_agent.dx), label = '100')
 plt.plot((MUHist[1]- MU_dx0)/(jac_agent.dx), label = '20')
 plt.plot((MUHist[2] - MU_dx0)/(jac_agent.dx), label = '50')
 plt.legend()
 plt.show()
 
-A = (MUHist[1]- MU_dx0)/(jac_agent.dx)
 
 plt.plot(C_dx0 , label = 'Steady State')
+plt.plot(CHist[0], label = '0')
 plt.plot(CHist[1], label = '20')
 plt.plot(CHist[3], label = '100')
 plt.plot(CHist[2], label = '50')
