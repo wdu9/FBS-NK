@@ -46,7 +46,7 @@ Theoretical Foundations of Buffer Stock Saving
 
 \author{William Du\authNum}
 
-\keywords{Precautionary saving, buffer stock saving, marginal propensity to consume, permanent income hypothesis}
+\keywords{Precautionary saving, Heterogeneous Agents, Monetary Policy, permanent income hypothesis}
 
 \jelclass{D81, D91, E21}
 
@@ -347,7 +347,7 @@ An equilibrium in this economy is a sequence of: \\
 
 - Prices $ \left( r^{a}_{t}, i_{t}, q^{s}_{t}, q^{b}_{t}, P_{t}, W_{t} , w_{t} , \pi_{t}, \pi^{w}_{t} \right) _{t=0}^{\infty}$\\
 
-- Aggregates $ \left(C_{t}, Y_{t} , N_{t},D_{t} , A_{t},M_{t},  G_{t} , B_{t}, \tau_{t} \right)_{t=0}^{\infty}$\\
+- Aggregates $ \left(C_{t}, Y_{t} , N_{t},D_{t} , A_{t} , B_{t} \right)_{t=0}^{\infty}$\\
 
 Such that: \\
 
@@ -365,12 +365,15 @@ $ \Phi_{t+1}(m) = H(\Phi_{t}(m))$ holds.\\
 
 Markets clear:\\
 
- $$ A_t = \int_{0}^{1} \mathcal{A}(m)\, d\Phi_{t}(m)$$
+ $$ A_t =  \int_{0}^{1} \pLevBF_{it}\left( m_{it} - c_{it}(m_{it})\right) \, di $$
  
- $$ Y_t = C_{t} +G_{t} $$
+ $$ Y_t = C_{t} +G $$
  
- where $C_{t} = \int_{0}^{1} \mathcal{C}(m)\, d\Phi_{t}(m)$
+ where $C_{t} =  \int_{0}^{1} \pLevBF_{it} c_{it}(m_{it})\, di $
 
+
+\hypertarget{Computation}{}
+\section{Computation}
 
 \hypertarget{Calibration}{}
 \section{Calibration}
@@ -431,6 +434,126 @@ Markets clear:\\
 
 \normalsize
 
+
+\hypertarget{Computational Details}{}
+\section{Computational Details}
+
+
+\hypertarget{Model as System}{}
+\subsection{Model as System}
+
+$$
+H_{t}(\mathbf{U},\mathbf{Z})= \begin{pmatrix} 
+ Y_{t} - Z_{t}N_{t} \\ \\ 
+B_{t-1} - q^{b}_{t}B_{t} + u\mho + G_{t} - \tau w_{t} N_{t} \\ \\  
+i_{t} - r^{*} - \phi \pi_{t} -\phi_{y}(Y_{t}-Y_{ss}) - v_{t} \\ \\
+\pi_{t} -\frac{\pi_{t+1}}{1+r^{*}} + \lambda(\mu_{t}^{p} -\mu_{p})  \\ \\
+ \pi_{t}^{w} -\not D \pi_{t+1}^{w} -(\frac{1-\lambda_{w}}{\lambda_{w}}) (1- \not D \lambda_{w}) (\mu^{w} -\mu_{t}^{w}) \\ \\
+    1+r_{t} - \frac{1 + i_{t}}{1+ \pi^{p}_{t+1}}\\ \\
+ 1+r_{t+1}^{a} - \frac{q_{t+1}^{s} +D_{t+1}}{q_{t}^{s}} \\ \\
+ r_{t} - r_{t+1}^{a} \\ \\
+ \frac{w_{t}}{w_{t-1}} - \frac{\Pi_{t}^{w}}{\Pi_{t}^{p}} \\ \\
+ \mathcal{C}_{t}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T}) - Y_{t} + G_{t}  \\ \\
+ \end{pmatrix} = \begin{pmatrix} 0 \\ 0 \\. \\. \\. \\ 0\\ \end{pmatrix} , \quad t=0,1 ,2,3,....
+$$ \\ \\
+ 
+
+ 
+ where \\
+ 
+ $\mathcal{C}_{t}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T}) = \int_{0}^{1} \pLevBF_{it} c_{it}(m_{it})\, di $ \\
+ 
+$c_{it}(m_{it})$ is the steady state normalized consumption policy for household $i$ in period t. \\ \\
+ 
+ 
+ 
+ $\mathbf{U} = \left(Y_{t} , N_{t} ,  D_{t
+ }, B_{t}, w_{t} , \pi_{t}^{p} ,\pi_{t}^{w}, r_{t} , r_{t+1}^{a}, i_{t} , q_{t}^{s},  q_{t}^{s} \right)_{t=0}^{t=T}$ \\ 
+
+ 
+ $\mathbf{Z} = \left(Z_{t} ,v_{t}\right)_{t=0}^{t=T}$ \\ \\
+ 
+ 
+\hypertarget{Reduced System}{}
+\subsubsection{Reduced System}
+ 
+ System Can be reduced to the following: \\ \\
+ 
+Exogenous Variables are $ Z_{t}, v_{t}$ \\ 
+
+Endogenous Variables are $ r_{t} , w_{t} ,N_{t}$ \\ \\
+
+\begin{eqnarray} 
+H_{t}(\mathbf{U},\mathbf{Z})= \begin{pmatrix} 
+\mathcal{H}_{t,1} \\ \\ 
+\mathcal{H}_{t,2} \\ \\
+\mathcal{H}_{t,3} \\ \\
+ \end{pmatrix} = \begin{pmatrix} 0 \\ 0 \\ 0 \\ \end{pmatrix} , \quad  t = 0, 1, 2, ..., T 
+ \end{eqnarray}
+ 
+ where \\ 
+ 
+ 
+ $\mathcal{H}_{t,1}  =\mathcal{C}_{t}\left( \left \{r^{a}_{s} , w_{s} , N_{s}  \right \}_{s=0}^{s=T} \right) - Z_{t} N_{t} + G\\ \\ $
+
+$ \mathcal{H}_{t,2}  =log(w_{t}) - log(w_{t-1}) + \left( \frac{1 - \lambda_{w}}{\lambda_{w}}(1 - \not D \lambda_{w}) \sum_{k=0}^{\infty} \not D^{k} ( \mu_{t+k}^{w} - \mu^{w}) \right) - \left(  \lambda \sum_{k=0}^{\infty} \frac{1}{(1+r^{*})^{k}} ( \mu_{t+k}^{p} - \mu^{p})\right)\\ \\ $
+
+$ \mathcal{H}_{t,3}  =  (1+r_{t}) \left(1+ -\lambda \sum_{k=1}^{\infty} \frac{1}{(1+r^{*})^{k}} ( \mu_{t+k}^{p} - \mu^{p}) \right) \\ \\
+ - \left(1+r^{*}+ \phi \left(- \lambda \sum_{k=0}^{\infty} \frac{1}{(1+r^{*})^{k}} ( \mu_{t+k}^{p} - \mu^{p}) \right) +\phi_{y} \left(Z_{t} N_{t} - Y_{ss} \right) + v_{t}\right) \\ \\ $
+ 
+$\mathbf{U} = (r_{0} , r_{1} , ...r_{T}, w_{0}, w_{1}, ..., w_{T}, N_{0}, N_{1},...,N_{T})$ \\ 
+
+$ \mathbf{Z} = ( Z_{0}, Z_{1},... Z_{T}, v_{0},...,v_{T}) \\ \\ $ 
+
+$ \mu_{t}^{p} = log(\frac{1}{w_{t}}) + log(Z_{t})$ \\ 
+
+$\mu_{t}^{w} = log(w_{t}) + log(1 - \tau_{t}) - mrs_{t} \\ \\ $
+
+
+$mrs_{t} = log \left(- \frac{\int_{0}^{1}   U_{n} \left(\cLevBF_{i t}, n_{i t} \right) \ d i  }{\int_{0}^{1} \pLevBF_{it} \theta_{it} U_{c} \left(\cLevBF_{i t}, n_{i t} \right) \  di } \right) = log \left(\frac{\int_{0}^{1} \varphi \pLevBF_{it} n_{it}^{v} \ d i  }{\int_{0}^{1} \pLevBF_{it}  \theta_{it} \cLevBF_{it}^{-\rho} \  di } \right) = log \left(\frac{\int_{0}^{1} \varphi \pLevBF_{it} \left(\frac{N_{t}}{1 - \mho} \right)^{v} \, d i  }{\int_{0}^{1} \pLevBF_{it}  \theta_{it} \cLevBF_{it}^{-\rho} \  di } \right)$ \\ 
+
+$ = log \left( \varphi \left(\frac{N_{t}}{1 - \mho}\right) ^{v}\right) + log \left(\int_{0}^{1} \pLevBF_{it}  \,  di  \right) - log \left(\int_{0}^{1} \pLevBF_{it}  \theta_{it} \cLevBF_{it}^{-\rho} \  di  \right) $
+
+
+\hypertarget{Jacobian of System}{}
+\subsection{Jacobian of System} 
+
+By applying implicit function theorem to equation 10 : \\ \\
+
+$$d\mathbf{U} =  -{\mathbf{H}_{\mathbf{U}}}^{-1} \mathbf{H}_{\mathbf{Z}} d \mathbf{Z}$$ \\ 
+
+
+ $$  \mathbf{H}_{\mathbf{U}}= \begin{pmatrix} 
+H_{\mathbf{u}, 0} \\ \\ 
+H_{\mathbf{u}, 1}  \\ \\
+. \\ \\
+. \\ \\
+. \\ \\ 
+H_{\mathbf{u}, T} \\ \\
+ \end{pmatrix} \quad \quad \mathbf{H}_{\mathbf{Z}}= \begin{pmatrix} 
+H_{\mathbf{Z}, 0} \\ \\ 
+H_{\mathbf{Z}, 1}  \\ \\
+. \\ \\
+. \\ \\
+. \\ \\ 
+H_{\mathbf{Z}, T} \\ \\
+ \end{pmatrix}$$ \\ \\
+ 
+ 
+ 
+$$ H_{\mathbf{U}, t}= \begin{pmatrix} 
+\frac{ \partial \mathcal{H}_{t,1}}{\partial r_{0}}  & ... & \frac{ \partial \mathcal{H}_{t,1}}{\partial r_{T}} & \frac{ \partial \mathcal{H}_{t,1}}{\partial w_{0}} & ... & \frac{ \partial \mathcal{H}_{t,1}}{\partial w_{T}} & \frac{ \partial \mathcal{H}_{t,1}}{\partial N_{0}} & ... &\frac{ \partial \mathcal{H}_{t,1}}{\partial N_{T}} \\ \\ 
+\frac{ \partial \mathcal{H}_{t,2}}{\partial r_{0}}  & ... & \frac{ \partial \mathcal{H}_{t,2}}{\partial r_{T}} & \frac{ \partial \mathcal{H}_{t,2}}{\partial w_{0}} & ... & \frac{ \partial \mathcal{H}_{t,2}}{\partial w_{T}} & \frac{ \partial \mathcal{H}_{t,2}}{\partial N_{0}} & ... &\frac{ \partial \mathcal{H}_{t,2}}{\partial N_{T}}  \\ \\
+\frac{ \partial \mathcal{H}_{t,3}}{\partial r_{0}}  & ... & \frac{ \partial \mathcal{H}_{t,3}}{\partial r_{T}} & \frac{ \partial \mathcal{H}_{t,3}}{\partial w_{0}} & ... & \frac{ \partial \mathcal{H}_{t,3}}{\partial w_{T}} & \frac{ \partial \mathcal{H}_{t,3}}{\partial N_{0}} & ... &\frac{ \partial \mathcal{H}_{t,3}}{\partial N_{T}} \\ \\
+ \end{pmatrix} $$ \\
+ 
+  $$ H_{\mathbf{Z}, t}= \begin{pmatrix} 
+\frac{ \partial \mathcal{H}_{t,1}}{\partial Z_{0}}  & ... & \frac{ \partial \mathcal{H}_{t,1}}{\partial Z_{T}} & \frac{ \partial \mathcal{H}_{t,1}}{\partial v_{0}} & ... & \frac{ \partial \mathcal{H}_{t,1}}{\partial v_{T}} \\ \\ 
+\frac{ \partial \mathcal{H}_{t,2}}{\partial Z_{0}}  & ... & \frac{ \partial \mathcal{H}_{t,2}}{\partial Z_{T}} & \frac{ \partial \mathcal{H}_{t,2}}{\partial v_{0}} & ... & \frac{ \partial \mathcal{H}_{t,2}}{\partial v_{T}} \\ \\
+\frac{ \partial \mathcal{H}_{t,3}}{\partial Z_{0}}  & ... & \frac{ \partial \mathcal{H}_{t,3}}{\partial Z_{T}} & \frac{ \partial \mathcal{H}_{t,3}}{\partial v_{0}} & ... & \frac{ \partial \mathcal{H}_{t,3}}{\partial v_{T}}  \\ \\
+ \end{pmatrix} $$
+ 
+ 
 
 \bibliography{\econtexRoot/BufferStockTheory,economics}
 
