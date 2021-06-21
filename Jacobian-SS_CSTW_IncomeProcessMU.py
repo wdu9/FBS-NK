@@ -179,8 +179,7 @@ class FBSNK_agent(IndShockConsumerType):
         self.wage = 1/(self.SSPmu) #calculate SS wage
         self.N = ((self.IncUnemp*self.UnempPrb ) + self.G + (1 - (1/(self.Rfree) ) ) * self.B) / (self.wage*self.tax_rate)#calculate SS labor supply from Budget Constraint
         
-        TranShkDstnTEST = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
-        self.ThetaShk = np.insert(TranShkDstnTEST.X ,0, self.IncUnemp)
+
 
 
         TranShkDstn     = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
@@ -231,7 +230,7 @@ class FBSNK_agent(IndShockConsumerType):
 FBSDict={
     # Parameters shared with the perfect foresight model
     "CRRA":2,                           # Coefficient of relative risk aversion
-    "Rfree": 1.048**.25,                       # Interest factor on assets
+    "Rfree": 1.05**.25,                       # Interest factor on assets
     "DiscFac": 0.97,                     # Intertemporal discount factor
     "LivPrb" : [.99375],                    # Survival probability
     "PermGroFac" :[1.00],                 # Permanent income growth factor
@@ -265,7 +264,7 @@ FBSDict={
     # Parameters only used in simulation
     "AgentCount" : 50000,                 # Number of agents of this type
     "T_sim" : 200,                         # Number of periods to simulate
-    "aNrmInitMean" : np.log(1.3)-(.5**2)/2,# Mean of log initial assets
+    "aNrmInitMean" : np.log(1.75)-(.5**2)/2,# Mean of log initial assets
     "aNrmInitStd"  : .5,                   # Standard deviation of log initial assets
     "pLvlInitMean" : 0.0,                  # Mean of log initial permanent income
     "pLvlInitStd"  : 0.0,                  # Standard deviation of log initial permanent income
@@ -305,7 +304,7 @@ t=.16806722689075632
 t=0.16563445378151262
 Inc = 0.09535573122529638
 mho=.05
-r = (1.048)**.25 - 1 
+r = (1.05)**.25 - 1 
 B=.5
 
 w = (1/1.012)
@@ -348,10 +347,10 @@ ss_agent.dx = 0
 ss_agent.T_sim = 1200
 #ss_agent.track_vars = ['TranShk']
 
-target = q
+target = A
 
 
-NumAgents = 50000
+NumAgents = 300000
 
 tolerance = .001
 
@@ -362,11 +361,11 @@ go = True
 num_consumer_types = 5     # number of types 
 
 
-center =.9778 #98 
+center =.9773 #98 
 
 while go:
     
-    discFacDispersion = 0.0069
+    discFacDispersion = 0.0049
     bottomDiscFac     = center - discFacDispersion
     topDiscFac        = center + discFacDispersion
     
@@ -548,8 +547,7 @@ class FBSNK_JAC(FBSNK_agent):
         self.wage = 1/(self.SSPmu) #calculate SS wage
         self.N = ss_agent.N #calculate SS labor supply from Budget Constraint
         
-        TranShkDstnTEST = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
-        self.ThetaShk = np.insert(TranShkDstnTEST.X ,0, self.IncUnemp)
+
 
 
         TranShkDstn     = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
@@ -789,6 +787,11 @@ M_dx0 = np.array(listM_g)
 A_dx0 = np.array(listA_g)
 C_dx0 = np.array(listC_g)
 
+
+plt.plot(A_dx0, label = 'Asset Steady State')
+plt.legend()
+plt.show()
+
 plt.plot(C_dx0, label = 'Consumption Steady State')
 plt.legend()
 plt.show()
@@ -813,8 +816,8 @@ print('done with Ghosts')
 jac_agent = FBSNK_JAC(**params)
 jac_agent.pseudo_terminal = False
 jac_agent.PerfMITShk = True
-jac_agent.jac = True
-jac_agent.jacW = False
+jac_agent.jac = False
+jac_agent.jacW = True
 jac_agent.jacN = False
 jac_agent.jacT = False
 
@@ -831,7 +834,7 @@ if jac_agent.jac == True:
     jac_agent.IncShkDstn = params['T_cycle']*ss_agent.IncShkDstn
 
 if jac_agent.jacW == True or jac_agent.jacN == True or jac_agent.jacT ==True:
-    jac_agent.dx = 2.7  #.8
+    jac_agent.dx = 2.2 #.8
     jac_agent.Rfree = ss_agent.Rfree
     jac_agent.update_income_process()
 
@@ -853,17 +856,18 @@ for i in range(num_consumer_types):
 ###############################################################################
 
 
-testSet= [0,20,50,100]
+testSet= [20,50,100]
 
 CHist = []
 AHist = []
 MHist = []
 MUHist = []
 pLvlHist =[]
-#for i in range(params['T_cycle']):
+
+for i in range(params['T_cycle']):
     
     
-for i in testSet:
+#for i in testSet:
         
         listH_C = []
         listH_A = []
@@ -883,13 +887,13 @@ for i in testSet:
                 consumers[k].Rfree = (i)*[ss_agent.Rfree] + [ss_agent.Rfree + jac_agent.dx] + (params['T_cycle'] - i - 1)*[ss_agent.Rfree]
             
             if jac_agent.jacW == True:
-                consumers[k].IncShkDstn = i *ss_agent.IncShkDstn + jac_agent.IncShkDstnW + (params['T_cycle'] - i - 1)* ss_agent.IncShkDstn
+                consumers[k].IncShkDstn = i*ss_agent.IncShkDstn + jac_agent.IncShkDstnW + (params['T_cycle'] - i - 1)* ss_agent.IncShkDstn
                 
             if jac_agent.jacN == True:
-                consumers[k].IncShkDstn = i *ss_agent.IncShkDstn + jac_agent.IncShkDstnN + (params['T_cycle'] - i - 1)* ss_agent.IncShkDstn
+                consumers[k].IncShkDstn = i*ss_agent.IncShkDstn + jac_agent.IncShkDstnN + (params['T_cycle'] - i - 1)* ss_agent.IncShkDstn
                 
             if jac_agent.jacT == True:
-                consumers[k].IncShkDstn = i *ss_agent.IncShkDstn + jac_agent.IncShkDstnT + (params['T_cycle'] - i - 1)* ss_agent.IncShkDstn
+                consumers[k].IncShkDstn = i*ss_agent.IncShkDstn + jac_agent.IncShkDstnT + (params['T_cycle'] - i - 1)* ss_agent.IncShkDstn
 
 
             consumers[k].solve()
@@ -902,21 +906,21 @@ for i in testSet:
                 if jac_agent.jacW == True:
                     
                     if j == consumers[k].s + 1 :
-                        norm1 =  ((1-ss_agent.UnempPrb)/((ss_agent.wage + jac_agent.dx) * ss_agent.N * (1 - ss_agent.tax_rate)))
+                        norm1 =  ((1-ss_agent.UnempPrb)/( (ss_agent.wage + jac_agent.dx) * ss_agent.N * (1 - ss_agent.tax_rate)))
 
                     else:
                          norm1 =norm
                          
                          
-                if jac_agent.jacN == True:
+                elif jac_agent.jacN == True:
                     
                     if j == consumers[k].s + 1:
-                        norm1 =  ((1-ss_agent.UnempPrb)/((ss_agent.wage) * (ss_agent.N + jac_agent.dx) * (1 - ss_agent.tax_rate)))
+                        norm1 =  ((1-ss_agent.UnempPrb)/( (ss_agent.wage) * (ss_agent.N + jac_agent.dx) * (1 - ss_agent.tax_rate) ) )
                     else:
                       norm1 =norm
                         
                       
-                if jac_agent.jacT == True:
+                elif jac_agent.jacT == True:
                     
                     if j == consumers[k].s + 1  :
                         norm1 =  ( ( 1-ss_agent.UnempPrb ) / (  (ss_agent.wage)  * (ss_agent.N ) * (1 -  ( ss_agent.tax_rate + jac_agent.dx ) ) ) )
@@ -992,16 +996,21 @@ for i in testSet:
 ###############################################################################
 ###############################################################################
 
-'''
-CJAC = []
-AJAC = []
+
+CJACW = []
+AJACW = []
+MUJACW=[]
 for i in range(params['T_cycle']):
-    CJAC.append((CHist[i]-C_dx0)/jac_agent.dx)
-    AJAC.append((AHist[i]-A_dx0)/jac_agent.dx)
+    CJACW.append((CHist[i]-C_dx0)/jac_agent.dx)
+    AJACW.append((AHist[i]-A_dx0)/jac_agent.dx)
+    MUJACW.append((MUHist[i]-MU_dx0)/jac_agent.dx)
     
-savemat('CJAC.mat', mdict={'CJAC' : CJAC})
-savemat('AJAC.mat', mdict={'AJAC' : AJAC})
-'''
+savemat('CJACW.mat', mdict={'CJACW' : CJACW})
+savemat('AJACW.mat', mdict={'AJACW' : AJACW})
+savemat('MUJACW.mat', mdict={'MUJACW' : MUJACW})
+
+
+
 plt.plot(MU_dx0)
 plt.plot((MUHist[0][1:]), label = '0')
 #plt.plot((CHist[4]- C_dx0)/(jac_agent.dx), label = '175')
