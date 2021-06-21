@@ -102,41 +102,46 @@ Write here for intro
 \section{The Model}
 
 \subsection{Households}
-\label{subsec:Households}
-There is a continuum of households $ i \in [0,1]$ \\
-Each household $i$ solves the following problem
+\label{subsec:Households} 
+
+There is a continuum of households of mass 1 distributed on the unit
+interval and indexed by $i$. Households are ex-ante heterogeneous in their discount factors and are subject to idiosyncratic income shocks.  Each household faces the following problem:
+
 \begin{verbatimwrite}{\EqDir/supfn.tex}
 \begin{eqnarray}
   \label{eq:supfn}
   \max_{\{\cLevBF_{it+s}\}_{s=0}^{\infty}} \mathrm{E_{t}}\left[\sum_{s=0}^{\infty} (\not D \beta_{i})^{t+s} U\left(  \cLevBF_{i t+s}, n_{i t+s}\right)\right]
 \end{eqnarray}
 \end{verbatimwrite}
-\input{\EqDir/supfn.tex}
+\input{\EqDir/supfn.tex} 
+
+subject to 
+\begin{align*}
+\aLevBF_{it}     &= \mLevBF_{it} - \cLevBF_{it}   \label{eq:DBCparts} \\
+\aLevBF_{it} +\cLevBF_{it}    &= \mathbf{z}_{it} +   (1 + r^{a}_{t} ) \aLevBF_{it-1}   \\ 
+\aLevBF_{it}  &\geq 0 \\
+\end{align*}
+
 where
-$U\left(\cLevBF_{i t}, n_{i t}\right) = \frac{\cLevBF_{i t}^{1-\rho}}{1 -\rho} - \varphi \pLevBF_{it} \frac{n_{it}^{1+v}}{1+v}$  
+$U\left(\cLevBF_{i t}, n_{i t}\right) = \frac{\cLevBF_{i t}^{1-\rho}}{1 -\rho} - \varphi \pLevBF_{it} \frac{n_{it}^{1+v}}{1+v}$ , $\beta_{i}$ is the discount factor of household $i$ and $\not D$ is the probability of death.  \\
+
+$\mLevBF_{it}$ \ denotes household $i$'s market resources at time $t$ to be expended on consumption $\cLevBF_{it}$ or invested into an asset $ \aLevBF_{it}$ with return $r_{t+1}^{a}$.  $\mLevBF_{it}$ is determined by labor income,  $\mathbf{z}_{it}$, and the gross return on assets from the last period, $(1+r_{t}^{a}) \aLevBF_{it-1} $. Labor supply of household $i$ at time $t$ is denoted by $n_{it}$.  Given the formulation of sticky wages described in section 2.4, labor supply is an aggregate state variable and therefore consumption serves as the sole control variable in the dynamic problem. \\
 
 
 
 
-\begin{eqnarray}
-\aLevBF_{it}     &=& \mLevBF_{it} - \cLevBF_{it}   \label{eq:DBCparts} \\
-\mLevBF_{it+1} &=& \mathbf{z}_{it+1} +   (1 + r^{a}_{t+1} ) \aLevBF_{it}  , \\
-\aLevBF_{it+1}  &\geq&  0 \\
-\end{eqnarray}
+\begin{align*}
+\mathbf{z}_{it} &= \pLevBF_{it}\tShkAll_{it} \\
+\pLevBF_{it+1} &=\pLevBF_{it} \pShk_{it+1} \\
+\end{align*}
+
+
+Labor income is subject to permanent and transitory idiosyncratic shocks. In particular, household $i$'s labor income is composed of a permanent component, $\pLevBF_{it} $ indicating the level of permanent income and a transitory component, $\tShkAll_{it} $, indicating the transitory income shock received by household $i$ at time $t$. $\pLevBF_{it} $ is subject to permanent income shocks $\pShk_{it+1}$ where $\pShk_{it}$ is iid mean one lognormal with standard deviation $\sigma_\pShk$, $\forall t$  
+($\Ex_{t}[{\pShk}_{t+n}]=1~\forall~n>0$) .
 
 
 
-Labor Income
-
-\begin{eqnarray}
-\mathbf{z}_{it} &=& \pLevBF_{it}\tShkAll_{it} \\
-\pLevBF_{it+1} &=&\pLevBF_{it} \pShk_{it+1} \\
-\end{eqnarray}
-
-
-
-In future periods $t+n ~\forall~ n \geq 1$ there is a small probability $\pZero$ that income will
-be zero (a `zero-income event'),
+The transitory random variable follows   
 \begin{verbatimwrite}{\EqDir/tShkDef}
 \begin{equation}
 \tShkAll _{it+n}=
@@ -147,8 +152,9 @@ be zero (a `zero-income event'),
 \end{equation}
 \end{verbatimwrite}
 \input{\EqDir/tShkDef.tex}
-where $\tShkEmp_{t+n}$ is an iid mean-one random variable
-($\Ex_{t}[{\tShkEmp}_{t+n}]=1~\forall~n>0$)
+where $\tau_{t}$ is the tax rate , $w_{gt}$ is the real wage for labor type $g$ at time t, $ n_{igt}$ is the labor supply for labor type $g$ and $\tShkEmp_{t+n}$ is an iid mean-one lognormal with standard deviation $\sigma_{\tShkEmp}$,
+($\Ex_{t}[{\tShkEmp}_{t+n}]=1~\forall~n>0$).
+
 
 
 
@@ -161,32 +167,36 @@ the problem allows us to rewrite it more compactly in Bellman equation form,
 \end{eqnarray*}
 \end{comment}
 
-\hypertarget{Mutual Fund}{}
-\subsection{Mutual Fund}
+\hypertarget{Financial Intermediary}{}
+\subsection{Financial Intermediary}
 
-\label{subsec:Mutual Fund}
+\label{subsec:Financial Intermediary}
 
+The financial intermediary in our model performs a mutual fund activity where it  collects assets from households $A_{t}$ and invests them into government bonds $B_{t}$, stocks $v_{jt}$, and nominal reserves at the central bank $M_{t}$.\\ 
 
-
-Beginning of  period outstanding value of assets must equal value of the portfolio of shares and bonds.
-
-$$(1+r^{a}_{t}) A_{t-1} =  B_{t-1} + \int_{0}^{1} (q^{s}_{jt}+ D_{jt})\mathit{v}_{jt-1} \, dj +(1+i_{t-1}) \frac{M_{t-1}}{P_{t}}$$
-
- Portfolio-Investment Constraint: End of the period t value of newly issued assets equals value of newly purchased shares and bonds. 
+In particular, at the end of period $t$, the assets collected from households $A_{t}$ must be invested into shares $\mathit{v}_{jt}$ of firm $j$ at price  $q^{s}_{jt}$ , government bonds $B_{t}$ at price $q^{b}_{t}$ and nominal reserves $M_{t}$. 
 
 $$A_{t} = \frac{M_{t}}{P_{t}} +q^{b}_{t} B_{t} + \int_{0}^{1} q^{s}_{jt}\mathit{v}_{jt}\,dj$$
 
+where $A_{t} = \int_{0}^{1} a_{it} \, di$ \\
 
-Mutual Fund's Problem
+The mutual fund's return in the next period is then 
 
-$$\max_{\{B_{t}, M_{t} , \mathit{v}_{jt} \}} \mathrm{E}_{t}\left[1+r^{a}_{t+1} \right] = \mathrm{E}\left[ \frac{ B_{t} + \int_{0}^{1} (q^{s}_{jt+1}+ D_{jt+1})\mathit{v}_{jt} \, dj +(1+i_{t}) \frac{M_{t}}{P_{t+1}}}{\frac{M_{t}}{P_{t}} +q^{b}_{t} B_{t} + \int_{0}^{1} q^{s}_{jt}\mathit{v}_{jt}\,dj} \right]$$
+$$(1+r^{a}_{t+1})  = \frac{  B_{t} + \int_{0}^{1} (q^{s}_{jt+1}+ D_{jt+1})\mathit{v}_{jt} \, dj +(1+i_{t}) \frac{M_{t}}{P_{t+1}}}{A_{t}}$$\\ 
+
+where  $D_{jt+1}$ are dividends of firm $j$ and $i_{t}$ is the nominal interest rate. \\ \\
+
+The mutual fund is risk neutral and looks to maximize its expected return 
+
+
+$$\max_{\{B_{t}, M_{t} , \mathit{v}_{jt} \}} \mathrm{E}_{t}\left[1+r^{a}_{t+1} \right] = \mathrm{E}\left[ \frac{ B_{t} + \int_{0}^{1} (q^{s}_{jt+1}+ D_{jt+1})\mathit{v}_{jt} \, dj +(1+i_{t}) \frac{M_{t}}{P_{t+1}}}{\frac{M_{t}}{P_{t}} +q^{b}_{t} B_{t} + \int_{0}^{1} q^{s}_{jt}\mathit{v}_{jt}\,dj} \right]$$ \\
 
  
- FOC: Asset Pricing Equations/ No Arbitrage
+The first order conditions lead to the no arbitrage equations:
 
 $$ \mathrm{E}_{t}\left[1+r^{a}_{t+1}\right]= \frac{1}{q^{b}_{t}}  =\frac{\mathrm{E}_{t}\left[q^{s}_{jt+1} + D_{jt+1} \right]}{q^{s}_{jt}} = (1+i_{t}) \mathrm{E}_{t}\left[\frac{P_{t}}{P_{t+1}}\right] \equiv 1 +r_{t}$$
 
-
+where $r_{t}$ is defined to be the real interest rate in period $t$. 
 
 \hypertarget{Firms}{}
 \subsection{Firms}
@@ -297,15 +307,15 @@ subject to the following three constraints $$ N_{gt} = \left(\frac{W_{gt}}{W_{t}
 
 $$ W_{t} = \left(\int_{0}^{1} W_{gt}^{1-\epsilon_{w}}\,dg\right)^{\frac{1}{1-\epsilon_{w}}}$$
 
-where $\lambda_{w}$ probability labor union cannot adjust its wage and $\Phi_{it+s}$ is the distribution of  liquid assets, transitory and permanent shocks over households at period $t+s$.
+where $\lambda_{w}$ probability labor union cannot adjust its wage and $\Phi_{it+s}$ is the distribution of  liquid assets, transitory and permanent shocks over households at period $t+s$. \\
 
 
-Wage Phillips Curve
+Wage Phillips Curve follows from the first order condition
 
 
 $$ \pi_{t}^{w} =   \bar{\beta} \not D  \mathrm{E}_{t} \left[ \pi_{t+1}^{w}\right] + \frac{(1-\lambda_{w})}{\lambda_{w}} (1- \bar{\beta} \not D \lambda_{w}) (\mu^{w} - \mu_{t}^{w})$$
 
-where $\mu_{t}^{w} = w_{t} - p_{t} - \tau_{t} - mrs_{t}$
+where $\mu_{t}^{w} = log\left( \frac{W_{t}}{P_{t}}\right)  - log\left(1 -\tau_{t}\right) - mrs_{t}$
 
 
 \hypertarget{Government Policy}{}
@@ -438,6 +448,40 @@ Markets clear:\\
 \hypertarget{Computational Details}{}
 \section{Computational Details}
 
+\hypertarget{Household Bellman Equation }{}
+\subsection{Household Bellman Equation}
+
+Household i's dynamic program is
+
+$$ V(\pmb{\mathrm{m}}_{it},\pmb{\mathrm{p}}_{it})=\max_{\{ \pmb{\mathrm{c}}_{it}\}} { U( \pmb{\mathrm{c}}_{it}, n_{it}) + \beta_{i} \not D \mathrm{E}_{t}[V( \pmb{\mathrm{m}}_{it+1} , \pmb{\mathrm{p}}_{it+1})]}$$
+
+subject to 
+
+\begin{align*}
+ \pmb{\mathrm{m}}_{i t} & = \pmb{\mathrm{z}}_{i t}  + (1+\mathit{r}^{a}_{t})\pmb{\mathrm{a}}_{i t-1} \\
+ \pmb{\mathrm{c}}_{i t}  + \pmb{\mathrm{a}}_{i t} &= \pmb{\mathrm{z}}_{i t}  + (1+\mathit{r}^{a}_{t}) \pmb{\mathrm{a}}_{i t-1}   \\
+\pmb{\mathrm{a}}_{it} &\geq 0 
+\end{align*} \\ \\
+
+This can be normalized to \\
+
+
+$$ V(m_{it}) = \max_{\{c_{it}\}} { U(c_{it}, n_{it}) + \beta_{i}\not D \mathrm{E}_{t}[\psi_{it+1}^{1-\rho} V(m_{it+1})]}$$
+
+ subject to 
+ 
+ \begin{align*}
+m_{i t} &=  \xi_{it}  + (1+r^{a}_{t}) \frac{a_{i t-1}}{\psi_{it-1}} \\
+ c_{i t}  + a_{i t} &= \xi_{it}  + (1+r^{a}_{t}) \frac{a_{i t-1}}{\psi_{it-1}} \\
+ a_{it} &\geq 0 
+ \end{align*}
+ 
+ Here non boldface variables are normalized by permanent income $\mathit{p_{it}}$. 
+
+e.g. $x_{it} = \frac{\mathbf{x_{it}}}{\pmb{\mathrm{p}}_{it}}$
+
+
+
 
 \hypertarget{Model as System}{}
 \subsection{Model as System}
@@ -454,6 +498,7 @@ i_{t} - r^{*} - \phi \pi_{t} -\phi_{y}(Y_{t}-Y_{ss}) - v_{t} \\ \\
  r_{t} - r_{t+1}^{a} \\ \\
  \frac{w_{t}}{w_{t-1}} - \frac{\Pi_{t}^{w}}{\Pi_{t}^{p}} \\ \\
  \mathcal{C}_{t}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T}) - Y_{t} + G_{t}  \\ \\
+  \mathcal{A}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T}) - q_{t}^{s} - \frac{B_{t}}{1+r_{t}}  \\ \\
  \end{pmatrix} = \begin{pmatrix} 0 \\ 0 \\. \\. \\. \\ 0\\ \end{pmatrix} , \quad t=0,1 ,2,3,....
 $$ \\ \\
  
@@ -463,8 +508,11 @@ $$ \\ \\
  
  $\mathcal{C}_{t}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T}) = \int_{0}^{1} \pLevBF_{it} c_{it}(m_{it})\, di $ \\
  
+ $\mathcal{A}_{t}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T}) = \int_{0}^{1} \pLevBF_{it} \left(m_{it} - c_{it}(m_{it})\right)\, di $ \\
+ 
 $c_{it}(m_{it})$ is the steady state normalized consumption policy for household $i$ in period t. \\ \\
  
+
  
  
  $\mathbf{U} = \left(Y_{t} , N_{t} ,  D_{t
