@@ -52,7 +52,7 @@ q_ss= 1.1855898108103429
 
 #Phillips Curves parameters
 lambda_W = .75 #probability a firm won't be able to change wage
-lambda_P = .8  #probability a firm won't be able to change price
+lambda_P = .85  #probability a firm won't be able to change price
 
 Lambda = ( (1 - lambda_P) / lambda_P ) * (1 - ( lambda_P / (1+rstar) ) )
 ParamW = ( (1 - lambda_W) / lambda_W ) * ( 1 - DiscFac * LivPrb * lambda_W )
@@ -291,7 +291,7 @@ for j in range(200):
         J_B_w[i][i] = 0
         
         if i < j:
-            J_B_w[i][j] =  (tau*N_ss ) * ( 1/( 1+rstar)**(j-i ))
+            J_B_w[i][j] =  (tau*N_ss ) * ( 1/( 1+rstar)**(j-i ) )
             
             
             
@@ -304,7 +304,7 @@ for j in range(200):
         J_B_N[i][i] = 0 
         
         if i < j:
-            J_B_N[i][j] =  (tau*w_ss ) * ( 1 / ( 1+rstar)**(j-i ))
+            J_B_N[i][j] =  (tau*w_ss ) * ( 1 / ( 1+rstar)**(j-i ) )
             
          
             
@@ -362,7 +362,7 @@ for j in range(200):
     for i in range(200):
         
         if i < j :
-            J_pi_Z_1[i][j] =  (-Lambda/Z_ss)*(1/(1+rstar)**(j-i))
+            J_pi_Z_1[i][j] =  (-Lambda/Z_ss)*(1/(1+rstar)**(j-i) )
         
 
 
@@ -375,7 +375,7 @@ for j in range(200):
         J_pi_w[i][i] = -Lambda*(-1/w_ss)
         
         if i < j:
-            J_pi_w[i][j] = -Lambda * (-1/w_ss) * ( 1 / (1+rstar)**(j-i))
+            J_pi_w[i][j] = -Lambda * (-1/w_ss) * ( 1 / (1+rstar)**(j-i) )
             
             
 J_pi_Z = np.zeros((200,200)) # Jacobian of price inflation wrt to productivity
@@ -451,13 +451,13 @@ J_piw_N = J_piw_N  + np.dot(J_piw_MU,MUJACN)
 
 # because r_{t} =r_{t+1}^{a}
 
-J_ra_r = np.zeros((200,200)) # jacobian of return to mutual fund assets wrt to real interest rate
+J_r_ra = np.zeros((200,200)) # jacobian of return to mutual fund assets wrt to real interest rate
 for i in range(199):
-        J_ra_r[i-1, i ] = 1 # because r_{t} = r_{t+1}^{a}
+        J_r_ra[i-1, i ] = 1 # because r_{t} = r_{t+1}^{a}
  
-J_r_ra = np.zeros((200,200)) 
+J_ra_r = np.zeros((200,200)) 
 for i in range(199):
-        J_r_ra[i+1, i ] = 1 # because r_{t} = r_{t+1}^{a}        
+        J_ra_r[i+1, i ] = 1 # because r_{t} = r_{t+1}^{a}        
 
 
 
@@ -544,9 +544,6 @@ plt.show()
 
 
 #-------------------------------------------------------------------------------
-
-
-
 #--------------------------------------------------------------------------------------
 #Other endogenous Variables
 
@@ -555,6 +552,8 @@ plt.show()
 #dr = np.concatenate( (dr,np.array([[7.30643926e-06]]) ))
 
 dra = np.dot(J_ra_r,dr)
+
+
 
 #Bonds 
 dB = np.dot(J_B_r,dr) + np.dot(J_B_w,dw) + np.dot(J_B_N,dN)
@@ -603,7 +602,7 @@ dmu_p = (-1/w_ss)*dw + (1/Z_ss) * dZ[0:200]
 dmu_w = (1/w_ss)*dw - ( (v/N_ss)*dN - (1/MU)*dMU)
 
 
-dA_o = dq  + (dB/(1+rstar) - np.dot(dr, .5))/(1+rstar)**2
+dA_o = dq  + (dB/(1+rstar) - np.dot(dr, B_ss))/(1+rstar)**2
 
 
 #--------------------------------------------------------------------------------
@@ -715,7 +714,7 @@ fig.tight_layout()
 '''
 
 
-
+'''
 rangelen = 30
 
 fig, axs = plt.subplots(2, 2)
@@ -769,7 +768,7 @@ fig.tight_layout()
 #plt.savefig("GIPRZ3.jpg", dpi=500)
 
 
-
+'''
 
 
 
