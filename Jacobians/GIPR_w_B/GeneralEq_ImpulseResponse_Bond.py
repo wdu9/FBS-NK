@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 """
+Created on Sat Jun 19 22:04:59 2021
+
+@author: wdu
+
+
 Created on Fri May 28 16:47:58 2021
 
 @author: wdu
@@ -22,30 +27,34 @@ from scipy.io import loadmat
 
 #Agent parameters
 LivPrb = .99375
-DiscFac = .968
+DiscFac = .977
 v = 2
 rho = 2
 
 #Aggregate State Variables
 mho = .05
 tau = 0.1656344537815126
-N_ss = 1.19
+N_ss = 1.2255973765554078
 w_ss = 1/1.012
 Z_ss = 1
 G_ss = .19
+C_ss = 1.0299752212238078
+A_ss = 1.705471862072535
 rstar = 1.048**.25 - 1
-MU=1.8172334548115672
+MU= 1.704943983232289
 u = 0.0954
+B_ss = 0.5
 
+D_ss = (N_ss -1)*w_ss
 
 q_ss = N_ss * ( 1 - w_ss ) / rstar
-
+q_ss= 1.1855898108103429
 
 #Phillips Curves parameters
 lambda_W = .75 #probability a firm won't be able to change wage
-lambda_P = .75  #probability a firm won't be able to change price
+lambda_P = .8  #probability a firm won't be able to change price
 
-Lambda = ( (1 - lambda_P) / lambda_P ) * (1 - (lambda_P / (1+rstar) ) )
+Lambda = ( (1 - lambda_P) / lambda_P ) * (1 - ( lambda_P / (1+rstar) ) )
 ParamW = ( (1 - lambda_W) / lambda_W ) * ( 1 - DiscFac * LivPrb * lambda_W )
 
 #Policy
@@ -109,27 +118,23 @@ and the jth column  denotes the period in which the the change in the variable o
 
 #-----------------------------------------------------------------------------
 
-KC= 1
-K=KC
 
 #Consumption Jacobians
 
-CJAC=loadmat('AltCJAC')
+CJAC=loadmat('AltCJAC_w_B')
 CJAC=list(CJAC.items())
 CJAC=np.array(CJAC)
-CJAC = KC*CJAC[3][1].T #Consumption Jacobian to interest rate
+CJAC = CJAC[3][1].T #Consumption Jacobian to interest rate
 
-CJACW=loadmat('AltCJACW')
+CJACW=loadmat('AltCJACW_w_B')
 CJACW=list(CJACW.items())
 CJACW=np.array(CJACW)
-CJACW = KC*CJACW[3][1].T #Consumption Jacobian to Wage
+CJACW = CJACW[3][1].T #Consumption Jacobian to Wage
 
-CJACN=loadmat('AltCJACN')
+CJACN=loadmat('AltCJACN_w_B')
 CJACN=list(CJACN.items())
 CJACN=np.array(CJACN)
-CJACN = KC*CJACN[3][1].T #Consumption Jacobian to Labor
-
-
+CJACN = CJACN[3][1].T #Consumption Jacobian to Labor
 
 
 
@@ -140,94 +145,41 @@ CJACN = KC*CJACN[3][1].T #Consumption Jacobian to Labor
 
 #Marginal Utility Jacobians
 
-MUJAC=loadmat('AltMUJAC')
+MUJAC=loadmat('AltMUJAC_w_B')
 MUJAC=list(MUJAC.items())
 MUJAC = np.array(MUJAC)
-MUJAC = K*MUJAC[3][1].T
+MUJAC = MUJAC[3][1].T
 
-MUJACW=loadmat('ALTMUJACW')
+MUJACW=loadmat('ALTMUJACW_w_B')
 MUJACW=list(MUJACW.items())
 MUJACW = np.array(MUJACW)
-MUJACW = K*MUJACW[3][1].T
+MUJACW = MUJACW[3][1].T
 
-MUJACN=loadmat('ALTMUJACN')
+MUJACN=loadmat('ALTMUJACN_w_B')
 MUJACN=list(MUJACN.items())
 MUJACN = np.array(MUJACN)
-MUJACN = K*MUJACN[3][1].T
+MUJACN = MUJACN[3][1].T
 
 #-----------------------------------------------------------------------------
 
 # Asset Jacobians
 
-AJAC=loadmat('AltAJAC')
+AJAC=loadmat('AltAJAC_w_B')
 AJAC=list(AJAC.items())
 AJAC=np.array(AJAC)
 AJAC = AJAC[3][1].T
 
-AJACW=loadmat('AltAJACW')
+AJACW=loadmat('AltAJACW_w_B')
 AJACW=list(AJACW.items())
 AJACW=np.array(AJACW)
 AJACW = AJACW[3][1].T
 
-AJACN=loadmat('AltAJACN')
+AJACN=loadmat('AltAJACW_w_B')
 AJACN=list(AJACN.items())
 AJACN=np.array(AJACN)
 AJACN = AJACN[3][1].T
 
 #------------------------------------------------------------------------------
-# Price inflation
-
-
-# this jacobian for pi_{t+1} wrt t=>0, below is jacobian for pi_{t} wrt t=>0
-
-J_pi_w_1 = np.zeros((200,200)) # jacobian of inflation response to change in wage. Rows represent period in which there is a wage change. Columns represent period of inflation
-
-for j in range(200):
-    
-    for i in range(200):
-        
-        if i < j:
-            
-            J_pi_w_1[i][j] = -Lambda * ( -1/w_ss ) * (1 / (1+rstar) ** (j-i) )
-            
-            
-# this jacobian for pi_{t+1} wrt t=>0, below is jacobian for pi_{t} wrt t=>0
-
-J_pi_Z_1 = np.zeros((200,200)) # jacobian of inflation response to change in wage. Rows represent period in which wage change occurs. Columns denotes period of inflation 
-
-for j in range(200):
-    
-    for i in range(200):
-        
-        if i < j :
-            J_pi_Z_1[i][j] =  (-Lambda/Z_ss)*(1/(1+rstar)**(j-i))
-        
-
-
-J_pi_w = np.zeros((200,200)) # jacobian of inflation wrt to wage. Rows represent period in which there is a wage change. Columns represent period of inflation
-
-for j in range(200):
-    
-    for i in range(200):
-        
-        J_pi_w[i][i] = -Lambda*(-1/w_ss)
-        
-        if i < j:
-            J_pi_w[i][j] = -Lambda * (-1/w_ss) * ( 1 / (1+rstar)**(j-i))
-            
-            
-J_pi_Z = np.zeros((200,200)) # Jacobian of price inflation wrt to productivity
-
-for j in range(200):
-    
-    for i in range(200):
-            
-        J_pi_Z[i][i] =   -Lambda/Z_ss
-            
-        if i < j :
-            
-            J_pi_Z[i][j] =  (-Lambda/Z_ss)* ( 1 / (1+rstar)**(j-i))
-        
 #------------------------------------------------------------------------------
 # Dividends
 
@@ -280,7 +232,7 @@ for j in range(200):
         if i < j :
             
             J_q_D[i][j] =  1 / (( 1 + rstar)**(j-i))
-
+            
 
 
 #----------------------------------------------------------------------------
@@ -336,7 +288,7 @@ for j in range(200):
     
     for i in range(200):
         
-        J_B_w[i][i] = tau*N_ss 
+        J_B_w[i][i] = 0
         
         if i < j:
             J_B_w[i][j] =  (tau*N_ss ) * ( 1/( 1+rstar)**(j-i ))
@@ -349,43 +301,12 @@ for j in range(200):
     
     for i in range(200):
         
-        J_B_N[i][i] = tau*w_ss 
+        J_B_N[i][i] = 0 
         
         if i < j:
-            J_B_N[i][j] =  (tau*w_ss ) * ( 1/( 1+rstar)**(j-i ))
+            J_B_N[i][j] =  (tau*w_ss ) * ( 1 / ( 1+rstar)**(j-i ))
             
-          
-
-J_B_r_1 = np.zeros((200,200))
-
-for j in range(200):
-    
-    for i in range(200):
-                
-        if i < j:
-            J_B_r_1[i][j] =  (tau*w_ss*N_ss - G_ss - u*mho ) * (-(j-i) /( 1+rstar)**(j-i + 1))
-            
-J_B_w_1 = np.zeros((200,200))
-
-for j in range(200):
-    
-    for i in range(200):
-        
-        
-        if i < j:
-            J_B_w_1[i][j] =  (tau*N_ss ) * ( 1/( 1+rstar)**(j-i ))
-            
-            
-            
-J_B_N_1 = np.zeros((200,200))
-
-for j in range(200):
-    
-    for i in range(200):
-    
-        if i < j:
-            J_B_N_1[i][j] =  (tau*w_ss ) * ( 1/( 1+rstar)**(j-i ))
-            
+         
             
     
     
@@ -416,6 +337,61 @@ for i in range(200):
 
 #------------------------------------------------------------------------------
 
+# Price inflation
+
+
+# this jacobian for pi_{t+1} wrt t=>0, below is jacobian for pi_{t} wrt t=>0
+
+J_pi_w_1 = np.zeros((200,200)) # jacobian of inflation response to change in wage. Rows represent period in which there is a wage change. Columns represent period of inflation
+
+for j in range(200):
+    
+    for i in range(200):
+        
+        if i < j:
+            
+            J_pi_w_1[i][j] = -Lambda * ( -1/w_ss ) * (1 / (1+rstar) ** (j-i) )
+            
+            
+# this jacobian for pi_{t+1} wrt t=>0, below is jacobian for pi_{t} wrt t=>0
+
+J_pi_Z_1 = np.zeros((200,200)) # jacobian of inflation response to change in wage. Rows represent period in which wage change occurs. Columns denotes period of inflation 
+
+for j in range(200):
+    
+    for i in range(200):
+        
+        if i < j :
+            J_pi_Z_1[i][j] =  (-Lambda/Z_ss)*(1/(1+rstar)**(j-i))
+        
+
+
+J_pi_w = np.zeros((200,200)) # jacobian of inflation wrt to wage. Rows represent period in which there is a wage change. Columns represent period of inflation
+
+for j in range(200):
+    
+    for i in range(200):
+        
+        J_pi_w[i][i] = -Lambda*(-1/w_ss)
+        
+        if i < j:
+            J_pi_w[i][j] = -Lambda * (-1/w_ss) * ( 1 / (1+rstar)**(j-i))
+            
+            
+J_pi_Z = np.zeros((200,200)) # Jacobian of price inflation wrt to productivity
+
+for j in range(200):
+    
+    for i in range(200):
+            
+        J_pi_Z[i][i] =   -Lambda/Z_ss
+            
+        if i < j :
+            
+            J_pi_Z[i][j] =  (-Lambda/Z_ss) * ( 1 / (1+rstar)**(j-i))
+            
+#------------------------------------------------------------------------------------
+
 #Wage inflation
 
 J_piw_MU = np.zeros((200,200)) #Jacobian of wage inflation wrt to Marginal Utility of Consumption
@@ -428,9 +404,7 @@ for j in range(200):
         J_piw_MU[i][i] =  1/MU
             
         if i<j:
-            J_piw_MU[i][j] =  (1/MU)*((DiscFac*LivPrb)**(j-i)) 
-            
-        
+            J_piw_MU[i][j] =  (1/MU) * ( (DiscFac*LivPrb) **(j-i) ) 
             
 
 J_piw_MU = -ParamW*J_piw_MU
@@ -446,9 +420,11 @@ for j in range(200):
         J_piw_w[i][i] =  -ParamW * (1/w_ss)
             
         if i<j:
-            J_piw_w[i][j] = -ParamW * (1/w_ss) *((DiscFac*LivPrb)**(j-i)) 
+            J_piw_w[i][j] = -ParamW * (1/w_ss) * ( (DiscFac*LivPrb)**(j-i)) 
+            
             
 J_piw_w = J_piw_w + np.dot(J_piw_MU,MUJACW)     
+
 
 
 
@@ -462,7 +438,7 @@ for j in range(200):
             
         if i < j:
             
-            J_piw_N[i][j] =  - ParamW*( -v / N_ss  ) * ( (DiscFac*LivPrb)**(j-i) )
+            J_piw_N[i][j] =  - ParamW * ( -v / N_ss  ) * ( (DiscFac*LivPrb)**(j-i) )
             
             
 J_piw_N = J_piw_N  + np.dot(J_piw_MU,MUJACN) 
@@ -476,11 +452,12 @@ J_piw_N = J_piw_N  + np.dot(J_piw_MU,MUJACN)
 # because r_{t} =r_{t+1}^{a}
 
 J_ra_r = np.zeros((200,200)) # jacobian of return to mutual fund assets wrt to real interest rate
-for j in range(200):
-    for i in range(199):
-        if  i + 1 == j :
-            J_ra_r[i-1, i ] = 1 # because r_{t} = r_{t+1}^{a}
-         
+for i in range(199):
+        J_ra_r[i-1, i ] = 1 # because r_{t} = r_{t+1}^{a}
+ 
+J_r_ra = np.zeros((200,200)) 
+for i in range(199):
+        J_r_ra[i+1, i ] = 1 # because r_{t} = r_{t+1}^{a}        
 
 
 
@@ -489,14 +466,12 @@ for j in range(200):
 # derivative of log(w_{t-1}) wrt w_{t-1} given today is period t
 
 h2_wagelag = np.zeros((200,200))
-for j in range(200):
-    for i in range(199):
-        if  i + 1 == j :
-            h2_wagelag[i, i-1] = (1/w_ss) 
+for i in range(199):
+        h2_wagelag[i, i-1] = (1/w_ss) 
 
 
 
-
+#-------------------------------------------------------------------------------------
 
 
 #------------------------------------------------------------------------------
@@ -504,21 +479,21 @@ for j in range(200):
 
 #Goods Market Clearing Target
 h1 = np.zeros((200,600))
-h1[:,0:200] = CJAC  #Partials wrt r
-h1[:,200:400] =  CJACW  + J_G_w #partials wrt w
-h1[:,400:600] = CJACN  -J_Y_N + J_G_N #Partials wrt N
+h1[:,0:200] = np.dot(CJAC,J_ra_r)  #Partials wrt r
+h1[:,200:400] =  CJACW   #partials wrt w
+h1[:,400:600] = CJACN  - J_Y_N  #Partials wrt N
 
 
 # Wage Residual Target
 h2 = np.zeros((200,600))
-h2[:,0:200] =   - np.dot(J_piw_MU, MUJAC) 
+h2[:,0:200] =   - np.dot(J_piw_MU, np.dot(MUJAC,J_ra_r)) 
 h2[:,200:400] = np.identity(200)*(1/w_ss) - h2_wagelag - J_piw_w + J_pi_w  
 h2[:,400:600] =   - J_piw_N 
     
 
 # Fisher Residual Target
 h3 = np.zeros((200,600))
-h3[:, 0:200] = J_ra_r 
+h3[:, 0:200] =  np.identity(200)
 h3[:, 200:400] = (1 + rstar) * J_pi_w_1 - phi * J_pi_w 
 h3[:, 400:600] = - np.dot( J_i_Y, J_Y_N )
 
@@ -554,14 +529,14 @@ G =np.dot(-invHU,HZ)
 dU = np.dot(G,dZ)
 
 #Endogenous Variables
-dr_a = dU[0:200]
+dr = dU[0:200]
 dw = dU[200:400]
 dN = dU[400:600]
 
 
 
 #Real Rate and Wage, Labor/hours
-plt.plot(dr_a, label = 'Mutual Fund real return')
+plt.plot(dr, label = 'Real Interest Rate')
 plt.plot(dw , label = 'Real Wage')
 plt.plot(dN , label = 'Labor')
 plt.legend()
@@ -569,27 +544,31 @@ plt.show()
 
 
 #-------------------------------------------------------------------------------
+
+
+
+#--------------------------------------------------------------------------------------
 #Other endogenous Variables
 
 # real interest rate
 #dr = np.delete(dr_a , 0,0)
 #dr = np.concatenate( (dr,np.array([[7.30643926e-06]]) ))
 
+dra = np.dot(J_ra_r,dr)
+
+#Bonds 
+dB = np.dot(J_B_r,dr) + np.dot(J_B_w,dw) + np.dot(J_B_N,dN)
 
 #Assets
-dA = np.dot(AJAC,dr_a) + np.dot(AJACW,dw) + np.dot(AJACN,dN) 
+dA = np.dot(AJAC,dra) + np.dot(AJACW,dw) + np.dot(AJACN,dN) 
 #plt.plot(dA)
 
 #Consumption
-dC =  np.dot(CJAC,dr_a) + np.dot(CJACW,dw) + np.dot(CJACN,dN) 
+dC =  np.dot(CJAC, dra) + np.dot(CJACW,dw) + np.dot(CJACN,dN) 
 
 
 #Marginal Utility
-dMU = np.dot(MUJAC,dr_a) + np.dot(MUJACW,dw) + np.dot(MUJACN,dN) 
-
-
-#Government Spending
-dG = np.dot(J_G_N,dN) + np.dot(J_G_w,dw)
+dMU = np.dot(MUJAC, dra) + np.dot(MUJACW,dw) + np.dot(MUJACN,dN) 
 
 
 #output
@@ -613,15 +592,19 @@ dD = np.dot(J_D_Y,dY) + np.dot(J_D_w,dw)  + np.dot(J_D_N,dN) + np.dot(J_D_Z,dZ[0
 
 
 #Stock Price
-dq = np.dot(J_q_D,dD) + np.dot (J_q_r,dr_a)
+dq = np.dot(J_q_D,dD) + np.dot (J_q_r,dr)
 
 
 #Price Markup 
-dmu_p = (-1/w_ss)*dw + (1/Z_ss)*dZ[0:200]
+dmu_p = (-1/w_ss)*dw + (1/Z_ss) * dZ[0:200]
 
 
 # Wage Markup
 dmu_w = (1/w_ss)*dw - ( (v/N_ss)*dN - (1/MU)*dMU)
+
+
+dA_o = dq  + (dB/(1+rstar) - np.dot(dr, .5))/(1+rstar)**2
+
 
 #--------------------------------------------------------------------------------
 #Impulse Response Figures
@@ -629,7 +612,7 @@ dmu_w = (1/w_ss)*dw - ( (v/N_ss)*dN - (1/MU)*dMU)
 #percentages
 
 fig, axs = plt.subplots(2, 2)
-axs[0, 0].plot(100*dr_a,'darkgreen' )
+axs[0, 0].plot(100*dr,'darkgreen' )
 axs[0, 0].set_title("Real Interest Rate")
 axs[1, 0].plot(100*dw/w_ss,'forestgreen' )
 axs[1, 0].set_title("Real Wage")
@@ -646,11 +629,11 @@ fig.tight_layout()
 fig, axs = plt.subplots(2, 2)
 axs[0, 0].plot(100*dY/N_ss)
 axs[0, 0].set_title("Output")
-axs[1, 0].plot(100*dC)
+axs[1, 0].plot(100*dC/C_ss)
 axs[1, 0].set_title("Consumption")
 axs[1, 0].sharex(axs[0, 0])
-axs[0, 1].plot(100*dG/.19)
-axs[0, 1].set_title("Government Spending")
+axs[0, 1].plot(100*dB/.5)
+axs[0, 1].set_title("Government Bonds")
 axs[1, 1].plot(100*dN/N_ss)
 axs[1, 1].set_title("Labor")
 fig.tight_layout()
@@ -658,7 +641,7 @@ fig.tight_layout()
 
 
 fig, axs = plt.subplots(2, 2)
-axs[0, 0].plot(100*dA/q_ss)
+axs[0, 0].plot(100*dA/A_ss)
 axs[0, 0].set_title("Assets")
 axs[1, 0].plot(100*dmu_p/(1/w_ss))
 axs[1, 0].set_title("Price Markup")
@@ -672,7 +655,7 @@ fig.tight_layout()
 
 
 fig, axs = plt.subplots(2, 2)
-axs[0, 0].plot(dD)
+axs[0, 0].plot(100*dD/D_ss)
 axs[0, 0].set_title("Dividends")
 axs[1, 0].plot(100*di)
 axs[1, 0].set_title("Nominal Rate")
@@ -729,14 +712,14 @@ axs[1, 0].set_title("Nominal Rate")
 fig.tight_layout()
 
 
-
+'''
 
 
 
 rangelen = 30
 
 fig, axs = plt.subplots(2, 2)
-axs[0, 0].plot(100*dr_a[0:rangelen],'darkgreen')
+axs[0, 0].plot(100*dr[0:rangelen],'darkgreen')
 axs[0, 0].set_title("Real Interest Rate")
 axs[0,0].set(ylabel = '%')
 axs[1, 0].plot(100*dw[0:rangelen]/w_ss, 'darkgreen')
@@ -759,11 +742,11 @@ fig, axs = plt.subplots(2, 2)
 axs[0, 0].plot(100*dY[0:rangelen]/N_ss, 'darkgreen')
 axs[0, 0].set_title("Output")
 axs[0,0].set(ylabel = '% of s.s.')
-axs[1, 0].plot(100*dC[0:rangelen], 'darkgreen')
+axs[1, 0].plot(100*dC[0:rangelen]/C_ss, 'darkgreen')
 axs[1,0].set(ylabel = '% of s.s.')
 axs[1, 0].set_title("Consumption")
 axs[1, 0].sharex(axs[0, 0])
-axs[0, 1].plot(100*dA[0:rangelen]/q_ss, 'darkgreen')
+axs[0, 1].plot(100*dA[0:rangelen]/A_ss, 'darkgreen')
 axs[0, 1].set_title("Assets")
 axs[1, 1].plot(100*dN[0:rangelen]/N_ss, 'darkgreen')
 axs[1, 1].set_title("Labor")
@@ -771,17 +754,17 @@ fig.tight_layout()
 #plt.savefig("GIPRZ2.jpg", dpi=500)
 
 fig, axs = plt.subplots(2, 2)
-axs[0, 0].plot(100*dMU[0:rangelen]/MU, 'darkgreen')
+axs[0, 0].plot(100*dD[0:rangelen]/D_ss, 'darkgreen')
 axs[0,0].set(ylabel = '% of s.s.')
-axs[0, 0].set_title("Marginal Utility")
+axs[0, 0].set_title("Dividends")
 axs[1, 0].plot(100*di[0:rangelen], 'darkgreen')
 axs[1,0].set(ylabel = '% ')
 axs[1, 0].set_title("Nominal Rate")
 axs[1, 0].sharex(axs[0, 0])
-axs[0, 1].plot(dZ[0:200], 'darkgreen')
-axs[0, 1].set_title("Z")
-axs[1, 1].plot(100*dZ[200:400], 'darkgreen')
-axs[1, 1].set_title("v")
+axs[0, 1].plot(100*dB/B_ss, 'darkgreen')
+axs[0, 1].set_title("Government Bonds")
+axs[1, 1].plot(dZ[0:200], 'darkgreen')
+axs[1, 1].set_title("Z")
 fig.tight_layout()
 #plt.savefig("GIPRZ3.jpg", dpi=500)
 
@@ -789,7 +772,7 @@ fig.tight_layout()
 
 
 
-'''
+
 
 
 
