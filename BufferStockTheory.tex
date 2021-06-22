@@ -48,7 +48,7 @@ Theoretical Foundations of Buffer Stock Saving
 
 \keywords{Precautionary saving, Heterogeneous Agents, Monetary Policy, permanent income hypothesis}
 
-\jelclass{D81, D91, E21}
+
 
 
 \maketitle 
@@ -59,22 +59,6 @@ Theoretical Foundations of Buffer Stock Saving
   This paper develops a heterogenous Agent New Keynesian Model with a friedman buffer stock income process.
 \end{abstract}
 
-\begin{small}
-\parbox{\textwidth}{
-\begin{center}
-\begin{tabbing}
-\texttt{~Archive:~} \= \= \url{} \kill \\  %
-\texttt{~~~~~PDF:~} \> \> \url{} \\
-\texttt{~~Slides:~} \> \> \url{} \\
-\texttt{~~~~~Web:~} \> \> \url{}    \\
-\texttt{~~GitHub:~} \> \> \url{http://github.com/wdu9/FBS-NK} \\
-\texttt{~~~~~~~~~~} \> \> \textit{(In GitHub repo, see \texttt{/Code} for tools for solving and simulating the model)} \\
-\end{tabbing}
-\end{center}
-          
-\href{https://colab.research.google.com/github/econ-ark/REMARK/blob/master/REMARKs/BufferStockTheory/BufferStockTheory.ipynb}{CLICK HERE} for an interactive \href{http:https://en.wikipedia.org/wiki/Project_Jupyter}{Jupyter Notebook} that uses the \href{https://econ-ark/HARK}{Econ-ARK/HARK} toolkit (\cite{carroll_et_al-proc-scipy-2018}) to produce all of the paper's figures (warning: it may take several minutes to launch)
-}
-\end{small}
 
 \begin{authorsinfo}
 \name{Contact: \href{mailto:wdu9@jhu.edu}{\texttt{wdu9@jhu.edu}}}
@@ -125,7 +109,7 @@ subject to
 where
 $U\left(\cLevBF_{i t}, n_{i t}\right) = \frac{\cLevBF_{i t}^{1-\rho}}{1 -\rho} - \varphi \pLevBF_{it} \frac{n_{it}^{1+v}}{1+v}$ , $\beta_{i}$ is the discount factor of household $i$ and $\not D$ is the probability of death.  \\
 
-$\mLevBF_{it}$ \ denotes household $i$'s market resources at time $t$ to be expended on consumption $\cLevBF_{it}$ or invested into an asset $ \aLevBF_{it}$ with return $r_{t+1}^{a}$.  $\mLevBF_{it}$ is determined by labor income,  $\mathbf{z}_{it}$, and the gross return on assets from the last period, $(1+r_{t}^{a}) \aLevBF_{it-1} $. Labor supply of household $i$ at time $t$ is denoted by $n_{it}$.  Given the formulation of sticky wages described in section 2.4, labor supply is an aggregate state variable and therefore consumption serves as the sole control variable in the dynamic problem. \\
+$\mLevBF_{it}$ \ denotes household $i$'s market resources at time $t$ to be expended on consumption $\cLevBF_{it}$ or invested into an mutual fund.  $ \aLevBF_{it}$ denotes the value of household $i$'s shares at the mutual at period $t$ and $r_{t+1}^{a}$ denotes the mutual fund's return.  $\mLevBF_{it}$ is determined by labor income,  $\mathbf{z}_{it}$, and the gross return on assets from the last period, $(1+r_{t}^{a}) \aLevBF_{it-1} $. Labor supply of household $i$ at time $t$ is denoted by $n_{it}$.  Given the formulation of sticky wages described in section 2.4, labor supply is an aggregate state variable and therefore consumption serves as the sole control variable in the dynamic problem. \\
 
 
 
@@ -137,11 +121,11 @@ $\mLevBF_{it}$ \ denotes household $i$'s market resources at time $t$ to be expe
 
 
 Labor income is subject to permanent and transitory idiosyncratic shocks. In particular, household $i$'s labor income is composed of a permanent component, $\pLevBF_{it} $ indicating the level of permanent income and a transitory component, $\tShkAll_{it} $, indicating the transitory income shock received by household $i$ at time $t$. $\pLevBF_{it} $ is subject to permanent income shocks $\pShk_{it+1}$ where $\pShk_{it}$ is iid mean one lognormal with standard deviation $\sigma_\pShk$, $\forall t$  
-($\Ex_{t}[{\pShk}_{t+n}]=1~\forall~n>0$) .
+($\Ex_{t}[{\pShk}_{t+n}]=1~\forall~n>0$) . \\
 
 
 
-The transitory random variable follows   
+The transitory random variable follows   \\
 \begin{verbatimwrite}{\EqDir/tShkDef}
 \begin{equation}
 \tShkAll _{it+n}=
@@ -151,9 +135,9 @@ The transitory random variable follows
 \end{cases} \label{eq:tShkDef}
 \end{equation}
 \end{verbatimwrite}
-\input{\EqDir/tShkDef.tex}
+\input{\EqDir/tShkDef.tex}\\
 where $\tau_{t}$ is the tax rate , $w_{gt}$ is the real wage for labor type $g$ at time t, $ n_{igt}$ is the labor supply for labor type $g$ and $\tShkEmp_{t+n}$ is an iid mean-one lognormal with standard deviation $\sigma_{\tShkEmp}$,
-($\Ex_{t}[{\tShkEmp}_{t+n}]=1~\forall~n>0$).
+($\Ex_{t}[{\tShkEmp}_{t+n}]=1~\forall~n>0$). \\ 
 
 
 
@@ -196,7 +180,7 @@ The first order conditions lead to the no arbitrage equations:
 
 $$ \mathrm{E}_{t}\left[1+r^{a}_{t+1}\right]= \frac{1}{q^{b}_{t}}  =\frac{\mathrm{E}_{t}\left[q^{s}_{jt+1} + D_{jt+1} \right]}{q^{s}_{jt}} = (1+i_{t}) \mathrm{E}_{t}\left[\frac{P_{t}}{P_{t+1}}\right] \equiv 1 +r_{t}$$
 
-where $r_{t}$ is defined to be the real interest rate in period $t$. 
+where $r_{t}$ is defined to be the real interest rate in period $t$.  \\ \\
 
 \hypertarget{Firms}{}
 \subsection{Firms}
@@ -204,67 +188,74 @@ where $r_{t}$ is defined to be the real interest rate in period $t$.
 \hypertarget{Final Good Producer}{}
 \subsubsection{Final Good Producer}
 
-Perfectly Competitive Final Good Producer aggregates goods with CES technology
+A perfectly competitive final good producer purchases intermediate goods $Y_{jt}$ from intermediate good producers and produces a final good $Y_{t}$ according to a CES production Function. 
 
-$$ Y_{t} = \left(\int_{0}^{1} Y_{jt}^{\frac{\epsilon_{p}-1}{\epsilon_{p}}}\, dj\right)^{\frac{\epsilon_{p}}{\epsilon_{p}-1}}$$
+$$ Y_{t} = \left(\int_{0}^{1} Y_{jt}^{\frac{\epsilon_{p}-1}{\epsilon_{p}}}\, dj\right)^{\frac{\epsilon_{p}}{\epsilon_{p}-1}}$$ \\
 
-Final Good Producer Profit maximzation Problem
+where $\epsilon_{p}$ is the elasticity of substitution. \\ 
 
-$$ \max_{Y_{jt}} P_{t} \left(\int_{0}^{1} Y_{jt}^{\frac{\epsilon_{p}-1}{\epsilon_{p}}}\, dj\right)^{\frac{\epsilon_{p}}{\epsilon_{p}-1}} - \int_{0}^{1} P_{jt} Y_{jt} ,\ dj $$
+Given $P_{jt}$ , the price of intermediate good $j$ ,  the final good producer maximizes his profit
+
+$$ \max_{Y_{jt}} P_{t} \left(\int_{0}^{1} Y_{jt}^{\frac{\epsilon_{p}-1}{\epsilon_{p}}}\, dj\right)^{\frac{\epsilon_{p}}{\epsilon_{p}-1}} - \int_{0}^{1} P_{jt} Y_{jt} ,\ dj $$ \\
 
 
-This leads to demand
+The first order condition leads to demand for good $j$
 
-$$ Y_{jt} = \left(\frac {P_{jt}}{P_{t}}\right)^{- \epsilon_{p}} Y_{t}$$
+$$ Y_{jt} = \left(\frac {P_{jt}}{P_{t}}\right)^{- \epsilon_{p}} Y_{t}$$ \\
 
-Plugging this demand into $ P_{t}Y_{t} = \int_{0}^{1} P_{jt} Y_{jt} ,\ dj$ , we obtain
+and the price index
 
-Price index $$P_{t} = \left(\int_{0}^{1} P_{jt}^{1-\epsilon_{p}}\,dj \right )^{\frac{1}{1-\epsilon_{p}}}$$
+$$P_{t} = \left(\int_{0}^{1} P_{jt}^{1-\epsilon_{p}}\,dj \right )^{\frac{1}{1-\epsilon_{p}}}$$
 
 
 \hypertarget{Intermediate Good Producer}{}
 \subsubsection{Intermediate Good Producer}
 
+There is a continuum of  monopolistically competitive intermediate good producers indexed by $j \in [0,1]$ who produce intermediate goods according to a Cobb Douglas Production function.  
+
 $$Y_{jt} =  Z_{t}  N_{jt}$$ 
 
-where $log(Z_{t}) = \rho_{Z} log( Z_{t-1}) + \epsilon_{Z}$
+where $log(Z_{t}) = \rho_{Z} log( Z_{t-1}) + \epsilon_{Z}$ \\ \\
 
 
- Firm Maximization Problem
+Prices are sticky a la Calvo where each period intermediate good producers may reset their price with probability $ 1 -\lambda_{p}$ . Following Auclert et al 2020., each intermediate firm $j$ chooses $P_{jt}$ to maximize its dividend $D_{jt}$ and  stock price $q^{s}_{jt} $ \\ 
  
- Firm $j$ chooses $P_{jt}$ to maximize its dividend $D_{jt}$ and its stock price $q^{s}_{jt} $
+ $$\max_{\{P_{jt}\}} \overbrace{\frac{(P_{jt} - MC_{t})Y_{jt}}{P_{t}}}^{=D_{jt}} + q^{s}_{jt}\left(P_{jt}\right) $$ \\
  
- $$\max_{\{P_{jt}\}} \overbrace{\frac{(P_{jt} - MC_{t})Y_{jt}}{P_{t}}}^{=D_{jt}} + q^{s}_{jt}\left(P_{jt}\right) $$
- 
-Given $q^{s}_{jt}\left(P_{jt}\right) = \frac{\mathrm{E}_{t}\left[q^{s}_{jt+1} +D_{jt+1}\left(P_{jt}\right)\right]}{1+r_{t}}$, this is equivalent to: 
+where  $q^{s}_{jt}\left(P_{jt}\right) = \frac{\mathrm{E}_{t}\left[q^{s}_{jt+1} +D_{jt+1}\left(P_{jt}\right)\right]}{1+r_{t}}$ \\ \\
+
+The problem above can be restated as 
  
  $$\max_{\{P_{jt}\}} \mathrm{E}_{t}\left[\sum_{s=0}^{\infty} (\lambda_{P}) ^{s} M_{t,t+s} \left[ \frac{(P_{jt} - MC_{t+s})Y_{jt+s}}{P_{t+s}}\right]\right]$$
  
 subject to $$Y_{jt} = \left(\frac {P_{jt}}{P_{t}}\right)^{- \epsilon_{p}} Y_{t}$$
  
-where $ \lambda_{P}$ is the  probability a firm cannot change its price,  $M_{t, t+s} = \prod_{k=t}^{t+s-1} \frac{1}{1+r_{k}}$ is the stochastic discount factor and $MC_{t} = \frac{W_{t}}{A_{t}}$ is the marginal cost
+where $M_{t, t+s} = \prod_{k=t}^{t+s-1} \frac{1}{1+r_{k}}$ is the stochastic discount factor and $MC_{t} = \frac{W_{t}}{A_{t}}$ is the marginal cost of firm $j$.  \\ \\
 
-Phillips Curve
 
-$$ \pi_{t} = \frac{\mathrm{E}_{t}[\pi_{t+1}]}{1+r^{*}} + \lambda (\mu_{t}-\mu)$$
+This problem leads to the Phillips Curve in our model \\ 
 
-where $r^{*}$ is the natural rate of interest in the steady state, $\lambda = \frac{(1-\lambda_{p})(1-\frac{\lambda_{p}}{1+r^{*}})}{\lambda_{p}}$,  $ \mu_{t} = log(P_{t}) - log(W_{t}) + log(Z_{t})$ and $\mu = \frac{\epsilon_{p}}{1-\epsilon_{p}}$
+$$ \pi_{t}^{p} = \frac{\mathrm{E}_{t}[\pi_{t+1}^{p}]}{1+r^{*}} + \lambda (\mu_{t}^{p} -\mu^{p})$$
+
+where $r^{*}$ is the natural rate of interest in the steady state, $\lambda = \frac{(1-\lambda_{p})(1-\frac{\lambda_{p}}{1+r^{*}})}{\lambda_{p}}$,  $ \mu_{t}^{p} = log(P_{t}) - log(W_{t}) + log(Z_{t})$ and $\mu^{p} = \frac{\epsilon_{p}}{1-\epsilon_{p}}$ \\ \\
+
+
 
 \hypertarget{Labor Market}{}
 \subsection{Labor Market}
 
+Given the probability of receiving an unemployment shock in any period is $\mho$, we assume, without loss of generality, households $i \in [\mho,1]$ are `employed'  with positive labor supply $n_{it}$ and households $i \in [0, \mho]$  are `unemployed' with $n_{it} = 0$. \\
 
-Every worker $i \in [\mho,1]$ provides $n_{igt}$ hours of work to labor union $g \in [0,1]$ and assume $n_{igt} = \mathit{n}_{gt}$. This assumption will imply labor income heterogeneity is only due to transitory income shocks.
+There is a continuum of labor unions indexed by $g \in [0,1]$ that collects labor $n_{igt} > 0$ from employed households $i \in [\mho,1]$ . Household $i \in [\mho,1]$ labor supply is therefore, 
 
-Therefore, 
+$$n_{it} = \int_{0}^{1} n_{igt}\,dg$$ \\
 
-$$n_{it} = \int_{0}^{1} n_{igt}\,dg$$ WLOG assume employed workers are $i \in [\mho,1]$
+Following Auclert et al 2020., we assume each labor union $g$ demands the same level  of labor supply from each household. That is,   $n_{igt} =\mathit{n}_{gt}$. This assumption will imply labor income heterogeneity is only due to permanent and transitory income shocks.
+The labor supply collected from employed households  by labor union $g$  is therefore 
 
-and 
+$$  (1-\mho) \mathit{n}_{gt} = \int_{\mho}^{1} n_{igt}\,di $$ \\
 
-$$N_{gt} = \int_{\mho}^{1} n_{igt}\,di = (1-\mho_{t}) \mathit{n}_{gt}$$ 
 
-Can think of LHS as labor demand for labor type $g$ o, and RHS is effective labor supply of labor type $g$ from households. There is an underlying assumption that unemployed households supply  "useless" labor. That they're labor supply is effectively useless. Or assumption can be thought as labor union only asks for labor from unemployed households. So if labor unions need to supply $N_{gt}$ to the labor packer, then the labor union will demand $ n_{gt} = \frac{N_{gt}}{1-\mho}$ from each household that is working.
 
 
 \hypertarget{Competitive Labor Packer}{}
@@ -304,6 +295,7 @@ $$ \max_{\{W_{gt}\}} \mathrm{E_{t}}\left[\sum_{s=0}^{\infty} (\bar{\beta} \not D
 where $\bar{\beta} = \int_{\mho}^{1} \beta_{i} \, di$
 
 subject to the following three constraints $$ N_{gt} = \left(\frac{W_{gt}}{W_{t}}\right)^{-\epsilon_{w}} N_{t} $$
+$$  N_{gt} = (1-\mho) \mathit{n}_{gt} = \int_{\mho}^{1} n_{igt}\,di $$ 
 
 $$ W_{t} = \left(\int_{0}^{1} W_{gt}^{1-\epsilon_{w}}\,dg\right)^{\frac{1}{1-\epsilon_{w}}}$$
 
@@ -398,6 +390,27 @@ Markets clear:\\
 \hypertarget{Results}{}
 \section{Results}
 
+\begin{figure}{Impulse Response to Monetary Policy Shock}
+  \begin{subfigure}{}
+    \centering\includegraphics[scale=.35]{\FigDir/GIPRM2}
+  \end{subfigure}
+  \begin{subfigure}{}
+    \centering\includegraphics[scale=.35]{\FigDir/GIPRM1}
+    \caption{ Impulse Response to One Percent Increase in Nominal Rate}
+  \end{subfigure}
+\end{figure}
+
+\begin{figure}{Impulse Response to Productivity Shock}
+  \begin{subfigure}{}
+    \centering\includegraphics[scale=.35]{\FigDir/GIPRZ2}
+  \end{subfigure}
+  \begin{subfigure}{}
+    \centering\includegraphics[scale=.35]{\FigDir/GIPRZ1}
+    \caption{ Impulse Response to One Percent Increase in $Z_{t}$}
+  \end{subfigure}
+\end{figure}
+
+
 
 \hypertarget{Conclusion}{}
 \section{Conclusion}
@@ -408,15 +421,6 @@ Markets clear:\\
 
 
 
-\providecommand{\figName}{Convergence-of-the-Consumption-Rules}
-\providecommand{\figFile}{cFuncsConverge}
-\hypertarget{\figFile}{}
-\hypertarget{\figName}{}
-\begin{figure}[tbp]
-\centerline{\includegraphics[width=6in]{\FigDir/\figFile}}
-\caption{Convergence of the Consumption Rules}
-\label{fig:\figFile}
-\end{figure}
 
 
 
@@ -429,6 +433,27 @@ Markets clear:\\
 
 
 
+
+%\providecommand{\figName}{GIPRM1}
+%\providecommand{\figFile}{GIPRM1}
+%\hypertarget{\figFile}{}
+%\hypertarget{\figName}{}
+%\begin{figure}[tbp]
+%\centerline{\includegraphics[scale=.35]{\FigDir/\figFile}}
+%\caption{Monetary Policy Shock}
+%\label{fig:\figFile}
+%\end{figure}
+
+
+%%
+%\renewcommand{\figFile}{GIPRM2}
+%\hypertarget{\figFile}{}  
+%\begin{figure}[tbp]
+%\centerline{\includegraphics[scale=.35]{\FigDir/\figFile}}
+%\caption{Monetary Policy Shock}
+%\label{fig:\figFile}
+%\end{figure}
+%%
 
 
 \clearpage\vfill\eject
