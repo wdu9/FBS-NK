@@ -40,7 +40,7 @@ Z_ss = 1
 G_ss = .19
 C_ss = 1.0299752212238078
 A_ss = 1.705471862072535
-rstar = 1.048**.25 - 1
+rstar = 1.05**.25 - 1
 MU= 1.704943983232289
 u = 0.0954
 B_ss = 0.5
@@ -51,10 +51,17 @@ q_ss = N_ss * ( 1 - w_ss ) / rstar
 q_ss= 1.1855898108103429
 
 #Phillips Curves parameters
-lambda_W = .0000000005 #probability a firm won't be able to change wage
+lambda_W = .75 #probability a firm won't be able to change wage
 lambda_P = .85  #probability a firm won't be able to change price
 
-#when
+#when lambda_W = .0000000005 and lambda_P = .85, we see labor fall , consumption and output rise, and slight price inflation.
+# My conjecture is that since firms are not flexible enough to lower their price, they must fire people since theyre productivity
+# has risen, however because of the strong consumption response to changes in wage,interest rate and wages, since the wage falls
+# output still rises strongly, why does the real wage rise? because the nominal wage  rises, why does the nominal wage rise?
+# Because consumption rises inducing a rise in the MRS leading to a rise in the wage
+
+
+
 
 
 Lambda = ( (1 - lambda_P) / lambda_P ) * (1 - ( lambda_P / (1+rstar) ) )
@@ -69,7 +76,7 @@ phi_y = 0
 # Shock Parameters       
 Z = .01 # Initial Productivity shock
 m_e = .01 # Initial Monetary Policy Shock
-p_m=.8 # AR1 Coefficient for monetary Policy shock
+p_m=.6 # AR1 Coefficient for monetary Policy shock
 p_z =.9 # AR1 Coefficient for productivity shock
 
 
@@ -490,7 +497,7 @@ h1[:,400:600] = CJACN  - J_Y_N  #Partials wrt N
 
 # Wage Residual Target
 h2 = np.zeros((200,600))
-h2[:,0:200] =   - np.dot(J_piw_MU, np.dot(MUJAC,J_ra_r)) 
+h2[:,0:200] =  - np.dot(J_piw_MU, np.dot(MUJAC,J_ra_r)) 
 h2[:,200:400] = np.identity(200)*(1/w_ss) - h2_wagelag - J_piw_w + J_pi_w  
 h2[:,400:600] =   - J_piw_N 
     
@@ -555,9 +562,8 @@ plt.show()
 #dr = np.delete(dr_a , 0,0)
 #dr = np.concatenate( (dr,np.array([[7.30643926e-06]]) ))
 
+#Mutual Fund Interest Rate
 dra = np.dot(J_ra_r,dr)
-
-
 
 #Bonds 
 dB = np.dot(J_B_r,dr) + np.dot(J_B_w,dw) + np.dot(J_B_N,dN)
@@ -583,7 +589,7 @@ dpi = np.dot(J_pi_w,dw) + np.dot(J_pi_Z,dZ[0:200])
 
 
 #wage inflation       
-dpiw = np.dot(J_piw_N,dN) + np.dot(J_piw_w,dw) 
+dpiw = np.dot(J_piw_N,dN) + np.dot(J_piw_w,dw) + np.dot(J_piw_MU,np.dot(MUJAC,dra))
 
 
 #nominal Rate
