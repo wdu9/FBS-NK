@@ -51,8 +51,11 @@ q_ss = N_ss * ( 1 - w_ss ) / rstar
 q_ss= 1.1855898108103429
 
 #Phillips Curves parameters
-lambda_W = .75 #probability a firm won't be able to change wage
+lambda_W = .0000000005 #probability a firm won't be able to change wage
 lambda_P = .85  #probability a firm won't be able to change price
+
+#when
+
 
 Lambda = ( (1 - lambda_P) / lambda_P ) * (1 - ( lambda_P / (1+rstar) ) )
 ParamW = ( (1 - lambda_W) / lambda_W ) * ( 1 - DiscFac * LivPrb * lambda_W )
@@ -66,7 +69,7 @@ phi_y = 0
 # Shock Parameters       
 Z = .01 # Initial Productivity shock
 m_e = .01 # Initial Monetary Policy Shock
-p_m=.5 # AR1 Coefficient for monetary Policy shock
+p_m=.8 # AR1 Coefficient for monetary Policy shock
 p_z =.9 # AR1 Coefficient for productivity shock
 
 
@@ -88,7 +91,7 @@ mshk = np.array(mshkList)
 #if Shk = 0 <=> productivity shock, 
 #else Shk = 1 <=> monetary policy Shock
 
-Shk = 1
+Shk = 0
 
 dZ = np.zeros((400,1))
 ShkLength = 200
@@ -117,7 +120,6 @@ and the jth column  denotes the period in which the the change in the variable o
 '''
 
 #-----------------------------------------------------------------------------
-
 
 #Consumption Jacobians
 
@@ -227,7 +229,7 @@ J_q_D =  np.zeros((200,200))
 for j in range(200):
     for i in range(200):
         
-        J_q_D[i][i] = 1 /( 1 + rstar)
+        J_q_D[i][i] =0 # 1 /( 1 + rstar)
         
         if i < j :
             
@@ -451,11 +453,11 @@ J_piw_N = J_piw_N  + np.dot(J_piw_MU,MUJACN)
 
 # because r_{t} =r_{t+1}^{a}
 
-J_r_ra = np.zeros((200,200)) # jacobian of return to mutual fund assets wrt to real interest rate
+J_r_ra = np.zeros((200,200)) 
 for i in range(199):
         J_r_ra[i-1, i ] = 1 # because r_{t} = r_{t+1}^{a}
  
-J_ra_r = np.zeros((200,200)) 
+J_ra_r = np.zeros((200,200)) # jacobian of return to mutual fund assets wrt to real interest rate
 for i in range(199):
         J_ra_r[i+1, i ] = 1 # because r_{t} = r_{t+1}^{a}        
 
@@ -468,6 +470,8 @@ for i in range(199):
 h2_wagelag = np.zeros((200,200))
 for i in range(199):
         h2_wagelag[i, i-1] = (1/w_ss) 
+
+
 
 
 
@@ -604,7 +608,8 @@ dmu_w = (1/w_ss)*dw - ( (v/N_ss)*dN - (1/MU)*dMU)
 
 dA_o = dq  + (dB/(1+rstar) - np.dot(dr, B_ss))/(1+rstar)**2
 
-
+#plt.plot(dA)
+#plt.plot(dA_o)
 #--------------------------------------------------------------------------------
 #Impulse Response Figures
 
@@ -715,6 +720,9 @@ fig.tight_layout()
 
 
 '''
+
+
+
 rangelen = 30
 
 fig, axs = plt.subplots(2, 2)
@@ -732,7 +740,7 @@ axs[1, 1].plot(100*dpi[0:rangelen], 'darkgreen')
 axs[1,1].set(ylabel = '%')
 axs[1, 1].set_title("Price Inflation")
 fig.tight_layout()
-#plt.savefig("GIPRZ1.jpg", dpi=500)
+plt.savefig("GIPRZ1_flexprice.jpg", dpi=500)
 
 
 
@@ -750,7 +758,7 @@ axs[0, 1].set_title("Assets")
 axs[1, 1].plot(100*dN[0:rangelen]/N_ss, 'darkgreen')
 axs[1, 1].set_title("Labor")
 fig.tight_layout()
-#plt.savefig("GIPRZ2.jpg", dpi=500)
+plt.savefig("GIPRZ2_flexprice.jpg", dpi=500)
 
 fig, axs = plt.subplots(2, 2)
 axs[0, 0].plot(100*dD[0:rangelen]/D_ss, 'darkgreen')
@@ -760,19 +768,15 @@ axs[1, 0].plot(100*di[0:rangelen], 'darkgreen')
 axs[1,0].set(ylabel = '% ')
 axs[1, 0].set_title("Nominal Rate")
 axs[1, 0].sharex(axs[0, 0])
-axs[0, 1].plot(100*dB/B_ss, 'darkgreen')
+axs[0, 1].plot(100*dB[0:rangelen]/B_ss, 'darkgreen')
 axs[0, 1].set_title("Government Bonds")
 axs[1, 1].plot(dZ[0:200], 'darkgreen')
 axs[1, 1].set_title("Z")
 fig.tight_layout()
-#plt.savefig("GIPRZ3.jpg", dpi=500)
+plt.savefig("GIPRZ3_flexprice.jpg", dpi=500)
 
 
 '''
-
-
-
-
 
 
 
