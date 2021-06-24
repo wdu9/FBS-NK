@@ -637,7 +637,7 @@ print("Done Computing Steady State")
 class Test_agent2(Test_agent):
     
     
-    def  update_income_process(self):
+     def  update_income_process(self):
         
         self.wage = 1/(self.SSPmu) #calculate SS wage
         self.N = ((self.IncUnemp*self.UnempPrb ) + self.G )/ (self.wage*self.tax_rate)#calculate SS labor supply from Budget Constraint
@@ -806,16 +806,16 @@ example.pseudo_terminal=False
 
 example.T_sim = params['T_cycle']
 example.cycles = 1
-example.jac = False
+example.jac = True
 example.jacW = False
 example.jacN = False
-example.jacPerm = True
+example.jacPerm = False
 example.PerfMITShk = True
 example.track_vars = ['aNrm','mNrm','cNrm','pLvl','aLvl']
 
 
 if example.jac == True:
-    example.dx = .0001
+    example.dx = .001
     example.del_from_time_inv('Rfree')
     example.add_to_time_vary('Rfree')
     example.IncShkDstn = params['T_cycle']*example.IncShkDstn
@@ -826,7 +826,7 @@ if example.jacW == True or example.jacN==True or example.jacPerm ==True:
     example.update_income_process()
     
 
-Test_set=[0,20,50,70]
+Test_set=[20,50]
 
 Mega_list =[]
 CHist = []
