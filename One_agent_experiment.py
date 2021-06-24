@@ -626,7 +626,7 @@ while go:
     print('Completed loops')
     print(completed_loops)
     
-    go = distance >= tolerance and completed_loops < 10
+    go = distance >= tolerance and completed_loops < 1
      
 print("Done Computing Steady State")
 
@@ -635,6 +635,48 @@ print("Done Computing Steady State")
 ###############################################################################
 
 class Test_agent2(Test_agent):
+    
+    
+    def  update_income_process(self):
+        
+        self.wage = 1/(self.SSPmu) #calculate SS wage
+        self.N = ((self.IncUnemp*self.UnempPrb ) + self.G )/ (self.wage*self.tax_rate)#calculate SS labor supply from Budget Constraint
+        
+        self.N = ss.N
+        
+        
+        TranShkDstn     = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
+        TranShkDstn.pmf  = np.insert(TranShkDstn.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)
+        TranShkDstn.X  = np.insert(TranShkDstn.X*(((1.0-self.tax_rate)*self.N*self.wage)/(1-self.UnempPrb)),0,self.IncUnemp)
+        PermShkDstn     = MeanOneLogNormal(self.PermShkStd[0],123).approx(self.PermShkCount)
+        self.IncShkDstn = [combine_indep_dstns(PermShkDstn,TranShkDstn)]
+        self.TranShkDstn = [TranShkDstn]
+        self.PermShkDstn = [PermShkDstn]
+        self.add_to_time_vary('IncShkDstn')
+        
+  
+        TranShkDstnW     = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
+        TranShkDstnW.pmf  = np.insert(TranShkDstnW.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)
+        TranShkDstnW.X  = np.insert(TranShkDstnW.X*(((1.0-self.tax_rate)*self.N*(self.wage + self.dx))/(1-self.UnempPrb)),0,self.IncUnemp)
+        self.IncShkDstnW = [combine_indep_dstns(PermShkDstn,TranShkDstnW)]
+        self.TranShkDstnW = [TranShkDstnW]
+        self.add_to_time_vary('IncShkDstnW')
+        
+        TranShkDstnN     = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
+        TranShkDstnN.pmf  = np.insert(TranShkDstnN.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)
+        TranShkDstnN.X  = np.insert(TranShkDstnN.X*(((1.0-self.tax_rate)*(self.N + self.dx)*self.wage)/(1-self.UnempPrb)),0,self.IncUnemp)
+        self.IncShkDstnN = [combine_indep_dstns(PermShkDstn,TranShkDstnN)]
+        self.TranShkDstnN = [TranShkDstnN]
+        self.add_to_time_vary('IncShkDstnN')
+        
+        TranShkDstnP     = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
+        TranShkDstnP.pmf  = np.insert(TranShkDstnP.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)
+        TranShkDstnP.X  = np.insert(TranShkDstnP.X*(((1.0- self.tax_rate) *self.N*self.wage)/(1-self.UnempPrb)),0,self.IncUnemp)
+        PermShkDstnP     = MeanOneLogNormal(self.PermShkStd[0] + self.dx ,123).approx(self.PermShkCount)
+        self.IncShkDstnP= [combine_indep_dstns2(PermShkDstnP,TranShkDstnP)]
+        self.TranShkDstnP = [TranShkDstnP]
+        self.PermShkDstnP = [PermShkDstnP]
+        self.add_to_time_vary('IncShkDstnP')
     
     
     
