@@ -318,7 +318,7 @@ $$ \pi_{t}^{w} =   \bar{\beta} \not D  \mathrm{E}_{t} \left[ \pi_{t+1}^{w}\right
 
 where $\mu^{w}$ is the optimal wage markup and the wage markup is defined as \\ 
 
-$\mu_{t}^{w} = log\left( \frac{W_{t}}{P_{t}}\right)  - log\left(1 -\tau_{t}\right) - mrs_{t}$ \\
+$\mu_{t}^{w} = log\left( \frac{W_{t}}{P_{t}}\right)  - log\left(1 -\tau \right) - mrs_{t}$ \\
 
 
 $ mrs_{t} = log \left(- \frac{\int_{0}^{1}   U_{n} \left(c_{i t}, n_{i t} \right) \ d i  }{\int_{0}^{1}  p_{it} \theta_{it} U_{c} \left(c_{i t}, n_{i t} \right) \  di } \right) \\ \\ $
@@ -332,11 +332,11 @@ $ mrs_{t} = log \left(- \frac{\int_{0}^{1}   U_{n} \left(c_{i t}, n_{i t} \right
 \hypertarget{Fiscal Policy}{}
 \subsubsection{Fiscal Policy}
 
-The government follows the balanced budget
+The government funds its purchases and unemployment insurance payments by issuing debt and taxing labor income. In particular, it follows 
 
-$$ B_{t-1} + G_{t} + \mathit{u} \mho =   q^{b}_{t} B_{t} +  \tau_{t} \int_{0}^{1} \int_{0}^{1} w_{igt} n_{igt} \, dg \, di$$ 
+$$ B_{t-1} + G + \mathit{u} \mho =   q^{b}_{t} B_{t} +  \tau \int_{0}^{1} \int_{0}^{1} w_{igt} n_{igt} \, dg \, di$$ \\
 
-Where $G_{t} $ are government expenditures which will be assumed to be constant along with the tax rate.
+where $G $ is government expenditures. \\
 
 
 
@@ -346,10 +346,9 @@ Where $G_{t} $ are government expenditures which will be assumed to be constant 
 
 The central bank follows the taylor rule: 
 
-$$i_{t} = r^{*} +\phi_{\pi} \pi^{p}_{t} + \phi_{y} (Y_{t} - Y_{ss}) + \epsilon^{m}_{t}$$
+$$i_{t} = r^{*} +\phi_{\pi} \pi^{p}_{t} + \phi_{y} (Y_{t} - Y_{ss}) + \epsilon^{m}_{t}$$ \\
 
-where $\phi_{\pi}$ is the Taylor rule coefficient for inflation, $\phi_{y}$ is the Taylor rule coeffficient for output gap,  $r^{*}$ is the steady state interest rate, $Y_{ss}$ is the steady state level of output,  $\epsilon^{m}_{t} = \rho_{v} v_{t-1} +\varepsilon_{t}$ is a monetary policy shock. \\ \\
-
+where $\phi_{\pi}$ is the Taylor rule coefficient for inflation, $\phi_{y}$ is the Taylor rule coeffficient for output gap,  $r^{*}$ is the steady state interest rate, $Y_{ss}$ is the steady state level of output,  $\epsilon^{m}_{t} = \rho_{v} v_{t-1} +\varepsilon_{t}$ is a monetary policy shock. \\
 
 \hypertarget{Equilibrium}{}
 \subsection{Equilibrium}
@@ -369,34 +368,56 @@ An equilibrium in this economy is a sequence of: \\
 
 Such that: \\
 
-$ \left(  c_{it}(m), V_{t}(m)\right)_{t=0}^{\infty}$  solves the household's maximization problem given $  \left( w_{t}, N_{t},  r^{a}_{t} \right)_{t=0}^{\infty}$.\\
+$ \left(  c_{it}(m)\right)_{t=0}^{\infty}$  solves the household's maximization problem given $  \left( w_{t}, N_{t},  r^{a}_{t} \right)_{t=0}^{\infty}$.\\
 
-The Mutual Fund, final Goods producer, intermediate goods producers, labor packer, and labor unions maximize their objective function.
+The Mutual fund, final goods producer, intermediate goods producers, labor packer, and labor unions maximize their objective function. \\
 
-The government budget constraint holds.
+The government budget constraint holds. \\
 
-The nominal interest rate is set according to the central bank's Taylor rule.
+The nominal interest rate is set according to the central bank's Taylor rule. \\
 
 
 $ \Phi_{t+1}(m) = H(\Phi_{t}(m))$ holds.\\
 
 
-Markets clear:\\
+Markets clear:
 
  $$ A_t =  \int_{0}^{1} \pLevBF_{it}\left( m_{it} - c_{it}(m_{it})\right) \, di $$
  
- $$ Y_t = C_{t} +G $$
+ $$ Y_t = C_{t} +G $$ \\
  
- where $C_{t} =  \int_{0}^{1} \pLevBF_{it} c_{it}(m_{it})\, di $
+ where $C_{t} \equiv  \int_{0}^{1} \pLevBF_{it} c_{it}(m_{it})\, di $
 
 
-\hypertarget{Computation}{}
-\section{Computation}
+\hypertarget{Computational Methodology}{}
+\section{Computation Methodology}
+
+\hypertarget{Household's Problem}{}
+\subsection{Household's Problem}
+
+We solve the household's problem by iterating over the first order condition and applying the endogenous gridpoints method developed by Carroll (2006). The computational efficiency for obtaining the consumption policies is greatly improved by dividing the variables of the household's problem by the level of permanent income $\pLevBF_{it}$, leaving normalized market resources $m_{it}$ as the sole state variable ( See Appendix  A.1).  
+
+\hypertarget{General Equilibrium Steady State}{}
+\subsection{General Equilibrium Steady State}
+
+To compute the steady state of the model, we begin with a guess of the mean of the uniformly distributed discount factors to target a predetermined interest rate.  With the steady state consumption policy, we simulate the model forward periods and compute the aggregate level of consumption $ C_{t} =  \int_{0}^{1} \pLevBF_{it} c_{it}(m_{it})\, di$  and the aggregate level of assets $ A_{t} = \int_{0}^{1} \pLevBF_{it} \left( m_{it} -  c_{it}(m_{it}) \right)$ for the terminal period. If either the goods or asset market does not clear given the computed aggregate levels of consumption and assets,  we input a new guess of the mean of the discount factors and solve and simulate the model again. We repeat this process until the goods and asset markets clear.  
+
+
+\hypertarget{General Equilibrium Impulse Responses}{}
+\subsection{General Equilibrium Impulse Responses}
+
+To compute the impulse responses of the model, we follow the sequence space jacobian method of Auclert et al. (2021). In particular, we define the model as a system of equations in sequence space and then linearize the system around the steady state to solve for the impulse responses to a perfect foresight ``MIT shock'', that is, an unanticipated shock whose subsequent path is known to all agents.  In a linearized system to first order, aggregate certainty equivalence holds (Simon 1956, Theil 1957),  and therefore the perfect foresight responses to an unexpected shock are the same responses to the shocks of the full stochastic model. For further computational details, see Appendix A.2 . 
+
+
+
+
+
 
 \hypertarget{Calibration}{}
 \section{Calibration}
 
 \input{\TableDir/Calibration.tex}
+
 
 
 
@@ -428,8 +449,8 @@ Markets clear:\\
 
 
 
-\hypertarget{Conclusion}{}
-\section{Conclusion}
+\hypertarget{Issues and Extensions}{}
+\section{Issues and Extensions}
 
 
 
@@ -494,7 +515,7 @@ Markets clear:\\
 
 Household i's dynamic program is
 
-$$ V(\pmb{\mathrm{m}}_{it},\pmb{\mathrm{p}}_{it})=\max_{\{ \pmb{\mathrm{c}}_{it}\}} { U( \pmb{\mathrm{c}}_{it}, n_{it}) + \beta_{i} \not D \mathrm{E}_{t}[V( \pmb{\mathrm{m}}_{it+1} , \pmb{\mathrm{p}}_{it+1})]}$$
+$$ V(\pmb{\mathrm{m}}_{it},\pmb{\mathrm{p}}_{it})=\max_{ \{ \pmb{\mathrm{c}}_{it}\}} { U( \pmb{\mathrm{c}}_{it}, n_{it}) + \beta_{i} \not D \mathrm{E}_{t}[V( \pmb{\mathrm{m}}_{it+1} , \pmb{\mathrm{p}}_{it+1})]}$$
 
 subject to 
 
@@ -519,7 +540,7 @@ m_{i t} &=  \xi_{it}  + (1+r^{a}_{t}) \frac{a_{i t-1}}{\psi_{it-1}} \\
  
  Here non boldface variables are normalized by permanent income $\mathit{p_{it}}$. 
 
-e.g. $x_{it} = \frac{\mathbf{x_{it}}}{\pmb{\mathrm{p}}_{it}}$
+e.g. $x_{it} = \frac{\mathbf{x_{it}}}{\pmb{\mathrm{p}}_{it}}$ \\
 
 
 
@@ -527,19 +548,20 @@ e.g. $x_{it} = \frac{\mathbf{x_{it}}}{\pmb{\mathrm{p}}_{it}}$
 \hypertarget{Model as System}{}
 \subsection{Model as System}
 
+The model can be defined by the system of equations below. The solution of the model must see this system be equal to a vector of zeros for periods $t =0, 1, 2, 3, ...$. The system is defined over the sequence space of all endogenous variables $\mathbf{U}$  and exogneous variables $\mathbf{Z}$ of the model.
+
 $$
 H_{t}(\mathbf{U},\mathbf{Z})= \begin{pmatrix} 
  Y_{t} - Z_{t}N_{t} \\ \\ 
-B_{t-1} - q^{b}_{t}B_{t} + u\mho + G_{t} - \tau w_{t} N_{t} \\ \\  
-i_{t} - r^{*} - \phi \pi_{t} -\phi_{y}(Y_{t}-Y_{ss}) - v_{t} \\ \\
-\pi_{t} -\frac{\pi_{t+1}}{1+r^{*}} + \lambda(\mu_{t}^{p} -\mu_{p})  \\ \\
+B_{t-1} - q^{b}_{t}B_{t} + u\mho + G - \tau w_{t} N_{t} \\ \\  
+i_{t} - r^{*} - \phi \pi^{p}_{t} -\phi_{y}(Y_{t}-Y_{ss}) - v_{t} \\ \\
+\pi_{t}^{p} -\frac{\pi^{p}_{t+1}}{1+r^{*}} + \lambda(\mu_{t}^{p} -\mu_{p})  \\ \\
  \pi_{t}^{w} -\not D \pi_{t+1}^{w} -(\frac{1-\lambda_{w}}{\lambda_{w}}) (1- \not D \lambda_{w}) (\mu^{w} -\mu_{t}^{w}) \\ \\
     1+r_{t} - \frac{1 + i_{t}}{1+ \pi^{p}_{t+1}}\\ \\
  1+r_{t+1}^{a} - \frac{q_{t+1}^{s} +D_{t+1}}{q_{t}^{s}} \\ \\
  r_{t} - r_{t+1}^{a} \\ \\
  \frac{w_{t}}{w_{t-1}} - \frac{\Pi_{t}^{w}}{\Pi_{t}^{p}} \\ \\
- \mathcal{C}_{t}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T}) - Y_{t} + G_{t}  \\ \\
-  \mathcal{A}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T}) - q_{t}^{s} - \frac{B_{t}}{1+r_{t}}  \\ \\
+ \mathcal{C}_{t}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T}) - Y_{t} + G \\ \\
  \end{pmatrix} = \begin{pmatrix} 0 \\ 0 \\. \\. \\. \\ 0\\ \end{pmatrix} , \quad t=0,1 ,2,3,....
 $$ \\ \\
  
@@ -560,17 +582,22 @@ $c_{it}(m_{it})$ is the steady state normalized consumption policy for household
  }, B_{t}, w_{t} , \pi_{t}^{p} ,\pi_{t}^{w}, r_{t} , r_{t+1}^{a}, i_{t} , q_{t}^{s},  q_{t}^{s} \right)_{t=0}^{t=T}$ \\ 
 
  
- $\mathbf{Z} = \left(Z_{t} ,v_{t}\right)_{t=0}^{t=T}$ \\ \\
+ $\mathbf{Z} = \left(Z_{t} ,v_{t}\right)_{t=0}^{t=T}$ \\
+ 
+ \textbf{Note} the asset market clearing condition is not included in the system as the goods market clearing condition holds if and only if the asset market clearing condition holds.  \\ \\
+ 
  
  
 \hypertarget{Reduced System}{}
 \subsubsection{Reduced System}
  
- System Can be reduced to the following: \\ \\
+The previous system of a little more than a dozen endogenous variables can be reduced to a system of three endogenous variables. \\ 
+ 
+Endogenous Variables are $ r_{t} , w_{t} ,N_{t}$ \\ 
  
 Exogenous Variables are $ Z_{t}, v_{t}$ \\ 
 
-Endogenous Variables are $ r_{t} , w_{t} ,N_{t}$ \\ \\
+The reduced system: \\ \\
 
 \begin{eqnarray} 
 H_{t}(\mathbf{U},\mathbf{Z})= \begin{pmatrix} 
@@ -590,26 +617,41 @@ $ \mathcal{H}_{t,2}  =log(w_{t}) - log(w_{t-1}) + \left( \frac{1 - \lambda_{w}}{
 $ \mathcal{H}_{t,3}  =  (1+r_{t}) \left(1+ -\lambda \sum_{k=1}^{\infty} \frac{1}{(1+r^{*})^{k}} ( \mu_{t+k}^{p} - \mu^{p}) \right) \\ \\
  - \left(1+r^{*}+ \phi \left(- \lambda \sum_{k=0}^{\infty} \frac{1}{(1+r^{*})^{k}} ( \mu_{t+k}^{p} - \mu^{p}) \right) +\phi_{y} \left(Z_{t} N_{t} - Y_{ss} \right) + v_{t}\right) \\ \\ $
  
+$ \mu_{t}^{p} = log(\frac{1}{w_{t}}) + log(Z_{t})$ \\ 
+
+$\mu_{t}^{w} = log(w_{t}) + log(1 - \tau_{t}) - mrs_{t} \\  $
+
+$mrs_{t} = log \left(- \frac{\int_{0}^{1}   U_{n} \left(\cLevBF_{i t}, n_{i t} \right) \ d i  }{\int_{0}^{1} \pLevBF_{it} \theta_{it} U_{c} \left(\cLevBF_{i t}, n_{i t} \right) \  di } \right) = log \left(\frac{\int_{0}^{1} \varphi \pLevBF_{it} n_{it}^{v} \ d i  }{\int_{0}^{1} \pLevBF_{it}  \theta_{it} \cLevBF_{it}^{-\rho} \  di } \right) = log \left(\frac{\int_{0}^{1} \varphi \pLevBF_{it} \left(\frac{N_{t}}{1 - \mho} \right)^{v} \, d i  }{\int_{0}^{1} \pLevBF_{it}  \theta_{it} \cLevBF_{it}^{-\rho} \  di } \right)$ \\ 
+
+$ = log \left( \varphi \left(\frac{N_{t}}{1 - \mho}\right) ^{v}\right) + log \left(\int_{0}^{1} \pLevBF_{it}  \,  di  \right) - log \left(\int_{0}^{1} \pLevBF_{it}  \theta_{it} \cLevBF_{it}^{-\rho} \  di  \right) $ \\ \\
+ 
+ and the arguments of the function $H_{t}$ are \\
+ 
 $\mathbf{U} = (r_{0} , r_{1} , ...r_{T}, w_{0}, w_{1}, ..., w_{T}, N_{0}, N_{1},...,N_{T})$ \\ 
 
 $ \mathbf{Z} = ( Z_{0}, Z_{1},... Z_{T}, v_{0},...,v_{T}) \\ \\ $ 
 
-$ \mu_{t}^{p} = log(\frac{1}{w_{t}}) + log(Z_{t})$ \\ 
 
-$\mu_{t}^{w} = log(w_{t}) + log(1 - \tau_{t}) - mrs_{t} \\ \\ $
-
-
-$mrs_{t} = log \left(- \frac{\int_{0}^{1}   U_{n} \left(\cLevBF_{i t}, n_{i t} \right) \ d i  }{\int_{0}^{1} \pLevBF_{it} \theta_{it} U_{c} \left(\cLevBF_{i t}, n_{i t} \right) \  di } \right) = log \left(\frac{\int_{0}^{1} \varphi \pLevBF_{it} n_{it}^{v} \ d i  }{\int_{0}^{1} \pLevBF_{it}  \theta_{it} \cLevBF_{it}^{-\rho} \  di } \right) = log \left(\frac{\int_{0}^{1} \varphi \pLevBF_{it} \left(\frac{N_{t}}{1 - \mho} \right)^{v} \, d i  }{\int_{0}^{1} \pLevBF_{it}  \theta_{it} \cLevBF_{it}^{-\rho} \  di } \right)$ \\ 
-
-$ = log \left( \varphi \left(\frac{N_{t}}{1 - \mho}\right) ^{v}\right) + log \left(\int_{0}^{1} \pLevBF_{it}  \,  di  \right) - log \left(\int_{0}^{1} \pLevBF_{it}  \theta_{it} \cLevBF_{it}^{-\rho} \  di  \right) $
 
 
 \hypertarget{Jacobian of System}{}
 \subsection{Jacobian of System} 
 
-By applying implicit function theorem to equation 10 : \\ \\
+\hypertarget{Implicit Function Theorem}{}
+\subsubsection{Implicit Function Theorem} 
+
+By applying the implicit function theorem to the reduced system, we can obtain the endogenous responses of the real interest rate, wage, and labor supply given some exogenous shock \\
 
 $$d\mathbf{U} =  -{\mathbf{H}_{\mathbf{U}}}^{-1} \mathbf{H}_{\mathbf{Z}} d \mathbf{Z}$$ \\ 
+
+where $d\mathbf{U}$ are the endogenous responses of the real interest rate, the real wage, and labor supply to an exogenous shock $d \mathbf{Z}$.
+
+Specifically, notation is defined below\\
+
+
+$$d\mathbf{U} =(dr_{0} , dr_{1} , ...dr_{T}, dw_{0}, dw_{1}, ..., dw_{T}, dN_{0}, dN_{1},...,dN_{T})$$
+
+$$d \mathbf{Z} = ( dZ_{0}, dZ_{1},... dZ_{T}, dv_{0},...dv_{T}) $$ \\
 
 
  $$  \mathbf{H}_{\mathbf{U}}= \begin{pmatrix} 
@@ -640,10 +682,47 @@ $$ H_{\mathbf{U}, t}= \begin{pmatrix}
 \frac{ \partial \mathcal{H}_{t,1}}{\partial Z_{0}}  & ... & \frac{ \partial \mathcal{H}_{t,1}}{\partial Z_{T}} & \frac{ \partial \mathcal{H}_{t,1}}{\partial v_{0}} & ... & \frac{ \partial \mathcal{H}_{t,1}}{\partial v_{T}} \\ \\ 
 \frac{ \partial \mathcal{H}_{t,2}}{\partial Z_{0}}  & ... & \frac{ \partial \mathcal{H}_{t,2}}{\partial Z_{T}} & \frac{ \partial \mathcal{H}_{t,2}}{\partial v_{0}} & ... & \frac{ \partial \mathcal{H}_{t,2}}{\partial v_{T}} \\ \\
 \frac{ \partial \mathcal{H}_{t,3}}{\partial Z_{0}}  & ... & \frac{ \partial \mathcal{H}_{t,3}}{\partial Z_{T}} & \frac{ \partial \mathcal{H}_{t,3}}{\partial v_{0}} & ... & \frac{ \partial \mathcal{H}_{t,3}}{\partial v_{T}}  \\ \\
+ \end{pmatrix} $$ \\ \\
+ 
+\hypertarget{Obtaining All Other Responses}{}
+\subsubsection{Obtaining All Other Responses} 
+
+To obtain all other responses given the endogenous response $\mathbf{dU}$, we compute the jacobians of the endogenous variable with respect to the relevant endogenous variables that have already been solved for.  For example, to compute the response of consumption to some exogenous shock $d\mathbf{Z}$, we sum  the jacobians of consumption with respect to the real interest rate, the wage and labor supply 
+
+$$ d\mathbf{C} = \mathcal{J}^{\mathcal{C} , r} d\mathbf{r} +\mathcal{J}^{\mathcal{C} , w} d\mathbf{w} +\mathcal{J}^{\mathcal{C} , N} d\mathbf{N} $$\\
+ 
+ where $\mathcal{J}^{\mathcal{C} , w} $ is the jacobian of aggregate consumption  $\mathcal{C}_{t}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T}) $  with respect to the wage. \\
+ 
+ To be clear , 
+ 
+$$d\mathbf{w} =  ( dw_{1}, dw_{2}, . . . , dw_{T})' $$
+ 
+ 
+ 
+ $$\mathcal{J}^{\mathcal{C} , w} =   \begin{pmatrix} 
+\frac{ \partial \mathcal{C}_{0}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{0}}  & \frac{ \partial \mathcal{C}_{0}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{2}}&    ... & \frac{ \partial \mathcal{C}_{0}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{T}} \\ \\ 
+\frac{ \partial \mathcal{C}_{1}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{0}}  &\frac{ \partial \mathcal{C}_{1}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{2}}& ... & \frac{ \partial \mathcal{C}_{1}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{T}} \\ \\
+.  \\ \\
+.  \\ \\
+. \\ \\
+\frac{ \partial \mathcal{C}_{T}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{0}}  &\frac{ \partial \mathcal{C}_{T}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{2}}& ... & \frac{ \partial \mathcal{C}_{T}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{T}}  \\ \\
  \end{pmatrix} $$
  
  
 
 \bibliography{\econtexRoot/BufferStockTheory,economics}
+
+Auclert et al 2020
+
+Auclert et al 2021
+
+Carroll 2006
+
+Reiter 2009
+
+
+
+
+
 
 \end{document}
