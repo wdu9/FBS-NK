@@ -107,7 +107,7 @@ subject to
 \end{align*}
 
 where
-$U\left(\cLevBF_{i t}, n_{i t}\right) = \frac{\cLevBF_{i t}^{1-\rho}}{1 -\rho} - \varphi \pLevBF_{it} \frac{n_{it}^{1+v}}{1+v}$ , $\beta_{i}$ is the discount factor of household $i$ and $\not D$ is the probability of death. Labor supply of household $i$ at time $t$ is denoted by $n_{it}$.  Given the formulation of sticky wages described in section 2.4, labor supply is an aggregate state variable and therefore consumption serves as the sole control variable in the dynamic problem.  \\
+$U\left(\cLevBF_{i t}, n_{i t}\right) = \frac{\cLevBF_{i t}^{1-\rho}}{1 -\rho} - \varphi \pLevBF_{it} \frac{n_{it}^{1+v}}{1+v}$ , $\beta_{i}$ is the discount factor of household $i$ and $\not D$ is the probability of death. Death is included in our model to ensure the distribution of permanent income, $\pLevBF$ ,and thus the distribution of wealth, has a limit.  Labor supply of household $i$ at time $t$ is denoted by $n_{it}$.  Given the formulation of sticky wages described in section 2.4, labor supply is an aggregate state variable and therefore consumption serves as the sole control variable in the dynamic problem.  \\
 
 $\mLevBF_{it}$ \ denotes household $i$'s market resources at time $t$ to be expended on consumption or invested into a mutual fund. $\cLevBF_{it}$ is the level of consumption of household $i$ at time $t$ and  $ \aLevBF_{it}$ is the value of household $i$'s shares at the mutual at period $t$ where the mutual fund's return is $r_{t+1}^{a}$.  $\mLevBF_{it}$ is determined by labor income,  $\mathbf{z}_{it}$, and the gross return on assets from the last period, $(1+r_{t}^{a}) \aLevBF_{it-1} $.  \\
 
@@ -153,19 +153,19 @@ the problem allows us to rewrite it more compactly in Bellman equation form,
 
 \label{subsec:Financial Intermediary}
 
-The financial intermediary in our model performs a mutual fund activity where it  collects assets from households $A_{t}$ and invests them into government bonds $B_{t}$, stocks $v_{jt}$, and nominal reserves at the central bank $M_{t}$.\\ 
+The financial intermediary in our model performs a mutual fund activity where it  collects assets from households and invests them into government bonds $B_{t}$, stocks $v_{jt}$, and nominal reserves at the central bank $M_{t}$.\\ 
 
 In particular, at the end of period $t$, the assets collected from households $A_{t}$ must be invested into shares $\mathit{v}_{jt}$ of firm $j$ at price  $q^{s}_{jt}$ , government bonds $B_{t}$ at price $q^{b}_{t}$ and nominal reserves $M_{t}$. 
 
 $$A_{t} = \frac{M_{t}}{P_{t}} +q^{b}_{t} B_{t} + \int_{0}^{1} q^{s}_{jt}\mathit{v}_{jt}\,dj$$
 
-where $A_{t} = \int_{0}^{1} a_{it} \, di$ \\
+where $A_{t} $ is the dollar value of the mutual fund's assets at the end of period $t$ and $ \mathit{v}_{jt}$ is the portfolio share of firm $j$ stocks with $\int_{0}^{1} \mathit{v}_{jt}\,dj =1$.  \\
 
 The mutual fund's return in the next period is then 
 
 $$(1+r^{a}_{t+1})  = \frac{  B_{t} + \int_{0}^{1} (q^{s}_{jt+1}+ D_{jt+1})\mathit{v}_{jt} \, dj +(1+i_{t}) \frac{M_{t}}{P_{t+1}}}{A_{t}}$$\\ 
 
-where  $D_{jt+1}$ are dividends of firm $j$ and $i_{t}$ is the nominal interest rate. \\ \\
+where  $D_{jt+1}$ are dividends of firm $j$ and $i_{t}$ is the nominal interest rate  on nominal reserves. \\ \\
 
 The mutual fund is risk neutral and looks to maximize its expected return 
 
@@ -177,7 +177,8 @@ The first order conditions lead to the no arbitrage equations:
 
 $$ \mathrm{E}_{t}\left[1+r^{a}_{t+1}\right]= \frac{1}{q^{b}_{t}}  =\frac{\mathrm{E}_{t}\left[q^{s}_{jt+1} + D_{jt+1} \right]}{q^{s}_{jt}} = (1+i_{t}) \mathrm{E}_{t}\left[\frac{P_{t}}{P_{t+1}}\right] \equiv 1 +r_{t}$$
 
-where $r_{t}$ is defined to be the real interest rate in period $t$.  \\ \\
+where $r_{t}$ is defined to be the real interest rate in period $t$. 
+In equilibrium ,we will assume $M_{t} =0$ \\ \\
 
 \hypertarget{Goods Market}{}
 \subsection{Goods Market}
@@ -360,8 +361,6 @@ An equilibrium in this economy is a sequence of: \\
 
 - Value functions $ \left( V_{t}(m) \right)_{t=0}^{\infty}$\\
 
-- Distributions $ \left(\Phi_{t}(m) \right)_{t=0}^{\infty}$\\
-
 - Prices $ \left(r_{t},  r^{a}_{t+1}, i_{t}, q^{s}_{t}, q^{b}_{t}, P_{t}, W_{t} , w_{t} , \pi^{p}_{t}, \pi^{w}_{t} \right) _{t=0}^{\infty}$\\
 
 - Aggregates $ \left(C_{t}, Y_{t} , N_{t}, D_{t} , A_{t} , B_{t} \right)_{t=0}^{\infty}$\\
@@ -377,12 +376,9 @@ The government budget constraint holds. \\
 The nominal interest rate is set according to the central bank's Taylor rule. \\
 
 
-$ \Phi_{t+1}(m) = H(\Phi_{t}(m))$ holds.\\
-
-
 Markets clear:
 
- $$ A_t =  \int_{0}^{1} \pLevBF_{it}\left( m_{it} - c_{it}(m_{it})\right) \, di $$
+ $$ A_t = q^{b}_{t} B_{t} + q^{s}_{t} =  \int_{0}^{1} \pLevBF_{it}\left( m_{it} - c_{it}(m_{it})\right) \, di $$
  
  $$ Y_t = C_{t} +G $$ \\
  
@@ -418,6 +414,7 @@ To compute the impulse responses of the model, we follow the sequence space jaco
 
 \input{\TableDir/Calibration.tex}
 
+Each period in our model represents one quarter of a year. Calibration of household parameters are presented in table 1 while calibration of economy parameters can be found in table 2. There are five discount factors distributed uniformly among agents in the economy with a mean of .9773 and spread of .0049. The discount factors were adjusted to target a 5 percent annual real interest rate. Similarly the disutility of labor is set to .883 to target a labor supply of 1.22 . The target of a 5 percent real interest rate and a labor supply level of 1.22 are completely arbitrary.  The coefficient of risk aversion is set to 2 and the frisch elasticity of labor supply is set to 1/2, in line with Chetty(2012).  The probability of death is set to .99375 to ensure the average working lifespanc of households is $ \frac{1}{(1-.99375)} = 160$ periods, or equivalently, 40 years.  The standard deviations of transitory and permanent shocks follows from CSTW(2017). The rest of household parameters being the unemployment rate, unemployment benefits and the tax rate are all arbitrarily chosen. With regards to the economy calibration, the calvo parameters for price stickiness is set to .85 and the wage stickiness is set .8 both of which lie in the conventional range. The steady price markup is set to 1.012 implying a 1.2 percent markup while the wage markup has been set 1.05 impying a 5 percent wage markup. The taylor rule coefficients have been initially set to zero implying a fixed nominal rate to provide transparency in understanding the impulse responses produced from the model and assess its accuracy without exterior pressures within the model. The taylor coefficients will be modified later when discussing results. The rest of the parameters are arbitrarily chosen. 
 
 
 
@@ -426,6 +423,9 @@ To compute the impulse responses of the model, we follow the sequence space jaco
 
 \hypertarget{Results}{}
 \section{Results}
+
+We conduct monetary policy and productivity shocks. The monetary policy shock is a 100 basis points increase in the nominal rate and follows an AR(1) with a coefficient of .5 while the productivity shock is a 1 percent increase in $Z_{t}$ following an AR(1) as well with a coefficient of .9. The impulse responses to the monetary policy shock can be found in figure 1.  As expected, the rise in the nominal rate leads to a rise in the real interest rate as prices cannot flexibly adjust to clear the goods market. The rise in the real rate leads to a fall in consumption due to the intertemporal substitution channel  causing output to fall. This fall in output necessitates a fall in labor demand. The downward pressure from falling labor demand with the fall in consumption raises the wage markup $(\frac{W_{t}}{P_{t}} - mrs_{t})$ inducing downward pressure on nominal wages. The downward pressure on nominal wages in turn leads to downward pressure on prices as firm markups rise. Given that prices are stickier than wages and downward pressures on both nominal prices and nominal wages, the real wage must fall. Due to the large aggregate MPC from household heterogeneity, the fall in consumption is further amplified from income effects as labor and real wages both fall. 
+
 
 \begin{figure}{Impulse Response to Monetary Policy Shock}
   \begin{subfigure}{}
@@ -436,6 +436,8 @@ To compute the impulse responses of the model, we follow the sequence space jaco
     \caption{ Impulse Response to One Percent Increase in Nominal Rate}
   \end{subfigure}
 \end{figure}
+
+The impulse responses to the productivity shock can be found in figure 2. The rise in productivity $Z_{t}$ leads to a rise in both output and firm markups, inducing downward pressure on prices which inturn also induces downward pressure on nominal wages. However, given the goods market must clear, consumption must rise as well inducing upward pressure on the nominal wage since economy marginal rate of substitution is a function of the average marginal utility of consumption. The net effect will see nominal wages rise leading to upward pressure on prices. This rise in nominal wages imply the effect of the fall in marginal utility on wages to be greater than the downward pressure on wages generated from the downward pressures on prices. The net effect of all these different pressures will see the real wage rise and therefore amplify the consumption response signficantly due to the large aggregate MPC in the model. In addition, to the fixed nominal interest rate, inflation will see the real interest rate fall further amplifying consumption. This amplification of consumption will lead to rises in output and labor due to upward pressure on labor demand.
 
 \begin{figure}{Impulse Response to Productivity Shock}
   \begin{subfigure}{}
@@ -453,7 +455,9 @@ To compute the impulse responses of the model, we follow the sequence space jaco
 \section{Issues and Extensions}
 
 
+Direction flipping due to nominal wage and nominal price interaction and perhaps consumption jacobian strength.
 
+Persistence of shock.
 
 
 
@@ -515,7 +519,7 @@ To compute the impulse responses of the model, we follow the sequence space jaco
 
 Household i's dynamic program is
 
-$$ V(\pmb{\mathrm{m}}_{it},\pmb{\mathrm{p}}_{it})=\max_{ \{ \pmb{\mathrm{c}}_{it}\}} { U( \pmb{\mathrm{c}}_{it}, n_{it}) + \beta_{i} \not D \mathrm{E}_{t}[V( \pmb{\mathrm{m}}_{it+1} , \pmb{\mathrm{p}}_{it+1})]}$$
+$$ V(\pmb{\mathrm{m}}_{it},\pmb{\mathrm{p}}_{it})=\max_{ \{ \pmb{\mathrm{c}}_{it}\}} { \frac{\cLevBF_{i t}^{1-\rho}}{1 -\rho} - \varphi \pLevBF_{it} \frac{n_{it}^{1+v}}{1+v} + \beta_{i} \not D \mathrm{E}_{t}[V( \pmb{\mathrm{m}}_{it+1} , \pmb{\mathrm{p}}_{it+1})]}$$
 
 subject to 
 
@@ -528,7 +532,7 @@ subject to
 This can be normalized to \\
 
 
-$$ V(m_{it}) = \max_{\{c_{it}\}} { U(c_{it}, n_{it}) + \beta_{i}\not D \mathrm{E}_{t}[\psi_{it+1}^{1-\rho} V(m_{it+1})]}$$
+$$ V(m_{it}) = \max_{\{c_{it}\}} {  \frac{c_{i t}^{1-\rho}}{1 -\rho} - \varphi \frac{n_{it}^{1+v}}{1+v} + \beta_{i}\not D \mathrm{E}_{t}[\psi_{it+1}^{1-\rho} V(m_{it+1})]}$$
 
  subject to 
  
@@ -548,7 +552,7 @@ e.g. $x_{it} = \frac{\mathbf{x_{it}}}{\pmb{\mathrm{p}}_{it}}$ \\
 \hypertarget{Model as System}{}
 \subsection{Model as System}
 
-The model can be defined by the system of equations below. The solution of the model must see this system be equal to a vector of zeros for periods $t =0, 1, 2, 3, ...$. The system is defined over the sequence space of all endogenous variables $\mathbf{U}$  and exogneous variables $\mathbf{Z}$ of the model.
+The model can be defined by the system of equations below. The solution of the model must see this system be equal to a vector of zeros for periods $t =0, 1, 2, 3, ...$. The system is defined over the sequence space of all endogenous variables $\mathbf{U}$  and exogenous variables $\mathbf{Z}$ of the model.
 
 $$
 H_{t}(\mathbf{U},\mathbf{Z})= \begin{pmatrix} 
@@ -569,9 +573,7 @@ $$ \\ \\
  
  where \\
  
- $\mathcal{C}_{t}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T}) = \int_{0}^{1} \pLevBF_{it} c_{it}(m_{it})\, di $ \\
- 
- $\mathcal{A}_{t}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T}) = \int_{0}^{1} \pLevBF_{it} \left(m_{it} - c_{it}(m_{it})\right)\, di $ \\
+$\mathcal{C}_{t}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T}) = \int_{0}^{1} \pLevBF_{it} c_{it}(m_{it})\, di $ \\
  
 $c_{it}(m_{it})$ is the steady state normalized consumption policy for household $i$ in period t. \\ \\
  
@@ -584,7 +586,7 @@ $c_{it}(m_{it})$ is the steady state normalized consumption policy for household
  
  $\mathbf{Z} = \left(Z_{t} ,v_{t}\right)_{t=0}^{t=T}$ \\
  
- \textbf{Note} the asset market clearing condition is not included in the system as the goods market clearing condition holds if and only if the asset market clearing condition holds.  \\ \\
+ \textbf{Note} the asset market clearing condition is not included in the system as the goods market clearing condition holds if and only if the asset market clearing condition holds. On the same note, the government budget constraint nor the equation for the stock price is included in the reduced system as they both bonds and its stock price appears in the asset clearing equation.  \\ \\
  
  
  
@@ -654,13 +656,48 @@ $$d\mathbf{U} =(dr_{0} , dr_{1} , ...dr_{T}, dw_{0}, dw_{1}, ..., dw_{T}, dN_{0}
 $$d \mathbf{Z} = ( dZ_{0}, dZ_{1},... dZ_{T}, dv_{0},...dv_{T}) $$ \\
 
 
+
+
+
  $$  \mathbf{H}_{\mathbf{U}}= \begin{pmatrix} 
-H_{\mathbf{u}, 0} \\ \\ 
-H_{\mathbf{u}, 1}  \\ \\
+H_{\mathbf{U}, 1} \\ \\ 
+H_{\mathbf{U}, 2}  \\ \\
+H_{\mathbf{U}, 3} \\ \\
+ \end{pmatrix} \quad \quad \mathbf{H}_{\mathbf{Z}}= \begin{pmatrix} 
+H_{\mathbf{Z}, 1} \\ \\ 
+H_{\mathbf{Z}, 2}  \\ \\
+H_{\mathbf{Z}, 3} \\ \\
+ \end{pmatrix}$$ \\ \\
+ 
+ 
+ $$ H_{\mathbf{U}, i}= \begin{pmatrix} 
+\frac{ \partial \mathcal{H}_{0,i}}{\partial r_{0}}  & ... & \frac{ \partial \mathcal{H}_{0,i}}{\partial r_{T}} & \frac{ \partial \mathcal{H}_{0,i}}{\partial w_{0}} & ... & \frac{ \partial \mathcal{H}_{0,i}}{\partial w_{T}} & \frac{ \partial \mathcal{H}_{0,i}}{\partial N_{0}} & ... &\frac{ \partial \mathcal{H}_{0,i}}{\partial N_{T}} \\ \\ 
+\frac{ \partial \mathcal{H}_{1,i}}{\partial r_{0}}  & ... & \frac{ \partial \mathcal{H}_{1,i}}{\partial r_{T}} & \frac{ \partial \mathcal{H}_{1,i}}{\partial w_{0}} & ... & \frac{ \partial \mathcal{H}_{1,i}}{\partial w_{T}} & \frac{ \partial \mathcal{H}_{1,i}}{\partial N_{0}} & ... &\frac{ \partial \mathcal{H}_{1,i}}{\partial N_{T}}  \\ \\
+.   \\ \\ \\ 
+. \\ \\ \\
+. \\ \\ \\
+\frac{ \partial \mathcal{H}_{T,i}}{\partial r_{0}}  & ... & \frac{ \partial \mathcal{H}_{T,i}}{\partial r_{T}} & \frac{ \partial \mathcal{H}_{T,i}}{\partial w_{0}} & ... & \frac{ \partial \mathcal{H}_{T,i}}{\partial w_{T}} & \frac{ \partial \mathcal{H}_{T,i}}{\partial N_{0}} & ... &\frac{ \partial \mathcal{H}_{T,i}}{\partial N_{T}} \\ \\
+ \end{pmatrix} $$ \\
+ 
+  $$ H_{\mathbf{Z}, t}= \begin{pmatrix} 
+\frac{ \partial \mathcal{H}_{0,i}}{\partial Z_{0}}  & ... & \frac{ \partial \mathcal{H}_{0,i}}{\partial Z_{T}} & \frac{ \partial \mathcal{H}_{0,i}}{\partial v_{0}} & ... & \frac{ \partial \mathcal{H}_{0,i}}{\partial v_{T}} \\ \\ 
+\frac{ \partial \mathcal{H}_{1,i}}{\partial Z_{0}}  & ... & \frac{ \partial \mathcal{H}_{1,i}}{\partial Z_{T}} & \frac{ \partial \mathcal{H}_{1,i}}{\partial v_{0}} & ... & \frac{ \partial \mathcal{H}_{1,i}}{\partial v_{T}} \\ \\
+. \\ \\ \\ 
+. \\ \\ \\
+. \\ \\ \\
+\frac{ \partial \mathcal{H}_{T,i}}{\partial Z_{0}}  & ... & \frac{ \partial \mathcal{H}_{T,i}}{\partial Z_{T}} & \frac{ \partial \mathcal{H}_{T,i}}{\partial v_{0}} & ... & \frac{ \partial \mathcal{H}_{T,i}}{\partial v_{T}}  \\ \\
+ \end{pmatrix} $$ \\ \\
+ 
+ 
+\textbf{ Or equivalently}
+
+ $$  \mathbf{H}_{\mathbf{U}}= \begin{pmatrix} 
+H_{\mathbf{U}, 0} \\ \\ 
+H_{\mathbf{U}, 1}  \\ \\
 . \\ \\
 . \\ \\
 . \\ \\ 
-H_{\mathbf{u}, T} \\ \\
+H_{\mathbf{U}, T} \\ \\
  \end{pmatrix} \quad \quad \mathbf{H}_{\mathbf{Z}}= \begin{pmatrix} 
 H_{\mathbf{Z}, 0} \\ \\ 
 H_{\mathbf{Z}, 1}  \\ \\
@@ -684,6 +721,9 @@ $$ H_{\mathbf{U}, t}= \begin{pmatrix}
 \frac{ \partial \mathcal{H}_{t,3}}{\partial Z_{0}}  & ... & \frac{ \partial \mathcal{H}_{t,3}}{\partial Z_{T}} & \frac{ \partial \mathcal{H}_{t,3}}{\partial v_{0}} & ... & \frac{ \partial \mathcal{H}_{t,3}}{\partial v_{T}}  \\ \\
  \end{pmatrix} $$ \\ \\
  
+ 
+ 
+ 
 \hypertarget{Obtaining All Other Responses}{}
 \subsubsection{Obtaining All Other Responses} 
 
@@ -700,12 +740,12 @@ $$d\mathbf{w} =  ( dw_{1}, dw_{2}, . . . , dw_{T})' $$
  
  
  $$\mathcal{J}^{\mathcal{C} , w} =   \begin{pmatrix} 
-\frac{ \partial \mathcal{C}_{0}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{0}}  & \frac{ \partial \mathcal{C}_{0}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{2}}&    ... & \frac{ \partial \mathcal{C}_{0}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{T}} \\ \\ 
-\frac{ \partial \mathcal{C}_{1}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{0}}  &\frac{ \partial \mathcal{C}_{1}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{2}}& ... & \frac{ \partial \mathcal{C}_{1}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{T}} \\ \\
+\frac{ \partial \mathcal{C}_{0}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{0}}  & \frac{ \partial \mathcal{C}_{0}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{1}}&    ... & \frac{ \partial \mathcal{C}_{0}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{T}} \\ \\ 
+\frac{ \partial \mathcal{C}_{1}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{0}}  &\frac{ \partial \mathcal{C}_{1}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{1}}& ... & \frac{ \partial \mathcal{C}_{1}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{T}} \\ \\
 .  \\ \\
 .  \\ \\
 . \\ \\
-\frac{ \partial \mathcal{C}_{T}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{0}}  &\frac{ \partial \mathcal{C}_{T}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{2}}& ... & \frac{ \partial \mathcal{C}_{T}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{T}}  \\ \\
+\frac{ \partial \mathcal{C}_{T}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{0}}  &\frac{ \partial \mathcal{C}_{T}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{1}}& ... & \frac{ \partial \mathcal{C}_{T}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{T}}  \\ \\
  \end{pmatrix} $$
  
  
@@ -718,7 +758,15 @@ Auclert et al 2021
 
 Carroll 2006
 
+CSTW(2017)
+
+ Chetty(2012)
+
 Reiter 2009
+
+Simon (1956)
+
+Theil (1957)
 
 
 
