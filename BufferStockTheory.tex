@@ -56,7 +56,7 @@ Theoretical Foundations of Buffer Stock Saving
 
 \hypertarget{abstract}{}
 \begin{abstract}
-  This paper develops a heterogenous Agent New Keynesian Model with a friedman buffer stock income process.
+  This paper develops a heterogenous agent new keynesian model featuring a buffer stock income process, both sticky wages and prices and heterogeneity in discount factors to generate high aggregate MPC.
 \end{abstract}
 
 
@@ -89,7 +89,7 @@ Write here for intro
 \label{subsec:Households} 
 
 There is a continuum of households of mass 1 distributed on the unit
-interval and indexed by $i$. Households are ex-ante heterogeneous in their discount factors and are subject to idiosyncratic income shocks.  Each household faces the following problem:
+interval and indexed by $i$. Households are ex-ante heterogeneous in their discount factors and subject to idiosyncratic income shocks.  Each household faces the following problem:
 
 \begin{verbatimwrite}{\EqDir/supfn.tex}
 \begin{eqnarray}
@@ -107,9 +107,8 @@ subject to
 \end{align*}
 
 where
-$U\left(\cLevBF_{i t}, n_{i t}\right) = \frac{\cLevBF_{i t}^{1-\rho}}{1 -\rho} - \varphi \pLevBF_{it} \frac{n_{it}^{1+v}}{1+v}$ , $\beta_{i}$ is the discount factor of household $i$ and $\not D$ is the probability of death. Death is included in our model to ensure the distribution of permanent income, $\pLevBF$ ,and thus the distribution of wealth, has a limit.  Labor supply of household $i$ at time $t$ is denoted by $n_{it}$.  Given the formulation of sticky wages described in section 2.4, labor supply is an aggregate state variable and therefore consumption serves as the sole control variable in the dynamic problem.  \\
+$U\left(\cLevBF_{i t}, n_{i t}\right) = \frac{\cLevBF_{i t}^{1-\rho}}{1 -\rho} - \varphi \pLevBF_{it} \frac{n_{it}^{1+v}}{1+v}$  and $\beta_{i}$ is the discount factor of household $i$. $\mLevBF_{it}$ \ denotes household $i$'s market resources at time $t$ to be expended on consumption or invested at a mutual fund. $\cLevBF_{it}$ is the level of consumption of household $i$ at time $t$ and  $ \aLevBF_{it}$ is the value of household $i$'s shares at the mutual during period $t$ where the mutual fund's return is $r_{t+1}^{a}$.  $\mLevBF_{it}$ is determined by labor income,  $\mathbf{z}_{it}$, and the gross return on assets from the last period, $(1+r_{t}^{a}) \aLevBF_{it-1} $. $\not D$ is the probability of death. Death is included in our model to ensure permanent income, $\pLevBF$, and thus wealth, has a limiting distribution.   Labor supply of household $i$ at time $t$ is denoted by $n_{it}$.  Given the formulation of sticky wages described in section 2.4, labor supply is an aggregate state variable and therefore consumption serves as the sole control variable in the dynamic problem.  \\
 
-$\mLevBF_{it}$ \ denotes household $i$'s market resources at time $t$ to be expended on consumption or invested into a mutual fund. $\cLevBF_{it}$ is the level of consumption of household $i$ at time $t$ and  $ \aLevBF_{it}$ is the value of household $i$'s shares at the mutual at period $t$ where the mutual fund's return is $r_{t+1}^{a}$.  $\mLevBF_{it}$ is determined by labor income,  $\mathbf{z}_{it}$, and the gross return on assets from the last period, $(1+r_{t}^{a}) \aLevBF_{it-1} $.  \\
 
 
 
@@ -126,17 +125,30 @@ Labor income is subject to permanent and transitory idiosyncratic shocks. In par
 
 The transitory component follows   \\
 \begin{verbatimwrite}{\EqDir/tShkDef}
-\begin{equation}
+$$
 \tShkAll _{it}=
 \begin{cases}
  u \phantom{_{t+1}/\pNotZero} & \text{with probability $\mho $} \\
  \tShkEmp_{it} (1-\tau_{t})\int_{0}^{1} w_{gt}n_{igt} \, dg      & \text{with probability $1 - \mho  $} 
 \end{cases} \label{eq:tShkDef}
-\end{equation}
+$$
 \end{verbatimwrite}
 \input{\EqDir/tShkDef.tex}\\
-where u is unemployment benefits, $\tau_{t}$ is the tax rate , $w_{gt}$ is the real wage for labor type $g$ at time t, $ n_{igt}$ is the labor supply for labor type $g$ and $\tShkEmp_{t}$ is an iid mean-one lognormal with standard deviation $\sigma_{\tShkEmp}$.  The probability of receiving an unemployment shock in a given period where households forego their after-tax labor income and receive unemployment benefits instead is denotes by $\mho$.  \\ 
+where u is unemployment benefits, $\tau_{t}$ is the tax rate , $w_{gt}$ is the real wage for labor type $g$ at time t, $ n_{igt}$ is the labor supply for labor type $g$ and $\tShkEmp_{t}$ is an iid mean-one lognormal with standard deviation $\sigma_{\tShkEmp}$.  The probability of receiving an unemployment shock in a given period where households forego their after-tax labor income and receive unemployment benefits instead is denoted by $\mho$.  \\ \\
 
+Given the formulation of sticky wages described in section 2.4, the transitory component simplifies to \\
+
+\begin{equation}
+\tShkAll _{it}=
+\begin{cases}
+ u \phantom{_{t+1}/\pNotZero} & \text{with probability $\mho $} \\
+ \tShkEmp_{it} (1-\tau_{t})\frac{w_{t}N_{t}}{(1-\mho)}      & \text{with probability $1 - \mho  $} 
+\end{cases} \label{eq:tShkDef}
+\end{equation} 
+
+where $w_{t}$ is the real wage and $N_{t}$  is labor supply.
+
+For details on the derivation, see Appendix.\\ \\
 
 
 \begin{comment}
@@ -157,7 +169,7 @@ The financial intermediary in our model performs a mutual fund activity where it
 
 In particular, at the end of period $t$, the assets collected from households $A_{t}$ must be invested into shares $\mathit{v}_{jt}$ of firm $j$ at price  $q^{s}_{jt}$ , government bonds $B_{t}$ at price $q^{b}_{t}$ and nominal reserves $M_{t}$. 
 
-$$A_{t} = \frac{M_{t}}{P_{t}} +q^{b}_{t} B_{t} + \int_{0}^{1} q^{s}_{jt}\mathit{v}_{jt}\,dj$$
+\begin{equation} A_{t} = \frac{M_{t}}{P_{t}} +q^{b}_{t} B_{t} + \int_{0}^{1} q^{s}_{jt}\mathit{v}_{jt}\,dj \end{equation}
 
 where $A_{t} $ is the dollar value of the mutual fund's assets at the end of period $t$ and $ \mathit{v}_{jt}$ is the portfolio share of firm $j$ stocks with $\int_{0}^{1} \mathit{v}_{jt}\,dj =1$.  \\
 
@@ -175,7 +187,7 @@ $$\max_{\{B_{t}, M_{t} , \mathit{v}_{jt} \}} \mathrm{E}_{t}\left[1+r^{a}_{t+1} \
  
 The first order conditions lead to the no arbitrage equations:
 
-$$ \mathrm{E}_{t}\left[1+r^{a}_{t+1}\right]= \frac{1}{q^{b}_{t}}  =\frac{\mathrm{E}_{t}\left[q^{s}_{jt+1} + D_{jt+1} \right]}{q^{s}_{jt}} = (1+i_{t}) \mathrm{E}_{t}\left[\frac{P_{t}}{P_{t+1}}\right] \equiv 1 +r_{t}$$
+\begin{equation} \mathrm{E}_{t}\left[1+r^{a}_{t+1}\right]= \frac{1}{q^{b}_{t}}  =\frac{\mathrm{E}_{t}\left[q^{s}_{jt+1} + D_{jt+1} \right]}{q^{s}_{jt}} = (1+i_{t}) \mathrm{E}_{t}\left[\frac{P_{t}}{P_{t+1}}\right] \equiv 1 +r_{t} \end{equation}
 
 where $r_{t}$ is defined to be the real interest rate in period $t$. 
 In equilibrium ,we will assume $M_{t} =0$ \\ \\
@@ -202,11 +214,11 @@ $$ \max_{Y_{jt}} P_{t} \left(\int_{0}^{1} Y_{jt}^{\frac{\epsilon_{p}-1}{\epsilon
 
 The first order condition leads to demand for good $j$
 
-$$ Y_{jt} = \left(\frac {P_{jt}}{P_{t}}\right)^{- \epsilon_{p}} Y_{t}$$ \\
+\begin{equation} Y_{jt} = \left(\frac {P_{jt}}{P_{t}}\right)^{- \epsilon_{p}} Y_{t}\end{equation} \\
 
 and the price index
 
-$$P_{t} = \left(\int_{0}^{1} P_{jt}^{1-\epsilon_{p}}\,dj \right )^{\frac{1}{1-\epsilon_{p}}}$$
+\begin{equation} P_{t} = \left(\int_{0}^{1} P_{jt}^{1-\epsilon_{p}}\,dj \right )^{\frac{1}{1-\epsilon_{p}}} \end{equation}
 
 
 \hypertarget{Intermediate Good Producer}{}
@@ -236,7 +248,7 @@ where $M_{t, t+s} = \prod_{k=t}^{t+s-1} \frac{1}{1+r_{k}}$ is the stochastic dis
 
 This problem leads to the Phillips Curve in our model \\ 
 
-$$ \pi_{t}^{p} = \frac{\mathrm{E}_{t}[\pi_{t+1}^{p}]}{1+r^{*}} + \lambda (\mu_{t}^{p} -\mu^{p})$$
+\begin{equation} \pi_{t}^{p} = \frac{\mathrm{E}_{t}[\pi_{t+1}^{p}]}{1+r^{*}} + \lambda (\mu_{t}^{p} -\mu^{p}) \end{equation}
 
 where $r^{*}$ is the natural rate of interest in the steady state, $\lambda = \frac{(1-\lambda_{p})(1-\frac{\lambda_{p}}{1+r^{*}})}{\lambda_{p}}$,  $ \mu_{t}^{p} = log(P_{t}) - log(W_{t}) + log(Z_{t})$ and $\mu^{p} = \frac{\epsilon_{p}}{1-\epsilon_{p}}$ \\ \\
 
@@ -245,7 +257,7 @@ where $r^{*}$ is the natural rate of interest in the steady state, $\lambda = \f
 \hypertarget{Labor Market}{}
 \subsection{Labor Market}
 
-Given the probability of receiving an unemployment shock is $\mho$, we assume, without loss of generality, households $i \in [\mho,1]$ are `employed'  with positive labor supply and households $i \in [0, \mho]$  are `unemployed' provide no labor. 
+Given the probability of receiving an unemployment shock is $\mho$, we assume, without loss of generality, households $i \in [\mho,1]$ are `employed'  with positive labor supply and households $i \in [0, \mho]$  are `unemployed' and provide no labor. 
 
 $$
 n _{it}=
@@ -261,12 +273,12 @@ There is a continuum of monopolistically competitive labor unions indexed by $g 
 
 $$n_{it} = \int_{0}^{1} n_{igt}\,dg$$ \\
 
-Following Auclert et al 2020., we assume each labor union $g$ demands the same level  of labor supply from each household. Denote $n_{gt}$ the level of labor supply demanded from each household by labor union $g$ at time $t$, then   $n_{igt} =\mathit{n}_{gt}$. This assumption will imply labor income heterogeneity to be solely the consequence of  permanent and transitory income shocks.
-The total labor supply collected from employed households  by labor union $g$  is then 
+Following Auclert et al 2020., we assume each labor union $g$ demands the same level  of labor supply from each household. Denote $n_{gt}$ the level of labor demanded from each household by labor union $g$ at time $t$, that is,  assume  $n_{igt} =\mathit{n}_{gt}$. This assumption will imply labor income heterogeneity to be solely the consequence of  permanent and transitory income shocks.
+The total level of labor collected from employed households  by labor union $g$  is then 
 
 $$  (1-\mho) \mathit{n}_{gt} = \int_{\mho}^{1} n_{igt}\,di $$ \\
 
-Each period $t$, labor unions sell their labor supply to a competitive labor packer who demands labor supply $N_{gt}$ at price $W_{gt}$ from union $g$ . 
+Each period $t$, labor unions sell their labor collected from households to a competitive labor packer who demands labor $N_{gt}$ at price $W_{gt}$ from union $g$ . 
 
 Thus, in equilibrium, $$  N_{gt} = (1-\mho) \mathit{n}_{gt} = \int_{\mho}^{1} n_{igt}\,di $$  \\
 
@@ -337,6 +349,11 @@ The government funds its purchases and unemployment insurance payments by issuin
 
 $$ B_{t-1} + G + \mathit{u} \mho =   q^{b}_{t} B_{t} +  \tau \int_{0}^{1} \int_{0}^{1} w_{igt} n_{igt} \, dg \, di$$ \\
 
+which simplifies to 
+
+$$ B_{t-1} + G + \mathit{u} \mho =   q^{b}_{t} B_{t} +  \tau w_{t}N_{t}$$  \\
+
+
 where $G $ is government expenditures. \\
 
 
@@ -361,7 +378,7 @@ An equilibrium in this economy is a sequence of: \\
 
 - Value functions $ \left( V_{t}(m) \right)_{t=0}^{\infty}$\\
 
-- Prices $ \left(r_{t},  r^{a}_{t+1}, i_{t}, q^{s}_{t}, q^{b}_{t}, P_{t}, W_{t} , w_{t} , \pi^{p}_{t}, \pi^{w}_{t} \right) _{t=0}^{\infty}$\\
+- Prices $ \left(r_{t},  r^{a}_{t+1}, i_{t}, q^{s}_{t}, q^{b}_{t}, w_{t} , \pi^{p}_{t}, \pi^{w}_{t} \right) _{t=0}^{\infty}$\\
 
 - Aggregates $ \left(C_{t}, Y_{t} , N_{t}, D_{t} , A_{t} , B_{t} \right)_{t=0}^{\infty}$\\
 
@@ -382,7 +399,7 @@ Markets clear:
  
  $$ Y_t = C_{t} +G $$ \\
  
- where $C_{t} \equiv  \int_{0}^{1} \pLevBF_{it} c_{it}(m_{it})\, di $
+ where $C_{t} \equiv  \int_{0}^{1} \pLevBF_{it} c_{it}(m_{it})\, di $ \\
 
 
 \hypertarget{Computational Methodology}{}
@@ -424,10 +441,16 @@ Each period in our model represents one quarter of a year. Calibration of househ
 \hypertarget{Results}{}
 \section{Results}
 
-We conduct monetary policy and productivity shocks. The monetary policy shock is a 100 basis points increase in the nominal rate and follows an AR(1) with a coefficient of .5 while the productivity shock is a 1 percent increase in $Z_{t}$ following an AR(1) as well with a coefficient of .9. The impulse responses to the monetary policy shock can be found in figure 1.  As expected, the rise in the nominal rate leads to a rise in the real interest rate as prices cannot flexibly adjust to clear the goods market. The rise in the real rate leads to a fall in consumption due to the intertemporal substitution channel  causing output to fall. This fall in output necessitates a fall in labor demand. The downward pressure from falling labor demand with the fall in consumption raises the wage markup $(\frac{W_{t}}{P_{t}} - mrs_{t})$ inducing downward pressure on nominal wages. The downward pressure on nominal wages in turn leads to downward pressure on prices as firm markups rise. Given that prices are stickier than wages and downward pressures on both nominal prices and nominal wages, the real wage must fall. Due to the large aggregate MPC from household heterogeneity, the fall in consumption is further amplified from income effects as labor and real wages both fall. 
+In this section, we analyze the impulse responses produced from our model for a monetary contraction and a productivity shock.
 
 
-\begin{figure}{Impulse Response to Monetary Policy Shock}
+\hypertarget{Monetary Policy Shock}{}
+\subsection{Monetary Policy Shock}
+
+The impulse responses to the monetary policy shock can be found in figure 1. The monetary policy shock is a 100 basis points increase in the nominal rate and follows an AR(1) with a coefficient of .5.  As expected, the rise in the nominal rate leads to a rise in the real interest rate as prices cannot flexibly adjust to clear the goods market. The rise in the real rate leads to a fall in consumption due to the intertemporal substitution channel  causing output to fall as well. This fall in output necessitates a fall in labor demand raising the wage markup $(\frac{W_{t}}{P_{t}} - mrs_{t})$ and thus inducing downward pressure on nominal wages. Downward pressure on nominal wages in turn leads to downward pressure on prices as firm markups rise. Given that prices are stickier than wages and given the downward pressures on both nominal prices and nominal wages, the real wage must fall. The fall in consumption is further amplified from income effects as labor and real wages both fall.  This amplification through the income channel is particularly significant in heterogenous agent new keynesian models as the large aggregate MPC induces consumption to react strongly to the rise in labor and real wages. 
+
+
+\begin{figure}{Impulse Responses to a Monetary Policy Shock}
   \begin{subfigure}{}
     \centering\includegraphics[scale=.35]{\FigDir/GIPRM2}
   \end{subfigure}
@@ -437,9 +460,14 @@ We conduct monetary policy and productivity shocks. The monetary policy shock is
   \end{subfigure}
 \end{figure}
 
-The impulse responses to the productivity shock can be found in figure 2. The rise in productivity $Z_{t}$ leads to a rise in both output and firm markups, inducing downward pressure on prices which inturn also induces downward pressure on nominal wages. However, given the goods market must clear, consumption must rise as well inducing upward pressure on the nominal wage since economy marginal rate of substitution is a function of the average marginal utility of consumption. The net effect will see nominal wages rise leading to upward pressure on prices. This rise in nominal wages imply the effect of the fall in marginal utility on wages to be greater than the downward pressure on wages generated from the downward pressures on prices. The net effect of all these different pressures will see the real wage rise and therefore amplify the consumption response signficantly due to the large aggregate MPC in the model. In addition, to the fixed nominal interest rate, inflation will see the real interest rate fall further amplifying consumption. This amplification of consumption will lead to rises in output and labor due to upward pressure on labor demand.
 
-\begin{figure}{Impulse Response to Productivity Shock}
+\hypertarget{Productivity Shock}{}
+\subsection{Productivity Shock}
+
+
+The impulse responses to the productivity shock can be found in figure 2. The productivity shock is a 1 percent increase in $Z_{t}$ following an AR(1) with a coefficient of .9. The rise in productivity raises both output and firm markups, inducing downward pressure on prices which inturn induces downward pressure on nominal wages. However, given the goods market must clear, consumption must rise causing upward pressure on the nominal wage since the economy marginal rate of substitution is a function of the average marginal utility of consumption. The net effect will see nominal wages rise leading to upward pressure on prices. The net effect of all these different pressures will see the real wage rise and therefore amplify the consumption response signficantly due to the large aggregate MPC in the model. In addition, to the fixed nominal interest rate, inflation will see the real interest rate fall further amplifying consumption. This amplification of consumption will lead to rises in output and labor due to upward pressure on labor demand.
+
+\begin{figure}{Impulse Responses to a Productivity Shock}
   \begin{subfigure}{}
     \centering\includegraphics[scale=.35]{\FigDir/GIPRZ2}
   \end{subfigure}
@@ -454,10 +482,14 @@ The impulse responses to the productivity shock can be found in figure 2. The ri
 \hypertarget{Issues and Extensions}{}
 \section{Issues and Extensions}
 
+The most prominent issue I have encountered thus far is determining whether the impulse responses are accurate in regards to the specification of the model. Producing the impulses responses is an exercise in linear algebra and the computation of jacobians. Because the jacobians were constructed without automatic differentiation, the accuracy of the impulse responses produced is uncertain as the smallest algebraic mistake may render them incorrect. Despite this uncertainty, the impulse responses of the model do mirror the responses produced from dynare under certain calibrations.  In particular, as long as prices are calibrated to be slightly stickier than wages, the impulse responses from a monetary policy shock behave in exactly the same manner as those produced from dynare. In addition, the impulse responses from a productivity shock seem essentially no different to those produced from dynare. The only issue is whenever wages are calibrated to be stickier than prices. When wages are stickier than prices,  to be specific, if the parameter for wage stickiness is set to .85 and the that of price stickiness to .8, the impulse responses to a monetary contraction are quantitatively the same as those seen in section 5 except they all invert across the x axis. That is, with the rise in the nominal rate, the results see a rise in consumption, output, labor, inflation and the real wage. This is much cause for concern regarding the accuracy of the code that produces the impulse responses as they do not survive under calibrations where wages are stickier than prices. It is possible, however, that these inverted responses may be accurate to the model due to the strong responsiveness of consumption present in the model. For instance, when the inverse frish elasticity is set to a large value (from v =2 to v=7) rendering labor to be significantly less sensitive to changes in wages, the impulse responses do not invert anymore ( consumption, output, labor, real wages all fall after a rise in the nominal rate). This is evidence that perhaps the consumption response is so strong that the slightest change in calibration could lead to large amplification effects that can invert the impulse response. My current hypothesis is that when prices are slightly more flexible than wages, the real wage may perhaps rise as since an increase in the nominal rate induces downward pressure on both prices and wages and if the fall in prices is larger than the fall in wages, the real wage may rise inducing a strong consumption response which amplifies and lead aggregate variables such as labor supply, and output to rise when the real rate rises. 
 
-Direction flipping due to nominal wage and nominal price interaction and perhaps consumption jacobian strength.
 
-Persistence of shock.
+
+
+
+
+
 
 
 
@@ -506,11 +538,6 @@ Persistence of shock.
 
 
 
-\clearpage\vfill\eject
-
-\normalsize
-
-
 \hypertarget{Computational Details}{}
 \section{Computational Details}
 
@@ -537,14 +564,32 @@ $$ V(m_{it}) = \max_{\{c_{it}\}} {  \frac{c_{i t}^{1-\rho}}{1 -\rho} - \varphi \
  subject to 
  
  \begin{align*}
-m_{i t} &=  \xi_{it}  + (1+r^{a}_{t}) \frac{a_{i t-1}}{\psi_{it-1}} \\
- c_{i t}  + a_{i t} &= \xi_{it}  + (1+r^{a}_{t}) \frac{a_{i t-1}}{\psi_{it-1}} \\
+m_{i t} &=  \xi_{it}  + (1+r^{a}_{t}) \frac{a_{i t-1}}{\psi_{it}} \\
+ c_{i t}  + a_{i t} &= \xi_{it}  + (1+r^{a}_{t}) \frac{a_{i t-1}}{\psi_{it}} \\
  a_{it} &\geq 0 
  \end{align*}
  
  Here non boldface variables are normalized by permanent income $\mathit{p_{it}}$. 
 
 e.g. $x_{it} = \frac{\mathbf{x_{it}}}{\pmb{\mathrm{p}}_{it}}$ \\
+
+First order condition for consumption:
+
+$$c_{it}^{-\rho} -  \beta_{i} \not D \mathrm{E}_{t}\left[ (1+r^{a}_{t+1})  \psi_{it+1}^{-\rho} V'(m_{it+1})\right] = 0$$ \\ 
+
+
+
+%%Now let $v(m_{it}, c_{it}) = \frac{c_{i t}^{1-\rho}}{1 -\rho} - \varphi \frac{n_{it}^{1+v}}{1+v} + \beta_{i}\not D \mathrm{E}_{t}[\psi_{it+1}^{1-\rho} V(m_{it+1})] $ and let $c_{it}(m_{it})$ denote the solution to the original dynamic problem.  \\ 
+
+%%Note $ \frac{ \partial v(m_{it},c_{it}(m_{it}))}{\partial m} =  \beta_{i}\not D \mathrm{E}_{t}[\psi_{it+1}^{1-\rho} V'(m_{it+1})] $ \\
+
+%%Then $$ V(m_{it}) = v(m_{it}, c_{it}(m_{it})$$ 
+
+%%$$ V'(m_{it}) = \frac{ \partial v(m_{it},c_{it}(m_{it}))}{\partial m}$$ 
+
+%%Which leads to the envelope condition \\
+
+%%$$V'(m_{it}) =  \beta_{i}\not D \mathrm{E}_{t}[\psi_{it+1}^{1-\rho} V'(m_{it+1})] $$
 
 
 
@@ -746,9 +791,33 @@ $$d\mathbf{w} =  ( dw_{1}, dw_{2}, . . . , dw_{T})' $$
 .  \\ \\
 . \\ \\
 \frac{ \partial \mathcal{C}_{T}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{0}}  &\frac{ \partial \mathcal{C}_{T}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{1}}& ... & \frac{ \partial \mathcal{C}_{T}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T})}{\partial w_{T}}  \\ \\
- \end{pmatrix} $$
+ \end{pmatrix} $$ \\
  
- 
+  
+\hypertarget{Additional Derivations}{}
+\section{Additional Derivations} 
+
+An employed household's transitory income is \\
+
+$$ \theta_{it}(1-\tau) \int_{0}^{1} \frac{W_{gt}}{P_{t}}n_{igt}\,dg$$
+
+where $W_{gt}$ denotes the nominal wage for labor type $g$ and $P_{t}$ the price of the final good. \\ \\
+
+Now noitce
+
+$$ \theta_{it}(1-\tau) \int_{0}^{1} \frac{W_{gt}}{P_{t}}\frac{N_{gt}}{1-\mho}\,dg$$
+
+$$ \theta_{it}(1-\tau) \int_{0}^{1} \frac{W_{gt}}{P_{t}}\frac{\left(\frac{W_{gt}}{W_{t}}\right)^{-\epsilon_{w}} N_{t}}{1-\mho}\,dg$$
+
+$$ \theta_{it}(1-\tau) \frac{N_{t}}{(1-\mho) W_{t}^{-\epsilon_{w}}P_{t}} \int_{0}^{1}  \left(W_{gt}\right)^{1-\epsilon_{w}} \,dg $$
+
+$$\theta_{it}(1-\tau) \frac{N_{t}}{(1-\mho) W_{t}^{-\epsilon_{w}}P_{t}} W_{t}^{1-\epsilon_{w}} $$
+
+$$ \theta_{it}(1-\tau) \frac{W_{t}N_{t}}{(1-\mho)P_{t} }$$\\
+
+Which leads to the expression in the paper \\
+
+$$ \theta_{it}(1-\tau) \frac{w_{t}N_{t}}{(1-\mho)}$$
 
 \bibliography{\econtexRoot/BufferStockTheory,economics}
 
