@@ -100,12 +100,11 @@ args =(q_ss , q_ss, D_ss,rstar)
 pd1 = grad(stock,1)
 pd1(*args)
 
-def production(Y,Z,N):
-    resid = Y-Z*N
-    
-    return resid
+
 
 def jac(func,args,plusone,T):
+    
+    "Second argument must always be +1 of first argument"
     
     "Function must be written variables at period t and t+1, cannot be t-1, or t+2"
    
@@ -143,6 +142,10 @@ def jac(func,args,plusone,T):
     
     return JAC
 
+
+
+
+
 p =[True,False]
 args =(q_ss , q_ss, D_ss,rstar)
 a = jac(stock,args,plusone=p,T=200)
@@ -161,8 +164,57 @@ p = [False]
 b =jac(price_inflation,args,plusone=p,T=200)
     
 
+print(b[0]- J_pi_mup)
+
+def production(Z,N):
+    Y = Z*N
+    return Y
+
+
+
+def simpleJAC(func,args,plusone,T):
+    
+    "First argument is variable you are taking the derivative of"
+    
+    "Function must be written variables at period t and t+1, cannot be t-1, or t+2"
+   
+    "plusone must be same length as (len([*args])-2) "
+        
+    forward = np.zeros((T,T)) 
+    for i in range(T-1):
+        forward [i, i+1 ] = 1
+        
+    simpleJAC = []
+    
+    for i in range(len([*args])):
+        
+        Pd = grad((func),i)
+        
+        if plusone[i] == False:
+            J = np.identity(T)*Pd(*args)
+            simpleJAC.append(J)
+        else: 
+            J = forward*Pd(*args)
+            simpleJAC.append(J)
     
     
+    return simpleJAC
+
+args = (1.0,1.19)    
+p=[False,False]
+    
+c = simpleJAC(production,args,plusone=p,T=200)
+
+print(c)
+
+
+
+
+
+
+
+
+
 '''
 def my_sum(*integers):
     result = 0
