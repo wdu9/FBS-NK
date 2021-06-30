@@ -56,7 +56,7 @@ Theoretical Foundations of Buffer Stock Saving
 
 \hypertarget{abstract}{}
 \begin{abstract}
-  This paper develops a heterogenous agent new keynesian model featuring a buffer stock income process, both sticky wages and prices and heterogeneity in discount factors to generate high aggregate MPC.
+  This paper develops a heterogenous agent new keynesian model featuring a buffer stock income process,  sticky wages and sticky prices, and heterogeneity in discount factors to generate high aggregate MPC.
 \end{abstract}
 
 
@@ -64,7 +64,7 @@ Theoretical Foundations of Buffer Stock Saving
 \name{Contact: \href{mailto:wdu9@jhu.edu}{\texttt{wdu9@jhu.edu}}}
 \end{authorsinfo}
 
-\thanks{Thanks to }
+\thanks{Thanks to Chris Carroll }
 
 \titlepagefinish
 
@@ -78,12 +78,14 @@ Theoretical Foundations of Buffer Stock Saving
 \label{sec:intro}
 
 
-Write here for intro
 
+The representative agent's inadequacy in matching the empirical marginal propensity to consume has led to a burgeoning literature on heterogeneity. Models with heterogeneous agents have been able to generate the large MPCs consist with the data while uncovering new channels through which fiscal and monetary policy can influence macroeconomic aggregates. To generate a large aggregate MPC, literature on heterogenous agents have implemented a two asset structure where households invest into  liquid and illiquid assets. With this portfolio structure, the model can be calibrated to ensure a significant proportion of households hold high levels of  illiquid assets and low levels of liquid assets. These illiquid households are unable to smooth income shocks and will therefore allow the model to feature a large aggregate MPC. Such an asset structure, however, generally increases the computational complexity of solving the model significantly. In comparison,\cite{carroll2017distribution}  demonstrate that modest heterogeneity in discount factors can generate a large aggregate MPC without introducing an additional asset to the household's portfolio choice, providing a much more tractable method in generating a large aggregate MPC. This is not to say illiquid assets should never be added ot the portfolio decision, there are certainly instances where the study of a model featuring heterogeneity necessitates an liquid-illiquid asset structure \cite{bayer2019precautionary}. The emphasis is on the case when the feature of a large aggregate MPC is desired in the model, and there is no analysis on the effects of illiquidity on the broader economy, it is much more computationally feasible to simply allow modest heterogeneity in the discount factors. In this paper, we extend on \cite{carroll2017distribution} by studying a heterogenous agent new keynesian economy featuring heterogeneity in discount factors to generate a large aggregate MPC. The model presented in this paper is largely drawn from \cite{auclert2020micro}  with the exception that households face permanent and transitory income shocks such as those found in the buffer stock literature.  
 
 
 \hypertarget{The-Model}{}
 \section{The Model}
+
+The model integrates the household specification of \cite{carroll2017distribution}, featuring a buffer stock income process, with the rest of the economy following \cite{auclert2020micro}. 
 
 \subsection{Households}
 \label{subsec:Households} 
@@ -300,10 +302,10 @@ $$ \max_{n_{jgt}} W_{t} \left(\int_{0}^{1} N_{jgt}^{\frac{\epsilon_{w}-1}{\epsil
 
 The first order condition leads to the labor packer's demand for labor type $g$
 
-$$ N_{gt} = \left(\frac{W_{gt}}{W_{t}}\right)^{-\epsilon_{w}} N_{t} $$
+\begin{equation} N_{gt} = \left(\frac{W_{gt}}{W_{t}}\right)^{-\epsilon_{w}} N_{t} \end{equation}
 
 and wage index follows
-$$ W_{t} = \left(\int_{0}^{1} W_{gt}^{1-\epsilon_{w}}\,dg\right)^{\frac{1}{1-\epsilon_{w}}}$$ \\
+\begin{equation} W_{t} = \left(\int_{0}^{1} W_{gt}^{1-\epsilon_{w}}\,dg\right)^{\frac{1}{1-\epsilon_{w}}}\end{equation} \\
 
 
 
@@ -327,7 +329,7 @@ $$ W_{t} = \left(\int_{0}^{1} W_{gt}^{1-\epsilon_{w}}\,dg\right)^{\frac{1}{1-\ep
 The wage Phillips Curve follows from the first order condition
 
 
-$$ \pi_{t}^{w} =   \bar{\beta} \not D  \mathrm{E}_{t} \left[ \pi_{t+1}^{w}\right] + \frac{(1-\lambda_{w})}{\lambda_{w}} (1- \bar{\beta} \not D \lambda_{w}) (\mu^{w} - \mu_{t}^{w})$$ \\
+\begin{equation} \pi_{t}^{w} =   \bar{\beta} \not D  \mathrm{E}_{t} \left[ \pi_{t+1}^{w}\right] + \frac{(1-\lambda_{w})}{\lambda_{w}} (1- \bar{\beta} \not D \lambda_{w}) (\mu^{w} - \mu_{t}^{w})\end{equation} \\
 
 where $\mu^{w}$ is the optimal wage markup and the wage markup is defined as \\ 
 
@@ -366,7 +368,7 @@ The central bank follows the taylor rule:
 
 $$i_{t} = r^{*} +\phi_{\pi} \pi^{p}_{t} + \phi_{y} (Y_{t} - Y_{ss}) + \epsilon^{m}_{t}$$ \\
 
-where $\phi_{\pi}$ is the Taylor rule coefficient for inflation, $\phi_{y}$ is the Taylor rule coeffficient for output gap,  $r^{*}$ is the steady state interest rate, $Y_{ss}$ is the steady state level of output,  $\epsilon^{m}_{t} = \rho_{v} v_{t-1} +\varepsilon_{t}$ is a monetary policy shock. \\
+where $\phi_{\pi}$ is the Taylor rule coefficient for inflation, $\phi_{y}$ is the Taylor rule coeffficient for output gap,  $r^{*}$ is the steady state interest rate, $Y_{ss}$ is the steady state level of output,  $\epsilon^{m}_{t} = \rho_{v} v_{t-1} +\varepsilon_{t}$ are innovations to the taylor rule. \\
 
 \hypertarget{Equilibrium}{}
 \subsection{Equilibrium}
@@ -375,8 +377,6 @@ where $\phi_{\pi}$ is the Taylor rule coefficient for inflation, $\phi_{y}$ is t
 An equilibrium in this economy is a sequence of: \\
 
 - Policy Functions $\left( c_{it}(m) \right )_{t=0}^{\infty}$ \\
-
-- Value functions $ \left( V_{t}(m) \right)_{t=0}^{\infty}$\\
 
 - Prices $ \left(r_{t},  r^{a}_{t+1}, i_{t}, q^{s}_{t}, q^{b}_{t}, w_{t} , \pi^{p}_{t}, \pi^{w}_{t} \right) _{t=0}^{\infty}$\\
 
@@ -408,7 +408,7 @@ Markets clear:
 \hypertarget{Household's Problem}{}
 \subsection{Household's Problem}
 
-We solve the household's problem by iterating over the first order condition and applying the endogenous gridpoints method developed by Carroll (2006). The computational efficiency for obtaining the consumption policies is greatly improved by dividing the variables of the household's problem by the level of permanent income $\pLevBF_{it}$, leaving normalized market resources $m_{it}$ as the sole state variable ( See Appendix  A.1).  
+We solve the household's problem by iterating over the first order condition and applying the endogenous gridpoints method developed by \cite{carroll2006method}. The computational efficiency for obtaining the consumption policies is greatly improved by dividing the variables of the household's problem by the level of permanent income $\pLevBF_{it}$, leaving normalized market resources $m_{it}$ as the sole state variable ( See Appendix  A.1).  
 
 \hypertarget{General Equilibrium Steady State}{}
 \subsection{General Equilibrium Steady State}
@@ -419,7 +419,7 @@ To compute the steady state of the model, we begin with a guess of the mean of t
 \hypertarget{General Equilibrium Impulse Responses}{}
 \subsection{General Equilibrium Impulse Responses}
 
-To compute the impulse responses of the model, we follow the sequence space jacobian method of Auclert et al. (2021). In particular, we define the model as a system of equations in sequence space and then linearize the system around the steady state to solve for the impulse responses to a perfect foresight ``MIT shock'', that is, an unanticipated shock whose subsequent path is known to all agents.  In a linearized system to first order, aggregate certainty equivalence holds (Simon 1956, Theil 1957),  and therefore the perfect foresight responses to an unexpected shock are the same responses to the shocks of the full stochastic model. For further computational details, see Appendix A.2 . 
+To compute the impulse responses of the model, we follow the sequence space jacobian method of \cite{auclert2019using} . The method synthesizes ideas developed from  \cite {boppart2018exploiting} by defining the model in sequence space and from \cite{reiter2009solving} by linearizing around the steady state. In particular, we define the model as a system of equations in sequence space and then linearize the system around the steady state to solve for the impulse responses to a perfect foresight ``MIT shock'', that is, an unanticipated shock whose subsequent path is known to all agents.  In a linearized system to first order, aggregate certainty equivalence holds  \cite{ simon1956dynamic}  \cite{theil1957note}  and therefore the perfect foresight responses to an unexpected shock are the same responses to the shocks of the full stochastic model. For further computational details, see Appendix A.2 . \\ 
 
 
 
@@ -431,7 +431,7 @@ To compute the impulse responses of the model, we follow the sequence space jaco
 
 \input{\TableDir/Calibration.tex}
 
-Each period in our model represents one quarter of a year. Calibration of household parameters are presented in table 1 while calibration of economy parameters can be found in table 2. There are five discount factors distributed uniformly among agents in the economy with a mean of .9773 and spread of .0049. The discount factors were adjusted to target a 5 percent annual real interest rate. Similarly the disutility of labor is set to .883 to target a labor supply of 1.22 . The target of a 5 percent real interest rate and a labor supply level of 1.22 are completely arbitrary.  The coefficient of risk aversion is set to 2 and the frisch elasticity of labor supply is set to 1/2, in line with Chetty(2012).  The probability of death is set to .99375 to ensure the average working lifespanc of households is $ \frac{1}{(1-.99375)} = 160$ periods, or equivalently, 40 years.  The standard deviations of transitory and permanent shocks follows from CSTW(2017). The rest of household parameters being the unemployment rate, unemployment benefits and the tax rate are all arbitrarily chosen. With regards to the economy calibration, the calvo parameters for price stickiness is set to .85 and the wage stickiness is set .8 both of which lie in the conventional range. The steady price markup is set to 1.012 implying a 1.2 percent markup while the wage markup has been set 1.05 impying a 5 percent wage markup. The taylor rule coefficients have been initially set to zero implying a fixed nominal rate to provide transparency in understanding the impulse responses produced from the model and assess its accuracy without exterior pressures within the model. The taylor coefficients will be modified later when discussing results. The rest of the parameters are arbitrarily chosen. 
+Each period in our model represents one quarter of a year. Calibration of household parameters are presented in table 1 while calibration of economy parameters can be found in table 2. There are five discount factors distributed uniformly among agents in the economy with a mean of .9773 and spread of .0049. The discount factors were adjusted to target a 5 percent annual real interest rate. Similarly the disutility of labor is set to .883 to target a labor supply of 1.22 . The target of a 5 percent real interest rate and a labor supply level of 1.22 are completely arbitrary.  The coefficient of risk aversion is set to 2 and the frisch elasticity of labor supply is set to 1/2, in line with Chetty(2012).  The probability of death is set to .99375 to ensure the average working lifespanc of households is $ \frac{1}{(1-.99375)} = 160$ periods, or equivalently, 40 years.  The standard deviations of transitory and permanent shocks follows from \cite{  carroll2017distribution}. The rest of household parameters being the unemployment rate, unemployment benefits and the tax rate are all arbitrarily chosen. With regards to the economy calibration, the calvo parameters for price stickiness is set to .85 and the wage stickiness is set .8 both of which lie in the conventional range. The steady price markup is set to 1.012 implying a 1.2 percent markup while the wage markup has been set 1.05 impying a 5 percent wage markup. The taylor rule coefficients have been initially set to zero implying a fixed nominal rate to provide transparency in understanding the impulse responses produced from the model and assess its accuracy without exterior pressures within the model. The taylor coefficients will be modified later when discussing results. The rest of the parameters are arbitrarily chosen. \\
 
 
 
@@ -482,11 +482,19 @@ The impulse responses to the productivity shock can be found in figure 2. The pr
 \hypertarget{Issues and Extensions}{}
 \section{Issues and Extensions}
 
-The most prominent issue I have encountered thus far is determining whether the impulse responses are accurate in regards to the specification of the model. Producing the impulses responses is an exercise in linear algebra and the computation of jacobians. Because the jacobians were constructed without automatic differentiation, the accuracy of the impulse responses produced is uncertain as the smallest algebraic mistake may render them incorrect. Despite this uncertainty, the impulse responses of the model do mirror the responses produced from dynare under certain calibrations.  In particular, as long as prices are calibrated to be slightly stickier than wages, the impulse responses from a monetary policy shock behave in exactly the same manner as those produced from dynare. In addition, the impulse responses from a productivity shock seem essentially no different to those produced from dynare. The only issue is whenever wages are calibrated to be stickier than prices. When wages are stickier than prices,  to be specific, if the parameter for wage stickiness is set to .85 and the that of price stickiness to .8, the impulse responses to a monetary contraction are quantitatively the same as those seen in section 5 except they all invert across the x axis. That is, with the rise in the nominal rate, the results see a rise in consumption, output, labor, inflation and the real wage. This is much cause for concern regarding the accuracy of the code that produces the impulse responses as they do not survive under calibrations where wages are stickier than prices. It is possible, however, that these inverted responses may be accurate to the model due to the strong responsiveness of consumption present in the model. For instance, when the inverse frish elasticity is set to a large value (from v =2 to v=7) rendering labor to be significantly less sensitive to changes in wages, the impulse responses do not invert anymore ( consumption, output, labor, real wages all fall after a rise in the nominal rate). This is evidence that perhaps the consumption response is so strong that the slightest change in calibration could lead to large amplification effects that can invert the impulse response. My current hypothesis is that when prices are slightly more flexible than wages, the real wage may perhaps rise as since an increase in the nominal rate induces downward pressure on both prices and wages and if the fall in prices is larger than the fall in wages, the real wage may rise inducing a strong consumption response which amplifies and lead aggregate variables such as labor supply, and output to rise when the real rate rises. 
+\hypertarget{Issues }{}
+\subsection{Issues }
 
 
+The most prominent issue I have encountered thus far is determining whether the impulse responses are accurate in regards to the specification of the model. Producing the impulses responses is an exercise in linear algebra and vector calculus. Because the jacobians of the model were constructed without automatic differentiation, the accuracy of the impulse responses produced is uncertain as the smallest algebraic mistake may render them incorrect. Despite this uncertainty, the impulse responses of the model do mirror the responses produced from dynare under certain calibrations.  In particular, as long as prices are calibrated to be at least slightly stickier than wages, the impulse responses from a monetary policy shock behave in exactly the same manner as those produced from dynare. In addition, the impulse responses from a productivity shock seem essentially no different to those produced from dynare. Problems arise whenever wages are calibrated to be stickier than prices. When wages are stickier than prices,  for instance if the parameter for wage stickiness is set to .85 and the that of price stickiness to .8, then the impulse responses to a monetary contraction invert across the x axis. That is, with the rise in the nominal rate, the results see a rise in consumption, output, labor, inflation and the real wage. More interestingly, the magnitudes of the impulse responses are exactly the same as those seen in figure 1 except that they are in the wrong direction. This is much cause for concern regarding the accuracy of the code that produces the impulse responses as they do not survive under calibrations where wages are stickier than prices. It is possible, however, that these inverted responses may be accurate to the model due to the strong responsiveness of consumption present in the model. For instance, when the inverse frish elasticity is set to a large value (from v =2 to v=7), rendering labor to be significantly less sensitive to changes in wages, the impulse responses do not invert anymore ( consumption, output, labor, real wages all fall after a rise in the nominal rate). This is evidence that perhaps the consumption response is so strong that the slightest change in calibration could lead to large amplification effects that can invert the impulse response. My current hypothesis is that when prices are slightly more flexible than wages, the real wage may perhaps rise as  an increase in the nominal rate induces downward pressure on both prices and wages and if the fall in prices is larger than the fall in wages, the real wage may rise inducing a strong consumption response which amplifies and lead aggregate variables such as labor supply, and output to rise when the real rate rises. To test this hypothesis, I plan on recomputing the consumption jacobians , calibrating households to have a smaller aggregate MPC to attenuate consumption response to a rise in wages and labor.
+
+To combat and ensure the impulse responses are indeed accurate to the model, I am currently writing code that can automatically compute the jacobians of the model, reducing the likelihood of algebraic mistakes. In addition, I plan on reframing the system that defines the model to include the asset market equilibrium equation and exclude the goods market clearing equation. In theory, it is only necessary to include one of the clearing equations in the system to solve the model and the results of the model should not depend which equation is chosen. If my impulse responses do not differ under the goods market equation and the asset market clearing condition, then I can be confident of the accuracy of the impulse responses. \\
 
 
+\hypertarget{Extensions }{}
+\subsection{Extensions }
+
+Once the impulse responses have been accurately solved for, it would be interesting to augment the model to allow for uncertainty shocks. Uncertainty shocks can be defined as a shock to the variance of either permanent or transitory income. In addition, comparing the impulse responses to an economy with heterogeneity in discount factors to an economy without such heterogeneity would solidify the argument that a modest amount of heterogeneity can generate a large aggregate MPC. 
 
 
 
@@ -597,7 +605,7 @@ $$c_{it}^{-\rho} -  \beta_{i} \not D \mathrm{E}_{t}\left[ (1+r^{a}_{t+1})  \psi_
 \hypertarget{Model as System}{}
 \subsection{Model as System}
 
-The model can be defined by the system of equations below. The solution of the model must see this system be equal to a vector of zeros for periods $t =0, 1, 2, 3, ...$. The system is defined over the sequence space of all endogenous variables $\mathbf{U}$  and exogenous variables $\mathbf{Z}$ of the model.
+The model can be defined by the system of equations below. The solution of the model must see this system be equal to a vector of zeros for periods $t =0, 1, 2, 3, ...$. The system is defined over the sequence space of all endogenous variables $\mathbf{U}$  and exogenous variables $\mathbf{Z}$ of the model. \\
 
 $$
 H_{t}(\mathbf{U},\mathbf{Z})= \begin{pmatrix} 
@@ -605,7 +613,7 @@ H_{t}(\mathbf{U},\mathbf{Z})= \begin{pmatrix}
 B_{t-1} - q^{b}_{t}B_{t} + u\mho + G - \tau w_{t} N_{t} \\ \\  
 i_{t} - r^{*} - \phi \pi^{p}_{t} -\phi_{y}(Y_{t}-Y_{ss}) - v_{t} \\ \\
 \pi_{t}^{p} -\frac{\pi^{p}_{t+1}}{1+r^{*}} + \lambda(\mu_{t}^{p} -\mu_{p})  \\ \\
- \pi_{t}^{w} -\not D \pi_{t+1}^{w} -(\frac{1-\lambda_{w}}{\lambda_{w}}) (1- \not D \lambda_{w}) (\mu^{w} -\mu_{t}^{w}) \\ \\
+ \pi_{t}^{w} -\bar{\beta} \not D \pi_{t+1}^{w} -(\frac{1- \lambda_{w}}{\lambda_{w}}) (1- \bar{\beta}\not D \lambda_{w}) (\mu^{w} -\mu_{t}^{w}) \\ \\
     1+r_{t} - \frac{1 + i_{t}}{1+ \pi^{p}_{t+1}}\\ \\
  1+r_{t+1}^{a} - \frac{q_{t+1}^{s} +D_{t+1}}{q_{t}^{s}} \\ \\
  r_{t} - r_{t+1}^{a} \\ \\
@@ -631,7 +639,7 @@ $c_{it}(m_{it})$ is the steady state normalized consumption policy for household
  
  $\mathbf{Z} = \left(Z_{t} ,v_{t}\right)_{t=0}^{t=T}$ \\
  
- \textbf{Note} the asset market clearing condition is not included in the system as the goods market clearing condition holds if and only if the asset market clearing condition holds. On the same note, the government budget constraint nor the equation for the stock price is included in the reduced system as they both bonds and its stock price appears in the asset clearing equation.  \\ \\
+ \textbf{Note} the asset market clearing condition   $\mathcal{A}_{t}(\{r_{s}^{a} ,w_{s}, N_{s}\}_{s=0}^{s=T}) =  q^{b}_{t}B_{t} + q^{s}$ is not included in the system as the goods market clearing condition holds if and only if the asset market clearing condition holds. On the same note, the government budget constraint nor the equation for the stock price is included in the reduced system as both appear in the asset clearing equation.  \\ \\
  
  
  
@@ -640,9 +648,9 @@ $c_{it}(m_{it})$ is the steady state normalized consumption policy for household
  
 The previous system of a little more than a dozen endogenous variables can be reduced to a system of three endogenous variables. \\ 
  
-Endogenous Variables are $ r_{t} , w_{t} ,N_{t}$ \\ 
+Endogenous Variables are $ \left( r_{t} , w_{t} ,N_{t}\right)_{t=0}^{T}$ \\ 
  
-Exogenous Variables are $ Z_{t}, v_{t}$ \\ 
+Exogenous Variables are $ \left(Z_{t}, v_{t}\right)_{t=0}^{T}$ \\ 
 
 The reduced system: \\ \\
 
@@ -772,7 +780,7 @@ $$ H_{\mathbf{U}, t}= \begin{pmatrix}
 \hypertarget{Obtaining All Other Responses}{}
 \subsubsection{Obtaining All Other Responses} 
 
-To obtain all other responses given the endogenous response $\mathbf{dU}$, we compute the jacobians of the endogenous variable with respect to the relevant endogenous variables that have already been solved for.  For example, to compute the response of consumption to some exogenous shock $d\mathbf{Z}$, we sum  the jacobians of consumption with respect to the real interest rate, the wage and labor supply 
+To obtain all other responses given the endogenous response $\mathbf{dU}$, we compute the jacobians of the endogenous variable with respect to the relevant endogenous variables that have already been solved for.  For example, to compute the response of consumption to some exogenous shock $d\mathbf{Z}$, we sum  the jacobians of consumption with respect to the real interest rate, wage and labor supply 
 
 $$ d\mathbf{C} = \mathcal{J}^{\mathcal{C} , r} d\mathbf{r} +\mathcal{J}^{\mathcal{C} , w} d\mathbf{w} +\mathcal{J}^{\mathcal{C} , N} d\mathbf{N} $$\\
  
@@ -799,43 +807,35 @@ $$d\mathbf{w} =  ( dw_{1}, dw_{2}, . . . , dw_{T})' $$
 
 An employed household's transitory income is \\
 
-$$ \theta_{it}(1-\tau) \int_{0}^{1} \frac{W_{gt}}{P_{t}}n_{igt}\,dg$$
+$$ \theta_{it}(1-\tau) \int_{0}^{1} \frac{W_{gt}}{P_{t}}n_{igt}\,dg$$\\
 
-where $W_{gt}$ denotes the nominal wage for labor type $g$ and $P_{t}$ the price of the final good. \\ \\
+where $W_{gt}$ denotes the nominal wage for labor type $g$ and $P_{t}$ the price of the final good. \\ 
 
-Now noitce
+Now notice since $n_{igt} = \frac{N_{gt}}{1-\mho}$ must hold in equilibrium,
 
 $$ \theta_{it}(1-\tau) \int_{0}^{1} \frac{W_{gt}}{P_{t}}\frac{N_{gt}}{1-\mho}\,dg$$
 
+Then substituting in the demand for labor type $g$, $ N_{gt} = \left(\frac{W_{gt}}{W_{t}}\right)^{-\epsilon_{w}} N_{t} $
+
 $$ \theta_{it}(1-\tau) \int_{0}^{1} \frac{W_{gt}}{P_{t}}\frac{\left(\frac{W_{gt}}{W_{t}}\right)^{-\epsilon_{w}} N_{t}}{1-\mho}\,dg$$
 
-$$ \theta_{it}(1-\tau) \frac{N_{t}}{(1-\mho) W_{t}^{-\epsilon_{w}}P_{t}} \int_{0}^{1}  \left(W_{gt}\right)^{1-\epsilon_{w}} \,dg $$
+and imposing the definition of the wage index , $W_{t} = \left(\int_{0}^{1} W_{gt}^{1-\epsilon_{w}}\,dg\right)^{\frac{1}{1-\epsilon_{w}}}$
 
 $$\theta_{it}(1-\tau) \frac{N_{t}}{(1-\mho) W_{t}^{-\epsilon_{w}}P_{t}} W_{t}^{1-\epsilon_{w}} $$
 
 $$ \theta_{it}(1-\tau) \frac{W_{t}N_{t}}{(1-\mho)P_{t} }$$\\
 
-Which leads to the expression in the paper \\
+definiting the real wage $w_{t} = \frac{W_{t}}{P_{t}}$ leads to the expression in the paper \\
 
 $$ \theta_{it}(1-\tau) \frac{w_{t}N_{t}}{(1-\mho)}$$
 
-\bibliography{\econtexRoot/BufferStockTheory,economics}
 
-Auclert et al 2020
 
-Auclert et al 2021
 
-Carroll 2006
+%\bibliography{\econtexRoot/BufferStockTheory,economics}
 
-CSTW(2017)
+\bibliography{\econtexRoot/REF}
 
- Chetty(2012)
-
-Reiter 2009
-
-Simon (1956)
-
-Theil (1957)
 
 
 
