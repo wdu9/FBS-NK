@@ -44,6 +44,7 @@ from scipy.io import loadmat, savemat
 from HARK.utilities import plot_funcs_der, plot_funcs
 
 
+# My Own file
 from JAC_Utility import DiscreteDistribution2, combine_indep_dstns2
 
 
@@ -193,7 +194,7 @@ class FBSNK_agent(IndShockConsumerType):
         
         TranShkDstnW     = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
         TranShkDstnW.pmf  = np.insert(TranShkDstnW.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)
-        TranShkDstnW.X  = np.insert(TranShkDstnW.X*(((1.0-self.tax_rate)*self.N*(self.wage + self.dx))/(1-self.UnempPrb)),0,self.IncUnemp)
+        TranShkDstnW.X  = np.insert(TranShkDstnW.X*(((1.0-self.tax_rate)*self.N*(self.wage + self.dx))/(1 - self.UnempPrb)),0,self.IncUnemp)
         PermShkDstnW     = MeanOneLogNormal(self.PermShkStd[0],123).approx(self.PermShkCount)
         self.IncShkDstnW = [combine_indep_dstns2(PermShkDstnW,TranShkDstnW)]
         self.TranShkDstnW = [TranShkDstnW]
@@ -211,16 +212,40 @@ class FBSNK_agent(IndShockConsumerType):
         self.PermShkDstnN = [PermShkDstnN]
         self.add_to_time_vary('IncShkDstnN')
         
+        TranShkDstnt    = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
+        TranShkDstnt.pmf  = np.insert(TranShkDstnt.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)
+        TranShkDstnt.X  = np.insert(TranShkDstnt.X*(((1.0- (self.tax_rate +self.dx)) *self.N*self.wage)/(1-self.UnempPrb)),0,self.IncUnemp)
+        PermShkDstnt     = MeanOneLogNormal(self.PermShkStd[0],123).approx(self.PermShkCount)
+        self.IncShkDstnt= [combine_indep_dstns2(PermShkDstnt,TranShkDstnt)]
+        self.TranShkDstnt = [TranShkDstnt]
+        self.PermShkDstnt = [PermShkDstnt]
+        self.add_to_time_vary('IncShkDstnt')
+        
         
              
-        TranShkDstnT     = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
+        TranShkDstnT     = MeanOneLogNormal(self.TranShkStd[0] +self.dx ,123).approx(self.TranShkCount)
         TranShkDstnT.pmf  = np.insert(TranShkDstnT.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)
-        TranShkDstnT.X  = np.insert(TranShkDstnT.X*(((1.0- (self.tax_rate +self.dx)) *self.N*self.wage)/(1-self.UnempPrb)),0,self.IncUnemp)
+        TranShkDstnT.X  = np.insert(TranShkDstnT.X*(((1.0- self.tax_rate) *self.N*self.wage)/(1-self.UnempPrb)),0,self.IncUnemp)
         PermShkDstnT     = MeanOneLogNormal(self.PermShkStd[0],123).approx(self.PermShkCount)
         self.IncShkDstnT= [combine_indep_dstns2(PermShkDstnT,TranShkDstnT)]
         self.TranShkDstnT = [TranShkDstnT]
         self.PermShkDstnT = [PermShkDstnT]
         self.add_to_time_vary('IncShkDstnT')
+    
+    
+        #PermShkDstnP = Lognormal(np.log(.9) - ((self.PermShkStd[0])**2)/2 , self.PermShkStd[0] , 123).approx(self.PermShkCount)
+        
+        
+        TranShkDstnP     = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
+        TranShkDstnP.pmf  = np.insert(TranShkDstnP.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)
+        TranShkDstnP.X  = np.insert(TranShkDstnP.X*(((1.0- self.tax_rate) *self.N*self.wage)/(1-self.UnempPrb)),0,self.IncUnemp)
+        PermShkDstnP     = MeanOneLogNormal(self.PermShkStd[0] + self.dx ,123).approx(self.PermShkCount)
+        self.IncShkDstnP= [combine_indep_dstns2(PermShkDstnP,TranShkDstnP)]
+        self.TranShkDstnP = [TranShkDstnP]
+        self.PermShkDstnP = [PermShkDstnP]
+        self.add_to_time_vary('IncShkDstnP')
+    
+        
     
     
         
@@ -237,16 +262,16 @@ FBSDict={
 
     # Parameters that specify the income distribution over the lifecycle
    
-    "PermShkStd" :  [(0.01*4/11)**0.5],    # Standard deviation of log permanent shocks to income
+    "PermShkStd" :  [.03], #[(0.01*4/11)**0.5],    # Standard deviation of log permanent shocks to income
     "PermShkCount" : 5,                    # Number of points in discrete approximation to permanent income shocks
     "TranShkStd" : [.2],        # Standard deviation of log transitory shocks to income
     "TranShkCount" : 5,                    # Number of points in discrete approximation to transitory income shocks
-    "UnempPrb" : 0.05, #.08                     # Probability of unemployment while working
-    "IncUnemp" :  0.0954, #0.29535573122529635,                      # Unemployment benefits replacement rate
+    "UnempPrb" : 0.06, #.08                     # Probability of unemployment while working
+    "IncUnemp" :  .21, #0.0954, #0.29535573122529635,                      # Unemployment benefits replacement rate
     "UnempPrbRet" : 0.0005,                # Probability of "unemployment" while retired
     "IncUnempRet" : 0.0,                   # "Unemployment" benefits when retired
     "T_retire" : 0,                        # Period of retirement (0 --> no retirement)
-    "tax_rate" : 0.16563445378151262,                      # Flat income tax rate (legacy parameter, will be removed in future)
+    "tax_rate" : .3, #0.16563445378151262,                      # Flat income tax rate (legacy parameter, will be removed in future)
 
     # Parameters for constructing the "assets above minimum" grid
     "aXtraMin" : 0.001,                    # Minimum end-of-period "assets above minimum" value
@@ -257,14 +282,14 @@ FBSDict={
 
     # A few other parameters
     "BoroCnstArt" : 0.0,                   # Artificial borrowing constraint; imposed minimum level of end-of period assets
-    "vFuncBool" : True,                    # Whether to calculate the value function during solution
+    "vFuncBool" : False,                    # Whether to calculate the value function during solution
     "CubicBool" : False,                   # Preference shocks currently only compatible with linear cFunc
     "T_cycle" : 1,                         # Number of periods in the cycle for this agent type
 
     # Parameters only used in simulation
     "AgentCount" : 50000,                 # Number of agents of this type
     "T_sim" : 200,                         # Number of periods to simulate
-    "aNrmInitMean" : np.log(1.75)-(.5**2)/2,# Mean of log initial assets
+    "aNrmInitMean" : np.log(1.6)-(.5**2)/2,# Mean of log initial assets
     "aNrmInitStd"  : .5,                   # Standard deviation of log initial assets
     "pLvlInitMean" : 0.0,                  # Mean of log initial permanent income
     "pLvlInitStd"  : 0.0,                  # Standard deviation of log initial permanent income
@@ -278,7 +303,9 @@ FBSDict={
      "jac"        : False,
      "jacW"       : False, 
      "jacN"       : False,
+     "jact"       : False,
      "jacT"       : False,
+     "jacPerm"    : False,
      "Ghost"      : False, 
      
      
@@ -287,8 +314,8 @@ FBSDict={
      "SSPmu" :  1.012,                       # Price Markup from sequence space jacobian appendix
      "calvo price stickiness":  .926,      # Auclert et al 2020
      "calvo wage stickiness": .899,        # Auclert et al 2020
-     "B" : .5,                               # Net Bond Supply
-     "G" : .19,#.18
+     "B" : .2,                               # Net Bond Supply
+     "G" : .4,
      "DisULabor": 0.8823685356415617,
      "InvFrisch": 2 ,
      "s" : 1
@@ -299,13 +326,12 @@ FBSDict={
 ###############################################################################
 
 
-G=.19
-t=.16806722689075632
-t=0.16563445378151262
-Inc = 0.09535573122529638
-mho=.05
+G=.4
+t=.3 #0.16563445378151262
+Inc = .21
+mho=.06
 r = (1.05)**.25 - 1 
-B=.5
+B=.2 #.65
 
 w = (1/1.012)
 N = (Inc*mho + G  + (1 - (1/(1+r)) ) *B) / (w*t) 
@@ -320,7 +346,7 @@ print(A)
 
 
 '''
-N= 1 + G
+N = 1 + G
 
 tnew = (Inc*mho + G)/(N*w)
 print(tnew)
@@ -345,6 +371,7 @@ ss_agent = FBSNK_agent(**FBSDict)
 ss_agent.cycles = 0
 ss_agent.dx = 0
 ss_agent.T_sim = 1200
+ss_agent.aNrmInitMean = np.log(A)-(.5**2)/2
 #ss_agent.track_vars = ['TranShk']
 
 target = A
@@ -352,7 +379,7 @@ target = A
 
 NumAgents = 300000
 
-tolerance = .001
+tolerance = .01
 
 completed_loops=0
 
@@ -361,11 +388,11 @@ go = True
 num_consumer_types = 5     # number of types 
 
 
-center =.9773 #98 
-
+center = .9844259169623462 #.9773 #98 
+#0.9778688120928881 for one agent
 while go:
     
-    discFacDispersion = 0.0049
+    discFacDispersion = 0.005
     bottomDiscFac     = center - discFacDispersion
     topDiscFac        = center + discFacDispersion
     
@@ -433,13 +460,14 @@ while go:
     
     disu_act = AMV/((ss_agent.N/(1-ss_agent.UnempPrb))**ss_agent.InvFrisch)
     
+    dif = AggA - target
     
     if AggA - target > 0 :
         
-       center = center - .0001
+       center = center - dif/200
         
     elif AggA - target < 0: 
-        center = center + .0001
+        center = center- dif/200
         
     else:
         break
@@ -463,7 +491,11 @@ while go:
 print("Done Computing Steady State")
 
 
-
+'''
+for i in range(len(DiscFac_list)):
+    
+    DiscFac_list[i]
+'''  
 
 ###############################################################################
 ###############################################################################
@@ -499,27 +531,27 @@ aNrm = np.concatenate(list_aNrm)
 
 
 
-x = np.linspace(0, 1.4, 1000, endpoint=True)
+x = np.linspace(0, 5, 1000, endpoint=True)
 
 y=[]
 for i in range(num_consumer_types):
     y.append(funcs[i](x))
 
 
-h = np.histogram(mNrm, bins=np.linspace(0,1.4,num=1000))
+h = np.histogram(mNrm, bins=np.linspace(0,5,num=1000))
 
 fig = plt.figure()
 ax1 = fig.add_subplot(111)
 plt.xlabel('Cash on Hand')
-plt.xlim(0,1.4)
+plt.xlim(0,5)
 ax1.plot(x, y[0], 'k' )
 
 ax1.plot(x, y[1], 'm' )
 ax1.plot(x, y[2], 'darkorange' )
 ax1.plot(x, y[3], 'forestgreen' )
 ax1.plot(x, y[4], 'deepskyblue' )
-ax1.plot(x, y[5], 'r' )
-ax1.plot(x, y[6], 'darkslategrey' )
+#ax1.plot(x, y[5], 'r' )
+#ax1.plot(x, y[6], 'darkslategrey' )
 
 
 ax1.set_ylim((0,.23))
@@ -534,6 +566,7 @@ ax2.set_ylabel('Number of Households', color='k')
 #plt.savefig("Presentation.png", dpi=150)
 
 '''
+
 
 ################################################################################
 ################################################################################
@@ -581,16 +614,32 @@ class FBSNK_JAC(FBSNK_agent):
         
         
              
-        TranShkDstnT     = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
+        TranShkDstnt    = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
+        TranShkDstnt.pmf  = np.insert(TranShkDstnt.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)
+        TranShkDstnt.X  = np.insert(TranShkDstnt.X*(((1.0- (self.tax_rate +self.dx)) *self.N*self.wage)/(1-self.UnempPrb)),0,self.IncUnemp)
+        PermShkDstnt     = MeanOneLogNormal(self.PermShkStd[0],123).approx(self.PermShkCount)
+        self.IncShkDstnt= [combine_indep_dstns2(PermShkDstnt,TranShkDstnt)]
+        self.TranShkDstnt = [TranShkDstnt]
+        self.PermShkDstnt = [PermShkDstnt]
+        self.add_to_time_vary('IncShkDstnt')
+        
+        TranShkDstnP     = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
+        TranShkDstnP.pmf  = np.insert(TranShkDstnP.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)
+        TranShkDstnP.X  = np.insert(TranShkDstnP.X*(((1.0- self.tax_rate) *self.N*self.wage)/(1-self.UnempPrb)),0,self.IncUnemp)
+        PermShkDstnP     = MeanOneLogNormal(self.PermShkStd[0] + self.dx ,123).approx(self.PermShkCount)
+        self.IncShkDstnP= [combine_indep_dstns2(PermShkDstnP,TranShkDstnP)]
+        self.TranShkDstnP = [TranShkDstnP]
+        self.PermShkDstnP = [PermShkDstnP]
+        self.add_to_time_vary('IncShkDstnP')
+        
+        TranShkDstnT     = MeanOneLogNormal(self.TranShkStd[0] + self.dx,123).approx(self.TranShkCount)
         TranShkDstnT.pmf  = np.insert(TranShkDstnT.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)
-        TranShkDstnT.X  = np.insert(TranShkDstnT.X*(((1.0- (self.tax_rate +self.dx)) *self.N*self.wage)/(1-self.UnempPrb)),0,self.IncUnemp)
+        TranShkDstnT.X  = np.insert(TranShkDstnT.X*(((1.0- self.tax_rate) *self.N*self.wage)/(1-self.UnempPrb)),0,self.IncUnemp)
         PermShkDstnT     = MeanOneLogNormal(self.PermShkStd[0],123).approx(self.PermShkCount)
         self.IncShkDstnT= [combine_indep_dstns2(PermShkDstnT,TranShkDstnT)]
         self.TranShkDstnT = [TranShkDstnT]
         self.PermShkDstnT = [PermShkDstnT]
         self.add_to_time_vary('IncShkDstnT')
-        
-        
 
     
   
@@ -657,20 +706,18 @@ class FBSNK_JAC(FBSNK_agent):
         bNrmNow = ReffNow*aNrmPrev         # Bank balances before labor income
         mNrmNow = bNrmNow + self.shocks['TranShk']  # Market resources after income
         
-        
-        if self.jac == True  or self.jacW == True or self.Ghost==True or self.jacN == True or self.jacT == True:
-        
-            if self.t_sim == 0:
                 
-                for i in range(num_consumer_types):
-                    if  self.DiscFac == consumers_ss[i].DiscFac:
+        if self.t_sim == 0:
+            
+            for i in range(num_consumer_types):
+                if  self.DiscFac == consumers_ss[i].DiscFac:
 
-                        mNrmNow = consumers_ss[i].state_now['mNrm']
-                        pLvlNow = consumers_ss[i].state_now['pLvl']
-                        
+                    mNrmNow = consumers_ss[i].state_now['mNrm']
+                    pLvlNow = consumers_ss[i].state_now['pLvl']
+                    
 
         return pLvlNow, PlvlAggNow, bNrmNow, mNrmNow, None
-        
+    
 
 
 ###############################################################################
@@ -761,8 +808,7 @@ for j in range(ghost_agent.T_sim):
         
         emp = listH_MUg[n][j,:] != ss_agent.IncUnemp
         
-        litMU_g.append( listH_MUg[n][j,:][emp] * listH_g[n][1][j,:][emp] * ( listH_g[n][0][j,:][emp] * listH_g[n][1][j,:][emp] )**(-ss_agent.CRRA) )
-    
+        litMU_g.append( listH_MUg[n][j,:][emp] * listH_g[n][1][j,:][emp] * ( listH_g[n][0][j,:][emp] * listH_g[n][1][j,:][emp] )**( -ss_agent.CRRA ) )
     
     
     MU = np.array(np.concatenate(litMU_g))
@@ -819,7 +865,10 @@ jac_agent.PerfMITShk = True
 jac_agent.jac = False
 jac_agent.jacW = True
 jac_agent.jacN = False
+jac_agent.jact = False
 jac_agent.jacT = False
+jac_agent.jacPerm = False
+
 
 
 jac_agent.IncShkDstn = params['T_cycle']*jac_agent.IncShkDstn
@@ -832,9 +881,11 @@ if jac_agent.jac == True:
     jac_agent.del_from_time_inv('Rfree')
     jac_agent.add_to_time_vary('Rfree')
     jac_agent.IncShkDstn = params['T_cycle']*ss_agent.IncShkDstn
+    
+    
 
-if jac_agent.jacW == True or jac_agent.jacN == True or jac_agent.jacT ==True:
-    jac_agent.dx = 2.2 #.8
+if jac_agent.jacW == True or jac_agent.jacN == True or jac_agent.jact ==True or jac_agent.jacT ==True or jac_agent.jacPerm == True:
+    jac_agent.dx = 2 #.8
     jac_agent.Rfree = ss_agent.Rfree
     jac_agent.update_income_process()
 
@@ -856,7 +907,7 @@ for i in range(num_consumer_types):
 ###############################################################################
 
 
-testSet= [20,50,100]
+testSet= [0,20,50]
 
 CHist = []
 AHist = []
@@ -864,10 +915,10 @@ MHist = []
 MUHist = []
 pLvlHist =[]
 
-for i in range(params['T_cycle']):
+#for i in range(params['T_cycle']):
     
     
-#for i in testSet:
+for i in testSet:
         
         listH_C = []
         listH_A = []
@@ -892,8 +943,17 @@ for i in range(params['T_cycle']):
             if jac_agent.jacN == True:
                 consumers[k].IncShkDstn = i*ss_agent.IncShkDstn + jac_agent.IncShkDstnN + (params['T_cycle'] - i - 1)* ss_agent.IncShkDstn
                 
+            if jac_agent.jact == True:
+                consumers[k].IncShkDstn = i*ss_agent.IncShkDstn + jac_agent.IncShkDstnt + (params['T_cycle'] - i - 1)* ss_agent.IncShkDstn
+                
             if jac_agent.jacT == True:
                 consumers[k].IncShkDstn = i*ss_agent.IncShkDstn + jac_agent.IncShkDstnT + (params['T_cycle'] - i - 1)* ss_agent.IncShkDstn
+                
+            if jac_agent.jacPerm == True:
+                #consumers[k].PermShkStd = (i)*[ss_agent.PermShkStd[0]] + [ss_agent.PermShkStd[0] + jac_agent.dx] + (params['T_cycle'] - i - 1)*[ss_agent.PermShkStd[0]]
+
+                consumers[k].IncShkDstn = i*ss_agent.IncShkDstn + jac_agent.IncShkDstnP + (params['T_cycle'] - i - 1)* ss_agent.IncShkDstn
+
 
 
             consumers[k].solve()
@@ -920,7 +980,7 @@ for i in range(params['T_cycle']):
                       norm1 =norm
                         
                       
-                elif jac_agent.jacT == True:
+                elif jac_agent.jact == True:
                     
                     if j == consumers[k].s + 1  :
                         norm1 =  ( ( 1-ss_agent.UnempPrb ) / (  (ss_agent.wage)  * (ss_agent.N ) * (1 -  ( ss_agent.tax_rate + jac_agent.dx ) ) ) )
@@ -996,20 +1056,37 @@ for i in range(params['T_cycle']):
 ###############################################################################
 ###############################################################################
 
-
-CJACW = []
-AJACW = []
-MUJACW=[]
-for i in range(params['T_cycle']):
-    CJACW.append((CHist[i]-C_dx0)/jac_agent.dx)
-    AJACW.append((AHist[i]-A_dx0)/jac_agent.dx)
-    MUJACW.append((MUHist[i]-MU_dx0)/jac_agent.dx)
+'''
+if jac_agent.jacW ==True:
     
-savemat('CJACW.mat', mdict={'CJACW' : CJACW})
-savemat('AJACW.mat', mdict={'AJACW' : AJACW})
-savemat('MUJACW.mat', mdict={'MUJACW' : MUJACW})
+    CJACW = []
+    AJACW = []
+    MUJACW=[]
+    for i in range(params['T_cycle']):
+        CJACW.append((CHist[i]-C_dx0)/jac_agent.dx)
+        AJACW.append((AHist[i]-A_dx0)/jac_agent.dx)
+        MUJACW.append((MUHist[i]-MU_dx0)/jac_agent.dx)
+    
+    savemat('CJACW.mat', mdict={'CJACW' : CJACW})
+    savemat('AJACW.mat', mdict={'AJACW' : AJACW})
+    savemat('MUJACW.mat', mdict={'MUJACW' : MUJACW})
 
+elif jac_agent.jacN == True:
+    
 
+    CJACN = []
+    AJACN = []
+    MUJACN=[]
+    for i in range(params['T_cycle']):
+        CJACN.append((CHist[i]-C_dx0)/jac_agent.dx)
+        AJACN.append((AHist[i]-A_dx0)/jac_agent.dx)
+        MUJACN.append((MUHist[i]-MU_dx0)/jac_agent.dx)
+        
+    savemat('CJACNr.mat', mdict={'CJACWNr' : CJACN})
+    savemat('AJACNr.mat', mdict={'AJACWNr' : AJACN})
+    savemat('MUJACNr.mat', mdict={'MUJACNr' : MUJACN})
+
+'''
 
 plt.plot(MU_dx0)
 plt.plot((MUHist[0][1:]), label = '0')
@@ -1024,6 +1101,7 @@ plt.plot((MUHist[0]- MU_dx0)/(jac_agent.dx), label = '0')
 #plt.plot((MUHist[3]- MU_dx0)/(jac_agent.dx), label = '100')
 plt.plot((MUHist[1]- MU_dx0)/(jac_agent.dx), label = '20')
 plt.plot((MUHist[2] - MU_dx0)/(jac_agent.dx), label = '50')
+plt.plot(np.zeros(jac_agent.T_sim), 'k')
 plt.legend()
 plt.show()
 
@@ -1031,7 +1109,6 @@ plt.show()
 plt.plot(C_dx0 , label = 'Steady State')
 plt.plot(CHist[0], label = '0')
 plt.plot(CHist[1], label = '20')
-plt.plot(CHist[3], label = '100')
 plt.plot(CHist[2], label = '50')
 plt.title("Aggregate Consumption")
 plt.ylabel("Aggregate Consumption")
@@ -1050,13 +1127,12 @@ plt.plot((CHist[0]- C_dx0)/(jac_agent.dx), label = '0')
 plt.plot((CHist[1]- C_dx0)/(jac_agent.dx), label = '20')
 plt.plot((CHist[2] - C_dx0)/(jac_agent.dx), label = '50')
 plt.plot(np.zeros(jac_agent.T_sim), 'k')
+plt.ylim([-.3,.3])
 plt.ylabel("dC / dw")
-
 plt.xlabel("Period")
 plt.title("Consumption Jacobians")
 plt.legend()
-plt.ylim([-.3,.4])
-#plt.savefig("ConsumptionJacobianWage.jpg", dpi=500)
+#plt.savefig("ConsumptionJacobianPerm.jpg", dpi=500)
 plt.show()
 
 
@@ -1076,7 +1152,7 @@ plt.show()
 
 
 plt.plot(MHist[1] - M_dx0, label = '20')
-plt.plot(MHist[3] - M_dx0, label = '100')
+plt.plot(MHist[0] - M_dx0, label = '0')
 plt.plot(MHist[2] - M_dx0, label = '50')
 plt.plot(np.zeros(jac_agent.T_sim), 'k')
 plt.xlabel("Period")
@@ -1097,7 +1173,6 @@ plt.plot(AHist[0], label = '0')
 plt.xlabel("Period")
 plt.ylabel("Aggregate Assets")
 plt.title("Aggregate Assets")
-plt.ylim([0,4])
 plt.legend()
 #plt.savefig("Aggregate Assets.jpg", dpi=500)
 plt.show()
@@ -1108,13 +1183,14 @@ plt.show()
 plt.plot((AHist[0]- A_dx0)/(jac_agent.dx), label = '0')
 plt.plot((AHist[1]- A_dx0)/(jac_agent.dx), label = '20')
 plt.plot((AHist[2] - A_dx0)/(jac_agent.dx), label = '50')
-plt.plot((AHist[3]- A_dx0)/(jac_agent.dx), label = '100')
+#plt.plot((AHist[3]- A_dx0)/(jac_agent.dx), label = '100')
+plt.ylim([-.3,5])
 plt.plot(np.zeros(jac_agent.T_sim), 'k')
 plt.xlabel("Period")
 plt.ylabel("dA / dw")
 plt.title("Asset Jacobians")
 plt.legend()
-#plt.savefig("Wage_AssetJacobian.jpg", dpi=500)
+#plt.savefig("AssetJacobianPerm.jpg", dpi=500)
 plt.show()
 
 
