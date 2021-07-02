@@ -47,8 +47,8 @@ D_ss = (N_ss -1)*w_ss
 q_ss = N_ss * ( 1 - w_ss ) / rstar
 
 #Phillips Curves parameters
-lambda_W = .75 #probability a firm won't be able to change wage
-lambda_P = .75  #probability a firm won't be able to change price
+lambda_W = .8 #probability a firm won't be able to change wage
+lambda_P = .85  #probability a firm won't be able to change price
 
 
 Lambda = ( (1 - lambda_P) / lambda_P ) * ( 1 - ( lambda_P / (1+rstar) ) )

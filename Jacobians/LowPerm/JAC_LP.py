@@ -15,6 +15,7 @@ from Automatic_JAC import jac,simpleJAC
  
  
 #-------------------------------------------------------------------------------
+#perm variance set to .3 and tran shock variance set to 
 
 #Agent parameters
 LivPrb = .99375
@@ -47,6 +48,8 @@ lambda_P = .85 #probability a firm won't be able to change price
 Lambda = ( (1 - lambda_P) / lambda_P ) * (1 - ( lambda_P / (1+rstar) ) )
 ParamW = ( (1 - lambda_W) / lambda_W ) * ( 1 - DiscFac * LivPrb * lambda_W )
 
+print(Lambda)
+print(ParamW)
 
 T=200
 
@@ -60,7 +63,7 @@ phi_y = 0
 Z = .01 # Initial Productivity shock
 m_e = .01 # Initial Monetary Policy Shock
 p_m=.5 # AR1 Coefficient for monetary Policy shock
-p_z =.98 # AR1 Coefficient for productivity shock
+p_z =.9 # AR1 Coefficient for productivity shock
 
 
 ZshkList=[]
@@ -110,7 +113,7 @@ and the jth column  denotes the period in which the the change in the variable o
 '''
 
 #-----------------------------------------------------------------------------
-f = 1
+
 #Consumption Jacobians
 
 CJAC=loadmat('CJAC_LP')
@@ -253,8 +256,8 @@ def price_inflation_tom(pi0,w,Z):
 
 args = (0.0,w_ss,Z_ss)
 J_pi1 = simpleJAC(price_inflation_tom,args,T=T)
-J_pi1_pi0 = J_pi1[0]
 
+J_pi1_pi0 = J_pi1[0]
 J_pi1_w = J_pi1[1] + np.dot(J_pi1_pi0,J_pi_w)
 J_pi1_Z = J_pi1[2] + np.dot(J_pi1_pi0,J_pi_Z)
 
@@ -281,6 +284,27 @@ J_piw_w = J_piw_w + np.dot(J_piw_MU,MUJACW)
 J_piw_N = J_piw_N  + np.dot(J_piw_MU,MUJACN) 
 
 
+
+'''
+def wageinflation_tom(piw0,piw1,w,N,MU):
+    
+    piw1 = piw0/(DiscFac*LivPrb) + ParamW*(np.log(w) - ( np.log( N**v) - np.log(MU)  ) ) / (DiscFac*LivPrb) 
+    
+    return resid
+
+args = (0.0,0.0,w_ss,N_ss,MU)
+J_piw1 = simpleJAC(wageinflation,args,T=200)
+
+J_piw1_piw0 = J_piw1[0]
+J_piw1_w = J_piw1[1]
+J_piw1_N = J_piw1[2]
+J_piw1_MU = J_piw1[3]
+
+
+J_piw1_w = J_piw1_w + np.dot(J_piw1_MU,MUJACW)  + np.dot(J_piw1_piw0,J_piw_w)   
+J_piw1_N = J_piw1_N  + np.dot(J_piw1_MU,MUJACN) + np.dot(J_piw1_piw0,J_piw_N)
+
+'''
 #--------------------------------------------------------------------------------------
 
 J_ra_r = np.zeros((T,T)) # jacobian of return to mutual fund assets wrt to real interest rate
@@ -497,10 +521,13 @@ dmu_w = (1/w_ss)*dw - ( (v/N_ss)*dN - (1/MU)*dMU)
 
 dA_o = dq  + (dB/(1+rstar) - np.dot(dr, B_ss))/(1+rstar)**2
 
+'''
 plt.plot(dA, label ='AJAC')
 plt.plot(dA_o , label = 'assets act')
 plt.legend()
 plt.show()
+'''
+
 #--------------------------------------------------------------------------------
 #Impulse Response Figures
 
@@ -536,7 +563,9 @@ fig.tight_layout()
 
 
 fig, axs = plt.subplots(2, 2)
-axs[0, 0].plot(100*dA/A_ss)
+axs[0, 0].plot(100*dA/A_ss, label= 'AJAC')
+axs[0, 0].plot(100*dA_o/A_ss, label =' A_clear')
+axs[0,0].legend()
 axs[0, 0].set_title("Assets")
 axs[1, 0].plot(100*dmu_p/(1/w_ss))
 axs[1, 0].set_title("Price Markup")
@@ -631,7 +660,7 @@ axs[1, 1].plot(100*dpi[0:rangelen], 'darkgreen')
 axs[1,1].set(ylabel = '%')
 axs[1, 1].set_title("Price Inflation")
 fig.tight_layout()
-plt.savefig("GIPRM1.jpg", dpi=500)
+#plt.savefig("GIPRM1.jpg", dpi=500)
 
 
 
@@ -649,7 +678,7 @@ axs[0, 1].set_title("Assets")
 axs[1, 1].plot(100*dN[0:rangelen]/N_ss, 'darkgreen')
 axs[1, 1].set_title("Labor")
 fig.tight_layout()
-plt.savefig("GIPRZ2.jpg", dpi=500)
+#plt.savefig("GIPRZ2.jpg", dpi=500)
 
 fig, axs = plt.subplots(2, 2)
 axs[0, 0].plot(100*dD[0:rangelen]/D_ss, 'darkgreen')
