@@ -43,7 +43,7 @@ q_ss = N_ss * ( 1 - w_ss ) / rstar
 
 #Phillips Curves parameters
 lambda_W = .8 #probability a firm won't be able to change wage
-lambda_P = .85 #probability a firm won't be able to change price
+lambda_P = .8 #probability a firm won't be able to change price
 
 Lambda = ( (1 - lambda_P) / lambda_P ) * (1 - ( lambda_P / (1+rstar) ) )
 ParamW = ( (1 - lambda_W) / lambda_W ) * ( 1 - DiscFac * LivPrb * lambda_W )
@@ -260,6 +260,7 @@ J_pi1 = simpleJAC(price_inflation_tom,args,T=T)
 J_pi1_pi0 = J_pi1[0]
 J_pi1_w = J_pi1[1] + np.dot(J_pi1_pi0,J_pi_w)
 J_pi1_Z = J_pi1[2] + np.dot(J_pi1_pi0,J_pi_Z)
+
 
 
 
