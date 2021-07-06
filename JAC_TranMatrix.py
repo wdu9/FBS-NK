@@ -267,7 +267,12 @@ class JACTran(IndShockConsumerType):
                 self.Cnow = self.solution[i].cFunc(Dist_mGrid)
                 self.CNrmList.append(self.Cnow)
                
-                bNext = self.Rfree[i]*aNext
+                if type(self.Rfree)==list:
+                    
+                    bNext = self.Rfree[i]*aNext
+                else:
+                    bNext = self.Rfree*aNext
+                    
                 ShockProbs = self.IncShkDstn[i].pmf
                 TranShocks = self.IncShkDstn[i].X[1]
                 PermShocks = self.IncShkDstn[i].X[0]
@@ -565,7 +570,8 @@ example = FBSNK_JAC(**params)
 example.pseudo_terminal = False
 example.cycles = 1
 
-example.jac= True
+example.jac= False
+example.jacW = True
 
 if example.jac == True:
     example.dx = .1
@@ -574,10 +580,18 @@ if example.jac == True:
     example.IncShkDstn = params['T_cycle']*ss.IncShkDstn
     
     
+if example.jacW==True:
+    example.dx = 2 #.8
+    example.Rfree = ss.Rfree
+    example.update_income_process()
+    
 i = 15
 if example.jac == True:
     example.Rfree = (i)*[ss.Rfree] + [ss.Rfree + example.dx] + (params['T_cycle'] - i - 1)*[ss.Rfree]
     
+if example.jacW == True:
+           example.IncShkDstn = i*ss.IncShkDstn + example.IncShkDstnW + (params['T_cycle'] - i - 1)* ss.IncShkDstn
+           
     
     
     
