@@ -110,7 +110,7 @@ class JACTran(IndShockConsumerType):
             self.N = ((self.IncUnemp*self.UnempPrb ) + self.G + (1 - (1/(self.Rfree) ) ) * self.B) / (self.wage*self.tax_rate)#calculate SS labor supply from Budget Constraint
         
 
-        TranShkDstn     = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
+        TranShkDstn = MeanOneLogNormal(self.TranShkStd[0],123).approx(self.TranShkCount)
         TranShkDstn.pmf  = np.insert(TranShkDstn.pmf*(1.0-self.UnempPrb),0,self.UnempPrb)   
         TranShkDstn.X  = np.insert(TranShkDstn.X*(((1.0-self.tax_rate)*self.N*self.wage)/(1-self.UnempPrb)),0,self.IncUnemp)
         PermShkDstn     = MeanOneLogNormal(self.PermShkStd[0],123).approx(self.PermShkCount)
@@ -247,7 +247,6 @@ class JACTran(IndShockConsumerType):
         
         if self.cycles == 0: 
             Dist_mGrid = self.Dist_mGrid
-            Dist_pGrid = self.Dist_pGrid
             aNext = Dist_mGrid - self.solution[0].cFunc(Dist_mGrid)
             
             self.aPolGrid = aNext # Steady State Asset Policy Grid
@@ -263,13 +262,13 @@ class JACTran(IndShockConsumerType):
             LivPrb = self.LivPrb[0] # Update probability of staying alive
             
             #New borns have this distribution (assumes start with no assets and permanent income=1)
-            NewBornDist = self.Jump_To_Grid_M(TranShocks_ntrl,ShockProbs_ntrl,Dist_mGrid)
+            NewBornDist = self.jump_to_grid_M(TranShocks_ntrl,ShockProbs_ntrl,Dist_mGrid)
             
             # Generate Steady State Transition Matrix
             TranMatrix_M = np.zeros((len(Dist_mGrid),len(Dist_mGrid))) 
             for i in range(len(Dist_mGrid)):
                     mNext_ij = bNext[i]/PermShocks_ntrl + TranShocks_ntrl # Compute next period's market resources given todays bank balances bnext[i]
-                    TranMatrix_M[:,i] = LivPrb*self.Jump_To_Grid_M(mNext_ij, ShockProbs_ntrl,Dist_mGrid) + (1.0-LivPrb)*NewBornDist 
+                    TranMatrix_M[:,i] = LivPrb*self.jump_to_grid_M(mNext_ij, ShockProbs_ntrl,Dist_mGrid) + (1.0-LivPrb)*NewBornDist 
             self.TranMatrix_M = TranMatrix_M
         
         elif self.T_cycle!= 0:
@@ -278,7 +277,6 @@ class JACTran(IndShockConsumerType):
             self.aPolGrid = [] # List of asset policy grids for each period in T_cycle
             self.TranMatrix_M = []
             Dist_mGrid =  self.Dist_mGrid
-
 
             for k in range(self.T_cycle):
                                                 
@@ -295,25 +293,23 @@ class JACTran(IndShockConsumerType):
                 
                 LivPrb = self.LivPrb[k] # Update probability of staying alive this period
                 
-
                 ShockProbs_ntrl = self.IncShkDstn_ntrl_msr[k].pmf  #probability of shocks this period
                 TranShocks_ntrl = self.IncShkDstn_ntrl_msr[k].X[1] #Transitory shocks this period
                 PermShocks_ntrl = self.IncShkDstn_ntrl_msr[k].X[0] #Permanent shocks this period
                 
-                
                 #New borns have this distribution (assumes start with no assets and permanent income=1)
-                NewBornDist = self.Jump_To_Grid_M(TranShocks_ntrl,ShockProbs_ntrl,Dist_mGrid)
+                NewBornDist = self.jump_to_grid_M(TranShocks_ntrl,ShockProbs_ntrl,Dist_mGrid)
                 
                 # Generate Transition Matrix this period
                 TranMatrix_M = np.zeros((len(Dist_mGrid),len(Dist_mGrid))) 
                 for i in range(len(Dist_mGrid)):
                         mNext_ij = bNext[i]/PermShocks_ntrl + TranShocks_ntrl # Compute next period's market resources given todays bank balances bnext[i]
-                        TranMatrix_M[:,i] = LivPrb*self.Jump_To_Grid_M(mNext_ij, ShockProbs_ntrl,Dist_mGrid) + (1.0-LivPrb)*NewBornDist 
+                        TranMatrix_M[:,i] = LivPrb*self.jump_to_grid_M(mNext_ij, ShockProbs_ntrl,Dist_mGrid) + (1.0-LivPrb)*NewBornDist 
                 TranMatrix_M = TranMatrix_M
                 self.TranMatrix_M.append(TranMatrix_M)
             
         
-    def Jump_To_Grid_M(self,m_vals, probs ,Dist_mGrid ):
+    def jump_to_grid_M(self,m_vals, probs ,Dist_mGrid ):
         '''
         Distributes values onto a predefined grid, maintaining the means.
         ''' 
@@ -372,7 +368,7 @@ class JACTran(IndShockConsumerType):
     
             A = np.dot( a, dstn ) # Compute Aggregate Assets this period
             AggA.append(A)
-    
+                            
             dstn = np.dot(self.TranMatrix_M[i],dstn) # Iterate Distribution forward
     
         #Transform Lists into tractable arrays for plotting
@@ -383,10 +379,10 @@ class JACTran(IndShockConsumerType):
 FBSDict={
     # Parameters shared with the perfect foresight model
     "CRRA":2,                           # Coefficient of relative risk aversion
-    "Rfree": 1.05**.25,                       # Interest factor on assets
-    "DiscFac": 0.9425, #.96,                     # Intertemporal discount factor
-    "LivPrb" : [.99375],                    # Survival probability
-    "PermGroFac" :[1.00],                 # Permanent income growth factor
+    "Rfree": 1.05**.25,                 # Interest factor on assets
+    "DiscFac": 0.9425, #.96,            # Intertemporal discount factor
+    "LivPrb" : [.99375],                # Survival probability
+    "PermGroFac" :[1.00],               # Permanent income growth factor
 
     # Parameters that specify the income distribution over the lifecycle
    
@@ -584,59 +580,6 @@ print("Done Computing Steady State")
 
 
 
-
-
-class FBSNK_JAC(JACTran):
-    
-    
-  
-     def update_solution_terminal(self):
-         
-         
-        """
-        Update the terminal period solution.  This method should be run when a
-        new AgentType is created or when CRRA changes.
-        Parameters
-        ----------
-        none
-        Returns
-        -------
-        none
-        """
-        
-    
-
-        self.solution_terminal.cFunc = deepcopy(ss.solution[0].cFunc)
-        self.solution_terminal.vFunc = deepcopy(ss.solution[0].vFunc)
-        self.solution_terminal.vPfunc = deepcopy(ss.solution[0].vPfunc)
-        self.solution_terminal.vPPfunc =  deepcopy(ss.solution[0].vPPfunc)
-
-    
-
-     def CalcErgodicDist(self):
-        
-        '''
-        Calculates the egodic distribution across normalized market resources and
-        permanent income as the eigenvector associated with the eigenvalue 1.
-        The distribution is reshaped as an array with the ij'th element representing
-        the probability of being at the i'th point on the mGrid and the j'th
-        point on the pGrid.
-        ''' 
-        
-        eigen, ergodic_distr = sp.linalg.eigs(ss.TranMatrix , k=1 , which='LM')
-        ergodic_distr = ergodic_distr.real/np.sum(ergodic_distr.real)
-        self.vec_dstn = ergodic_distr
-        self.ergodic_distr = ergodic_distr.reshape((len(self.Dist_mGrid),len(self.Dist_pGrid)))
-
-
-
-
-
-
-
-
-
-
 params = deepcopy(FBSDict)
 params['T_cycle'] = 200
 params['LivPrb']= params['T_cycle']*[ss.LivPrb[0]]
@@ -647,10 +590,12 @@ params['Rfree'] = params['T_cycle']*[ss.Rfree]
 
 
 
-example = FBSNK_JAC(**params)
+example = JACTran(**params)
 example.pseudo_terminal = False
 example.cycles = 1
 example.IncShkDstn_ntrl_msr = params['T_cycle']*ss.IncShkDstn_ntrl_msr
+example.cFunc_terminal_ = deepcopy(ss.solution[0].cFunc)
+
 
 example.jac= False
 example.jacW = False
@@ -692,7 +637,7 @@ for q in range(T):
     
     if example.jacW == True:
         example.IncShkDstn = q*ss.IncShkDstn + example.IncShkDstnW + (params['T_cycle'] - q )* ss.IncShkDstn
-        example.IncShkDstn_ntrl_msr =q*ss.IncShkDstn_ntrl_msr + example.IncShkDstnW_ntrl_msr + (params['T_cycle'] - q )* ss.IncShkDstn_ntrl_msr
+        example.IncShkDstn_ntrl_msr = q*ss.IncShkDstn_ntrl_msr + example.IncShkDstnW_ntrl_msr + (params['T_cycle'] - q )* ss.IncShkDstn_ntrl_msr
                
     if example.jacN == True:
         example.IncShkDstn = q*ss.IncShkDstn + example.IncShkDstnN + (params['T_cycle'] - q )* ss.IncShkDstn
@@ -703,26 +648,11 @@ for q in range(T):
         example.IncShkDstn = q*ss.IncShkDstn + example.IncShkDstnP + (params['T_cycle'] - q )* ss.IncShkDstn
     
     
-            
     example.solve()
     example.DefineDistributionGrid()
-    
-    Dist_mGrid = example.Dist_mGrid
-    Dist_pGrid = example.Dist_pGrid
-
-    
-    AggC_List = []
-    AggA_List = []
-    MUList = []
-    
-
 
     example.calc_transition_matrix_M()
     example.calc_agg_path_m(ss.vec_Dstn_M)
-
-
-
-
 
 
     CHist.append(example.AggC_m)
