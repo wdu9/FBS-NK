@@ -150,6 +150,7 @@ class JACTran(IndShockConsumerType):
         self.IncShkDstnN= [combine_indep_dstns2(PermShkDstnN,TranShkDstnN)]
         
         self.IncShkDstnN_ntrl_msr = [combine_indep_dstns2(PermShk_ntrl_msr,TranShkDstnN)]
+        self.IncShkDstnN_ntrl_msr_1 = [combine_indep_dstns2(PermShk_ntrl_msr_1,TranShkDstnN)]
 
         self.TranShkDstnN = [TranShkDstnN]
         self.PermShkDstnN = [PermShkDstnN]
@@ -333,7 +334,38 @@ class JACTran(IndShockConsumerType):
                     TranMatrix[:,i*len(dist_pGrid)+j] = LivPrb*self.jump_to_grid(mNext_ij, pNext_ij, shk_prbs,dist_mGrid,dist_pGrid) + (1.0-LivPrb)*NewBornDist
             self.tran_matrix = TranMatrix
             
+            '''
             
+            if self.track_perm_dstn == True:
+                   
+                   #list of grids of permanent income    
+               
+                   for i in range(self.T_cycle):
+                   
+                       num_points = 50
+                       #Dist_pGrid is taken to cover most of the ergodic distribution
+                       p_variance = self.PermShkStd[i]**2 # set variance of permanent income shocks this period
+                       max_p = 20.0*(p_variance/(1-self.LivPrb[i]))**0.5 # Consider probability of staying alive this period
+                       one_sided_grid = make_grid_exp_mult(1.0+1e-3, np.exp(max_p), num_points, 2) 
+                       
+                       dist_pGrid = np.append(np.append(1.0/np.fliplr([one_sided_grid])[0],np.ones(1)),one_sided_grid) # Compute permanent income grid this period. Grid of permanent income may differ dependent on PermShkStd
+                   
+                   
+                   self.perm_grid = dist_pGrid
+                   NewBornDist = self.jump_to_grid_fast(np.ones_like(tran_shks), shk_prbs, dist_pGrid)
+                   
+                   # Generate Transition Matrix this period
+                   TranMatrix_P = np.zeros((len(dist_pGrid),len(dist_pGrid))) 
+                   for i in range(len(dist_pGrid)):
+                       
+                           pNext_ij = dist_pGrid[j]*perm_shks # Compute next period's market resources given todays bank balances bnext[i]
+                           
+                           TranMatrix_P[:,i] = LivPrb*self.jump_to_grid_fast(pNext_ij, shk_prbs, dist_pGrid) + (1.0-LivPrb)*NewBornDist 
+                           
+                   self.TranMatrix_P = TranMatrix_P 
+                   
+                   '''
+           
         elif self.cycles > 1:
             print('calc_transition_matrix requires cycles = 0 or cycles = 1')
             
@@ -403,8 +435,34 @@ class JACTran(IndShockConsumerType):
                     #the 4th row , 6th column entry represents the probability of transitioning from the 6th element of the combined perm and m grid (grid of market resources multiplied by grid of perm income) to the 4th element of the combined perm and m grid
                     self.tran_matrix.append(TranMatrix)         
                 
-
-
+                    ''' 
+                if self.track_perm_dstn == True:
+                    
+                    self.dist_pGrid = [] #list of grids of permanent income    
+                
+                    for i in range(self.T_cycle):
+                    
+                        num_points = 100
+                        #Dist_pGrid is taken to cover most of the ergodic distribution
+                        p_variance = self.PermShkStd[i]**2 # set variance of permanent income shocks this period
+                        max_p = 20.0*(p_variance/(1-self.LivPrb[i]))**0.5 # Consider probability of staying alive this period
+                        one_sided_grid = make_grid_exp_mult(1.0+1e-3, np.exp(max_p), num_points, 2) 
+                        
+                        dist_pGrid = np.append(np.append(1.0/np.fliplr([one_sided_grid])[0],np.ones(1)),one_sided_grid) # Compute permanent income grid this period. Grid of permanent income may differ dependent on PermShkStd
+                        self.dist_pGrid.append(dist_pGrid)
+                    
+                    
+                
+                    NewBornDist = self.jump_to_grid_fast(np.ones_like(tran_shks),shk_prbs,dist_pGrid)
+                    
+                    # Generate Transition Matrix this period
+                    TranMatrix_P = np.zeros((len(dist_pGrid),len(dist_pGrid))) 
+                    for i in range(len(dist_pGrid)):
+                            pNext_ij = dist_pGrid[j]*perm_shks # Compute next period's market resources given todays bank balances bnext[i]
+                            TranMatrix_P[:,i] = LivPrb*self.jump_to_grid_fast(pNext_ij, shk_prbs,dist_pGrid) + (1.0-LivPrb)*NewBornDist 
+                    self.tran_matrix_P.append(TranMatrix_P)
+                    
+                    '''
                 
     def jump_to_grid(self, m_vals, perm_vals, probs, dist_mGrid, dist_pGrid ):
         
@@ -496,24 +554,24 @@ class JACTran(IndShockConsumerType):
 
         return probGrid.flatten()
 
-    def jump_to_grid_fast(self,m_vals, probs ,Dist_mGrid ):
+    def jump_to_grid_fast(self, vals, probs ,Grid ):
         '''
         Distributes values onto a predefined grid, maintaining the means.
         ''' 
     
-        probGrid = np.zeros(len(Dist_mGrid))
-        mIndex = np.digitize(m_vals,Dist_mGrid) - 1
-        mIndex[m_vals <= Dist_mGrid[0]] = -1
-        mIndex[m_vals >= Dist_mGrid[-1]] = len(Dist_mGrid)-1
+        probGrid = np.zeros(len(Grid))
+        mIndex = np.digitize(vals,Grid) - 1
+        mIndex[vals <= Grid[0]] = -1
+        mIndex[vals >= Grid[-1]] = len(Grid)-1
         
  
-        for i in range(len(m_vals)):
+        for i in range(len(vals)):
             if mIndex[i]==-1:
                 mlowerIndex = 0
                 mupperIndex = 0
                 mlowerWeight = 1.0
                 mupperWeight = 0.0
-            elif mIndex[i]==len(Dist_mGrid)-1:
+            elif mIndex[i]==len(Grid)-1:
                 mlowerIndex = -1
                 mupperIndex = -1
                 mlowerWeight = 1.0
@@ -521,7 +579,7 @@ class JACTran(IndShockConsumerType):
             else:
                 mlowerIndex = mIndex[i]
                 mupperIndex = mIndex[i]+1
-                mlowerWeight = (Dist_mGrid[mupperIndex]-m_vals[i])/(Dist_mGrid[mupperIndex]-Dist_mGrid[mlowerIndex])
+                mlowerWeight = (Grid[mupperIndex]-vals[i])/(Grid[mupperIndex] - Grid[mlowerIndex])
                 mupperWeight = 1.0 - mlowerWeight
                 
             probGrid[mlowerIndex] = probGrid[mlowerIndex] + probs[i]*mlowerWeight
@@ -559,6 +617,15 @@ class JACTran(IndShockConsumerType):
         self.vec_erg_dstn = ergodic_distr #distribution as a vector
         self.erg_dstn = ergodic_distr.reshape((len(self.dist_mGrid),len(self.dist_pGrid))) # distribution reshaped into len(mgrid) by len(pgrid) array
         
+        
+        '''
+        if self.track_perm_dstn == True:
+            eigen, perm_ergodic_distr = sp.linalg.eigs(self.TranMatrix_P , k=1 , which='LM') 
+            perm_ergodic_distr = perm_ergodic_distr.real/np.sum(perm_ergodic_distr.real)
+
+            self.perm_dstn = perm_ergodic_distr
+        '''
+            
 
 
     def calc_agg_path(self, init_dstn, cPolGrid_list = None, aPolGrid_list = None, tran_matrix_list = None, dist_pGrid_list =None):
@@ -601,7 +668,9 @@ class JACTran(IndShockConsumerType):
                         
         AggC =[] # List of aggregate consumption for each period t 
         AggA =[] # List of aggregate assets for each period t 
-    
+        
+        AggMU = []
+        
         dstn = init_dstn # Initial distribution set as steady state distribution
     
         T = len(cPolGrid_list)
@@ -619,6 +688,9 @@ class JACTran(IndShockConsumerType):
                 A = np.dot( a, dstn ) # Compute Aggregate Assets this period
                 AggA.append(A)
                 
+                MU = np.dot(c**(-self.CRRA) , dstn)
+                AggMU.append(MU)
+                
             else:
                 
                 gridc = np.dot( c.reshape( len(c), 1 ) , p.reshape( 1 , len(p) ) ) #Transform grid from normalized consumption to level of consumption
@@ -634,6 +706,7 @@ class JACTran(IndShockConsumerType):
         #Transform Lists into tractable arrays
         self.AggC  = np.array(AggC).T[0] 
         self.AggA  = np.array(AggA).T[0]
+        self.AggMU = np.array(AggMU).T[0]
 
 
     def calc_MU(self, init_dstn, cPolGrid_list = None, aPolGrid_list = None, tran_matrix_list = None, dist_pGrid_list =None):
@@ -702,22 +775,22 @@ FBSDict={
     # Parameters shared with the perfect foresight model
     "CRRA":2,                           # Coefficient of relative risk aversion
     "Rfree": 1.05**.25,                 # Interest factor on assets
-    "DiscFac": 0.977, #.96,            # Intertemporal discount factor
+    "DiscFac": 0.9735, #.96,            # Intertemporal discount factor
     "LivPrb" : [.99375],                # Survival probability
     "PermGroFac" :[1.00],               # Permanent income growth factor
 
     # Parameters that specify the income distribution over the lifecycle
    
-    "PermShkStd" :  [.05],#[(.005*4/11)**.5], #[(0.01*4/11)**0.5],    # Standard deviation of log permanent shocks to income
-    "PermShkCount" : 5,                    # Number of points in discrete approximation to permanent income shocks
+    "PermShkStd" : [.06], #[(0.01*4/11)**0.5],    # Standard deviation of log permanent shocks to income
+    "PermShkCount" : 7,                    # Number of points in discrete approximation to permanent income shocks
     "TranShkStd" : [.2],                   # Standard deviation of log transitory shocks to income
-    "TranShkCount" : 5,                    # Number of points in discrete approximation to transitory income shocks
+    "TranShkCount" : 7,                    # Number of points in discrete approximation to transitory income shocks
     "UnempPrb" : 0.07, #.08                # Probability of unemployment while working
-    "IncUnemp" :  .05,                      # Unemployment benefits replacement rate
+    "IncUnemp" :  .3,                      # Unemployment benefits replacement rate
     "UnempPrbRet" : 0.0005,                # Probability of "unemployment" while retired
     "IncUnempRet" : 0.0,                   # "Unemployment" benefits when retired
     "T_retire" : 0,                        # Period of retirement (0 --> no retirement)
-    "tax_rate" : .1,                      # Flat income tax rate (legacy parameter, will be removed in future)
+    "tax_rate" : .18,                      # Flat income tax rate (legacy parameter, will be removed in future)
 
     # Parameters for constructing the "assets above minimum" grid
     "aXtraMin" : 0.001,                    # Minimum end-of-period "assets above minimum" value
@@ -735,7 +808,7 @@ FBSDict={
     # Parameters only used in simulation
     "AgentCount" : 100000,                 # Number of agents of this type
     "T_sim" : 200,                         # Number of periods to simulate
-    "aNrmInitMean" : np.log(1.6)-(.5**2)/2,# Mean of log initial assets
+    "aNrmInitMean" : np.log(.8)-(.5**2)/2,# Mean of log initial assets
     "aNrmInitStd"  : .5,                   # Standard deviation of log initial assets
     "pLvlInitMean" : 0.0,                  # Mean of log initial permanent income
     "pLvlInitStd"  : 0.0,                  # Standard deviation of log initial permanent income
@@ -743,7 +816,7 @@ FBSDict={
     "T_age" : None,                        # Age after which simulated agents are automatically killed
     
     # new parameters
-     "dx"         : 0,                  #Deviation from steady state
+     "dx"         : 0,                     # Deviation from steady state
      "jac"        : False,
      "jacW"       : False, 
      "jacN"       : False,
@@ -759,7 +832,7 @@ FBSDict={
      "calvo price stickiness":  .926,      # Auclert et al 2020
      "calvo wage stickiness": .899,        # Auclert et al 2020
      "B" : .1,                               # Net Bond Supply
-     "G" : .105,
+     "G" : .2,
      "DisULabor": 0.8823685356415617,
      "InvFrisch": 2 ,
      "s" : 1
@@ -769,12 +842,13 @@ FBSDict={
 
 
 
-G=.105
-t=.1 #0.16563445378151262
-Inc = .05
+
+G=.2
+t=.18
+Inc = .3
 mho=.07
 r = (1.05)**.25 - 1 
-B=.1 
+B=.1
 
 w = (1/1.01)
 N = (Inc*mho + G  + (1 - (1/(1+r)) ) *B) / (w*t) 
@@ -782,10 +856,12 @@ q = ((1-w)*N)/r
 
 A = ( B/(1+r) ) + q
 
+
 #('output =' +str(N))
 #print(q)
 #print('Target Consumption =' +str(N-G))
 #print('Target Assets =' +str(A))
+
 
 target = A
 
@@ -815,6 +891,37 @@ while go:
     #Consumption = np.mean((ss.state_now['mNrm'] - ss.state_now['aNrm'])*ss.state_now['pLvl'])
     #ASSETS = np.mean(ss.state_now['aNrm']*ss.state_now['pLvl'])
 
+    #ss.track_perm_dstn = True
+    
+    #ss.define_distribution_grid()
+    #ss.calc_transition_matrix()
+    #ss.calc_ergodic_dist()
+    
+    
+    #pGrid = ss.perm_grid
+    #perm_dstn = ss.perm_dstn
+    
+    #plt.plot(perm_dstn.T[0])
+    #plt.show()
+    
+    #plt.plot(pGrid,perm_dstn.T[0])
+    #plt.show()
+    
+    ss.define_distribution_grid(dist_pGrid = np.array([1]))
+    ss.calc_transition_matrix()
+    ss.calc_ergodic_dist()
+    
+
+    
+    m_dstn = ss.vec_erg_dstn
+    m_dstn = m_dstn.T[0]
+    #m_dstn = ss.marg_dstn 
+    
+    
+    M_c = np.dot(ss.cPol_Grid, m_dstn)
+    
+    MU_new = np.dot(ss.cPol_Grid**(-ss.CRRA) , m_dstn)
+    
     
     ss.define_distribution_grid(dist_pGrid = np.array([1]))
     ss.calc_transition_matrix(ss.IncShkDstn_ntrl_msr)
@@ -826,7 +933,8 @@ while go:
     
     Css =  np.dot(c,SS_dstn)
     AggA =np.dot(asset,SS_dstn)
-    
+    MU_comp = np.dot(c**(-ss.CRRA), SS_dstn)
+
     
     ss.define_distribution_grid(dist_pGrid = np.array([1]))
     ss.calc_transition_matrix(ss.IncShkDstn_ntrl_msr_1)
@@ -836,22 +944,30 @@ while go:
     
     MU = np.dot(c**(-ss.CRRA), MU_dstn)
     
+    #cov_c2_p1 = - ( MU_new - MU)
+    
+    cov_c_p= -( M_c - Css) #covariance between normalized consumption and permanent income
+    
+    
     dif = AggA - target
     
     
     if dif[0] > 0 :
         
-       DiscFac = DiscFac - dif[0]/200
+       DiscFac = DiscFac - dif[0]/300
         
     elif dif[0] < 0: 
-        DiscFac = DiscFac- dif[0]/200
+        DiscFac = DiscFac - dif[0]/300
         
     else:
         break
     
     
     print('MU =' + str(MU))
+    print('MU_comp =' +str(MU_comp))
+    print('MU_new =' + str(MU_new))
 
+    
     print('Assets =' + str(AggA))
     #print('simulated assets = ' +str(ASSETS))
     print('Target Assets =' +str(A))
@@ -871,7 +987,7 @@ while go:
     
     print('Completed loops:' + str(completed_loops))
     
-    go = distance >= tolerance and completed_loops < 1
+    go = distance >= tolerance and completed_loops < 1  #40
         
 print("Done Computing Steady State")
 
@@ -889,7 +1005,7 @@ params['TranShkStd']= params['T_cycle']*[ss.TranShkStd[0]]
 params['Rfree'] = params['T_cycle']*[ss.Rfree]
 
 
-
+#Ghost
 
 ghost = JACTran(**params)
 ghost.pseudo_terminal = False
@@ -911,13 +1027,23 @@ ghost.IncShkDstn = params['T_cycle']*ss.IncShkDstn
 ghost.solve()
 
 ghost.define_distribution_grid(dist_pGrid = ghost.T_cycle*[np.array([1])])
+ghost.calc_transition_matrix(ghost.IncShkDstn_ntrl_msr)
+ghost.calc_agg_path(init_dstn = SS_dstn)
+
+C_ghost = ghost.AggC
+
+MU_comp_ghost = ghost.AggMU
+plt.plot(MU_comp_ghost)
+plt.show()
+
+ghost.define_distribution_grid(dist_pGrid = ghost.T_cycle*[np.array([1])])
 ghost.calc_transition_matrix(ghost.IncShkDstn_ntrl_msr_1)
 ghost.calc_MU(init_dstn = MU_dstn)
 
 MU_ghost = ghost.MU
 
-plt.plot(MU_ghost)
-
+#plt.plot(MU_ghost)
+#plt.show()
 
 
 
@@ -935,8 +1061,8 @@ example.IncShkDstn_ntrl_msr = params['T_cycle']*ss.IncShkDstn_ntrl_msr
 example.cFunc_terminal_ = deepcopy(ss.solution[0].cFunc)
 
 
-example.jac = False
-example.jacW = True
+example.jac = True
+example.jacW = False
 example.jacN = False
 example.jacPerm = False
 
@@ -949,10 +1075,9 @@ if example.jac == True:
     example.IncShkDstn_ntrl_msr = params['T_cycle']*ss.IncShkDstn_ntrl_msr
     example.IncShkDstn_ntrl_msr_1 = params['T_cycle']*ss.IncShkDstn_ntrl_msr_1
 
-
     
 if example.jacW==True or example.jacN == True or example.jacPerm ==True:
-    example.dx = .0001 
+    example.dx = .8
     example.Rfree = ss.Rfree
     example.update_income_process()
     
@@ -962,14 +1087,15 @@ if example.jacW==True or example.jacN == True or example.jacPerm ==True:
 CHist=[]
 AHist=[]
 MUHist=[]
+MUHist_comp =[]
 T=params['T_cycle']
 
 start1 = time.time()
 
-for q in range(T):
-#testset = [0,15]
+#for q in range(T):
+testset = [0,30]
 
-#for q in testset:
+for q in testset:
     
     if example.jac == True:
         example.Rfree = q*[ss.Rfree] + [ss.Rfree + example.dx] + (params['T_cycle'] - q )*[ss.Rfree]
@@ -982,7 +1108,8 @@ for q in range(T):
     if example.jacN == True:
         example.IncShkDstn = q*ss.IncShkDstn + example.IncShkDstnN + (params['T_cycle'] - q )* ss.IncShkDstn
         example.IncShkDstn_ntrl_msr =q*ss.IncShkDstn_ntrl_msr + example.IncShkDstnN_ntrl_msr + (params['T_cycle'] - q )* ss.IncShkDstn_ntrl_msr
-        
+        example.IncShkDstn_ntrl_msr_1 = q*ss.IncShkDstn_ntrl_msr_1 + example.IncShkDstnN_ntrl_msr_1 + (params['T_cycle'] - q )* ss.IncShkDstn_ntrl_msr_1
+
     if example.jacPerm == True:
         example.IncShkDstn = q*ss.IncShkDstn + example.IncShkDstnP + (params['T_cycle'] - q )* ss.IncShkDstn
         example.IncShkDstn_ntrl_msr =q*ss.IncShkDstn_ntrl_msr + example.IncShkDstnP_ntrl_msr + (params['T_cycle'] - q )* ss.IncShkDstn_ntrl_msr
@@ -1001,18 +1128,67 @@ for q in range(T):
     
     CHist.append(example.AggC)
     AHist.append(example.AggA)
+    MUHist_comp.append(example.AggMU)
     
     
-    example.define_distribution_grid(dist_pGrid = example.T_cycle*[np.array([1])])
-    example.calc_transition_matrix(example.IncShkDstn_ntrl_msr_1)
-    example.calc_MU(init_dstn = MU_dstn)
+    #example.define_distribution_grid(dist_pGrid = example.T_cycle*[np.array([1])])
+    #example.calc_transition_matrix(example.IncShkDstn_ntrl_msr_1)
+    #example.calc_MU(init_dstn = MU_dstn)
     
-    MUHist.append(example.MU)
+    #MUHist.append(example.MU)
    
     print(q)
 
 print('seconds past : ' + str(time.time()-start1))
 
+C_copy = CHist 
+#MU_copy= MUHist 
+
+
+
+#plt.plot((MU_copy[0]- MU_ghost)/example.dx, label = '0' )
+#plt.plot((MU_copy[1]- MU_ghost)/example.dx, label = '30' )
+plt.plot((MUHist_comp[0] - MU_comp_ghost) / example.dx , '--')
+plt.plot((MUHist_comp[1] - MU_comp_ghost) / example.dx , '--')
+plt.show()
+
+plt.plot((C_copy[0]- C_ghost)/example.dx, label = '0' )
+plt.plot((C_copy[1] - C_ghost)/example.dx, label = '30' )
+plt.show()
+
+'''
+plt.plot((CHist[0]- C_ghost)/example.dx, label = '0' )
+plt.plot((CHist[1] - C_ghost)/example.dx, label = '20' )
+plt.plot((CHist[2]- C_ghost)/example.dx, label = '30' )
+plt.plot(np.zeros(len(CHist[0])), color = 'k')
+plt.legend()
+plt.show()
+'''
+
+plt.plot((AHist[0]- AggA[0])/example.dx, label = '0' )
+plt.plot((AHist[1]- AggA[0])/example.dx, label = '30' )
+plt.plot(np.zeros(len(CHist[0])), color = 'k')
+plt.legend()
+plt.show()
+
+'''
+
+plt.plot((MUHist[0] - MU_ghost)/example.dx, label = '0' )
+plt.plot((MUHist[1] - MU_ghost)/example.dx, label = '30' )
+plt.plot(np.zeros(len(CHist[0])), color = 'k')
+plt.legend()
+plt.show()
+
+
+plt.plot((MUHist_comp[0] - MU_comp_ghost) / example.dx , '--')
+plt.plot((MUHist_comp[1] - MU_comp_ghost) / example.dx , '--')
+plt.plot((MUHist[0] - MU_dx0)/example.dx, label = '0' )
+plt.plot((MUHist[1] - MU_dx0)/example.dx, label = '30' )
+plt.show()
+
+'''
+
+'''
     
 plt.plot((CHist[0]- Css[0])/example.dx, label = '0' )
 plt.plot((CHist[20]- Css[0])/example.dx, label = '20' )
@@ -1021,25 +1197,35 @@ plt.plot(np.zeros(len(CHist[0])), color = 'k')
 plt.legend()
 plt.show()
 
+plt.plot((CHist[1]-C_dx0)/(example.dx), '--', label = '30')
+plt.plot((CHist[0]-C_dx0)/(example.dx),'--', label = '0')
+plt.plot((C_copy[0]- C_ghost)/example.dx, label = '0' )
+plt.plot((C_copy[1]- C_ghost)/example.dx, label = '30' )
+plt.show()
+
+
 
 plt.plot((AHist[0]- AggA[0])/example.dx, label = '0' )
-plt.plot((AHist[1]- AggA[0])/example.dx, label = '20' )
-plt.plot((AHist[30]- AggA[0])/example.dx, label = '20' )
-#plt.plot((AHist[50]- AggA[0])/example.dx, label = '20' )
-
+plt.plot((AHist[20]- AggA[0])/example.dx, label = '20' )
+plt.plot((AHist[30]- AggA[0])/example.dx, label = '30' )
 plt.plot(np.zeros(len(CHist[0])), color = 'k')
 plt.legend()
 plt.show()
 
 
 
-plt.plot((MUHist[0]- MU_ghost)/example.dx, label = '0' )
-plt.plot((MUHist[30]- MU_ghost)/example.dx, label = '20' )
+plt.plot((MUHist[0] - MU_ghost)/example.dx, label = '0' )
+plt.plot((MUHist[20] - MU_ghost)/example.dx, label = '20' )
+plt.plot((MUHist[30] - MU_ghost)/example.dx, label = '30' )
 plt.plot(np.zeros(len(CHist[0])), color = 'k')
 plt.legend()
 plt.show()
 
+'''
 
+
+
+'''
 
 if example.jac == True:
     CJAC = []
@@ -1049,12 +1235,12 @@ if example.jac == True:
     for i in range(example.T_cycle):
         CJAC.append((CHist[i] -Css[0])/example.dx)
         AJAC.append((AHist[i] -AggA[0])/example.dx)
-        #MUJAC.append((CHist[i] - MUss[0])/example.dx)
+        MUJAC.append((MUHist[i] - MU_ghost)/example.dx)
 
 
-    savemat( 'CJAC_TRAN_hNMPC.mat', mdict = {'CJAC_TRAN_hNMPC': CJAC})
-    savemat( 'AJAC_TRAN_hNMPC.mat', mdict = {'AJAC_TRAN_hNMPC': AJAC})
-    savemat( 'MUJAC_TRAN_hNMPC.mat', mdict = {'CJAC_TRAN_hNMPC': MUJAC})
+    savemat( 'CJAC_TRAN.mat', mdict = {'CJAC_TRAN': CJAC})
+    savemat( 'AJAC_TRAN.mat', mdict = {'AJAC_TRAN': AJAC})
+    savemat( 'MUJAC_TRAN.mat', mdict = {'CJAC_TRAN': MUJAC})
 
     
 if example.jacN == True:
@@ -1065,11 +1251,11 @@ if example.jacN == True:
     for i in range(example.T_cycle):
         CJACN.append((CHist[i] -Css[0])/example.dx)
         AJACN.append((AHist[i] -AggA[0])/example.dx)
-        #MUJACN.append((CHist[i] - MUss[0])/example.dx)
+        MUJACN.append((MUHist[i] - MU_ghost)/example.dx)
 
-    savemat( 'CJACN_TRAN_hNMPC.mat', mdict = {'CJACN_TRAN_hNMPC': CJACN})
-    savemat( 'AJACN_TRAN_hNMPC.mat', mdict = {'AJACN_TRAN_hNMPC': AJACN})
-    savemat( 'MUJACN_TRAN_hNMPC.mat', mdict = {'CJACN_TRAN_hNMPC': MUJACN})
+    savemat( 'CJACN_TRAN.mat', mdict = {'CJACN_TRAN': CJACN})
+    savemat( 'AJACN_TRAN.mat', mdict = {'AJACN_TRAN': AJACN})
+    savemat( 'MUJACN_TRAN.mat', mdict = {'CJACN_TRAN': MUJACN})
 
     
 if example.jacW == True:
@@ -1080,48 +1266,21 @@ if example.jacW == True:
     for i in range(example.T_cycle):
         CJACW.append((CHist[i] -Css[0])/example.dx)
         AJACW.append((AHist[i] -AggA[0])/example.dx)
-        #MUJACW.append((CHist[i] - MUss[0])/example.dx)
+        MUJACW.append((MUHist[i] - MU_ghost)/example.dx)
         
-    savemat( 'CJACW_TRAN_hNMPC.mat', mdict = {'CJACW_TRAN_hNMPC': CJACW})
-    savemat( 'AJACW_TRAN_hNMPC.mat', mdict = {'AJACW_TRAN_hNMPC': AJACW})
-    savemat( 'MUJACW_TRAN_hNMPC.mat', mdict = {'CJACW_TRAN_hNMPC': MUJACW})
-        
+    savemat( 'CJACW_TRAN.mat', mdict = {'CJACW_TRAN': CJACW})
+    savemat( 'AJACW_TRAN.mat', mdict = {'AJACW_TRAN': AJACW})
+    savemat( 'MUJACW_TRAN.mat', mdict = {'CJACW_TRAN': MUJACW})
+
     
     
-
-
-
-
-
-
-
-
-
 '''
 
-plt.plot((MUList - MUss[0])/example.dx,label = '15')
-plt.plot(np.zeros(len(AggA_List)), color = 'k')
-plt.legend()
-#plt.savefig("MUJAC_TRANMAT.jpg", dpi=500)
-plt.show()
 
 
 
-plt.plot((AggA_List - AggA[0])/example.dx,label = '15')
-plt.plot(np.zeros(len(AggA_List)), color = 'k')
-plt.legend()
-#plt.savefig("AJACW.jpg", dpi=500)
-plt.show()
 
 
-
-plt.plot((AggC_List - Css[0])/example.dx,label = '15',)
-plt.plot(np.zeros(len(AggA_List)), color= 'k')
-plt.legend()
-#plt.savefig("CJACW.jpg", dpi=500)
-plt.show()
-
-'''
 
 
 
